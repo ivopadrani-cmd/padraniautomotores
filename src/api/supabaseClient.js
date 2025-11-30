@@ -359,7 +359,7 @@ class Integrations {
         
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `public/${fileName}`;
+        const filePath = `uploads/${fileName}`; // All files in uploads folder
         
         const { data, error } = await supabase.storage
           .from('files')
@@ -370,18 +370,21 @@ class Integrations {
         
         if (error) throw error;
         
-        // Get public URL
-        const { data: urlData } = supabase.storage
+        // Get SIGNED URL for private bucket (valid for 1 year)
+        const { data: signedUrl, error: urlError } = await supabase.storage
           .from('files')
-          .getPublicUrl(filePath);
+          .createSignedUrl(filePath, 31536000); // 1 year expiration
+        
+        if (urlError) throw urlError;
         
         return {
-          id: data.id || fileName,
+          id: data.path || fileName,
           name: file.name,
           type: file.type,
           size: file.size,
-          url: urlData.publicUrl,
-          file_url: urlData.publicUrl
+          url: signedUrl.signedUrl,
+          file_url: signedUrl.signedUrl,
+          path: filePath // Store path for regenerating URLs later
         };
       },
       
@@ -392,7 +395,7 @@ class Integrations {
         
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `private/${fileName}`;
+        const filePath = `private/${fileName}`; // Private documents folder
         
         const { data, error } = await supabase.storage
           .from('files')
@@ -403,7 +406,7 @@ class Integrations {
         
         if (error) throw error;
         
-        // Get signed URL for private file
+        // Get signed URL for private file (1 year expiration)
         const { data: signedUrl, error: urlError } = await supabase.storage
           .from('files')
           .createSignedUrl(filePath, 31536000); // 1 year
@@ -411,12 +414,13 @@ class Integrations {
         if (urlError) throw urlError;
         
         return {
-          id: data.id || fileName,
+          id: data.path || fileName,
           name: file.name,
           type: file.type,
           size: file.size,
           url: signedUrl.signedUrl,
-          file_url: signedUrl.signedUrl
+          file_url: signedUrl.signedUrl,
+          path: filePath // Store path for regenerating URLs later
         };
       },
       

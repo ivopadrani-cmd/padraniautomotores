@@ -27,10 +27,12 @@ Esta guía explica cómo migrar la aplicación de localStorage a Supabase.
    - Ejecuta `supabase/migrations/001_initial_schema.sql`
    - Ejecuta `supabase/migrations/002_rls_policies.sql`
 
-3. **Crear bucket de Storage**
+3. **Crear bucket de Storage (PRIVADO para máxima seguridad)**
    - Ve a Storage en tu proyecto Supabase
    - Crea un bucket llamado `files`
-   - Configura como público (o privado según necesites)
+   - ⚠️ **IMPORTANTE**: Configúralo como **PRIVADO** (Public bucket: OFF)
+   - Esto garantiza que todos los archivos estén protegidos
+   - El sistema usa URLs firmadas que expiran automáticamente
 
 ## Migración de Datos
 

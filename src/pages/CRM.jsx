@@ -83,7 +83,7 @@ export default function CRM() {
   const queryClient = useQueryClient();
 
   const { data: leads = [], isLoading: loadingLeads } = useQuery({ queryKey: ['leads'], queryFn: () => base44.entities.Lead.list('-consultation_date') });
-  const { data: clients = [], isLoading: loadingClients } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list('-created_date') });
+  const { data: clients = [], isLoading: loadingClients } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list('-created_at') });
   const { data: vehicles = [] } = useQuery({ queryKey: ['vehicles'], queryFn: () => base44.entities.Vehicle.list() });
 
   const createLeadMutation = useMutation({

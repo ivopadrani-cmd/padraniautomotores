@@ -4,9 +4,6 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret';
-
 -- Users table (extends Supabase auth.users)
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -19,7 +16,41 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Vehicles table
+-- Clients table (MUST come before vehicles because vehicles references it)
+CREATE TABLE IF NOT EXISTS clients (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  full_name TEXT NOT NULL,
+  birth_date DATE,
+  phone TEXT,
+  email TEXT,
+  dni TEXT,
+  cuit_cuil TEXT,
+  city TEXT,
+  province TEXT,
+  address TEXT,
+  postal_code TEXT,
+  marital_status TEXT,
+  client_status TEXT DEFAULT 'Cliente' CHECK (client_status IN ('Prospecto', 'Cliente', 'Ex Cliente')),
+  observations TEXT,
+  attached_documents JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Sellers table (needed before reservations)
+CREATE TABLE IF NOT EXISTS sellers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  full_name TEXT NOT NULL,
+  phone TEXT,
+  email TEXT,
+  role TEXT DEFAULT 'Vendedor' CHECK (role IN ('Gerente', 'Administrador', 'Vendedor', 'Gestor', 'Comisionista', 'Mecánico')),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Vehicles table (references clients)
 CREATE TABLE IF NOT EXISTS vehicles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   status TEXT DEFAULT 'DISPONIBLE' CHECK (status IN ('A PERITAR', 'A INGRESAR', 'EN REPARACION', 'DISPONIBLE', 'PAUSADO', 'RESERVADO', 'VENDIDO', 'ENTREGADO')),
@@ -70,28 +101,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Clients table
-CREATE TABLE IF NOT EXISTS clients (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  full_name TEXT NOT NULL,
-  birth_date DATE,
-  phone TEXT,
-  email TEXT,
-  dni TEXT,
-  cuit_cuil TEXT,
-  city TEXT,
-  province TEXT,
-  address TEXT,
-  postal_code TEXT,
-  marital_status TEXT,
-  client_status TEXT DEFAULT 'Cliente' CHECK (client_status IN ('Prospecto', 'Cliente', 'Ex Cliente')),
-  observations TEXT,
-  attached_documents JSONB DEFAULT '[]'::jsonb,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Spouses table
+-- Spouses table (references clients)
 CREATE TABLE IF NOT EXISTS spouses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
@@ -106,34 +116,55 @@ CREATE TABLE IF NOT EXISTS spouses (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Sales table
-CREATE TABLE IF NOT EXISTS sales (
+-- Leads table (references clients only, needed before quotes/sales)
+CREATE TABLE IF NOT EXISTS leads (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  sale_date DATE NOT NULL,
-  seller TEXT,
+  consultation_date DATE NOT NULL,
+  consultation_time TIME,
+  source TEXT,
   client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
   client_name TEXT,
-  vehicle_id UUID REFERENCES vehicles(id) ON DELETE SET NULL,
-  vehicle_description TEXT,
-  sale_price DECIMAL(15,2) DEFAULT 0,
-  sale_price_currency TEXT DEFAULT 'ARS' CHECK (sale_price_currency IN ('ARS', 'USD')),
-  sale_price_exchange_rate DECIMAL(10,2),
-  deposit JSONB,
-  cash_payment JSONB,
-  trade_ins JSONB DEFAULT '[]'::jsonb,
-  financing JSONB,
-  balance_due_date DATE,
-  sale_status TEXT DEFAULT 'PENDIENTE' CHECK (sale_status IN ('PENDIENTE', 'FINALIZADA', 'CANCELADA')),
-  reservation_id UUID REFERENCES reservations(id) ON DELETE SET NULL,
-  lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,
-  quote_id UUID REFERENCES quotes(id) ON DELETE SET NULL,
+  client_phone TEXT,
+  client_email TEXT,
+  interested_vehicles JSONB DEFAULT '[]'::jsonb,
+  other_interests TEXT,
+  budget DECIMAL(15,2),
+  preferred_contact TEXT DEFAULT 'WhatsApp',
+  status TEXT DEFAULT 'Nuevo' CHECK (status IN ('Nuevo', 'Contactado', 'En negociación', 'Concretado', 'Perdido')),
+  interest_level TEXT DEFAULT 'Medio' CHECK (interest_level IN ('Bajo', 'Medio', 'Alto', 'Muy alto')),
   observations TEXT,
-  documents JSONB DEFAULT '[]'::jsonb,
+  follow_up_date DATE,
+  follow_up_time TIME,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Reservations table
+-- Quotes table (references clients, vehicles, leads)
+CREATE TABLE IF NOT EXISTS quotes (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  quote_date DATE NOT NULL,
+  client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
+  client_name TEXT,
+  client_phone TEXT,
+  vehicle_id UUID REFERENCES vehicles(id) ON DELETE SET NULL,
+  vehicle_description TEXT,
+  quoted_price_ars DECIMAL(15,2) DEFAULT 0,
+  quoted_price_currency TEXT DEFAULT 'ARS' CHECK (quoted_price_currency IN ('ARS', 'USD')),
+  quoted_price_exchange_rate DECIMAL(10,2),
+  trade_in JSONB,
+  financing_amount DECIMAL(15,2) DEFAULT 0,
+  financing_bank TEXT,
+  financing_installments INTEGER,
+  financing_installment_value DECIMAL(15,2),
+  notes TEXT,
+  lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,
+  is_multi_quote BOOLEAN DEFAULT false,
+  multi_quote_group_id TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Reservations table (references clients, vehicles, sellers)
 CREATE TABLE IF NOT EXISTS reservations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   reservation_date DATE NOT NULL,
@@ -163,55 +194,34 @@ CREATE TABLE IF NOT EXISTS reservations (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Quotes table
-CREATE TABLE IF NOT EXISTS quotes (
+-- Sales table (references clients, vehicles, reservations, leads, quotes)
+CREATE TABLE IF NOT EXISTS sales (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  quote_date DATE NOT NULL,
+  sale_date DATE NOT NULL,
+  seller TEXT,
   client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
   client_name TEXT,
-  client_phone TEXT,
   vehicle_id UUID REFERENCES vehicles(id) ON DELETE SET NULL,
   vehicle_description TEXT,
-  quoted_price_ars DECIMAL(15,2) DEFAULT 0,
-  quoted_price_currency TEXT DEFAULT 'ARS' CHECK (quoted_price_currency IN ('ARS', 'USD')),
-  quoted_price_exchange_rate DECIMAL(10,2),
-  trade_in JSONB,
-  financing_amount DECIMAL(15,2) DEFAULT 0,
-  financing_bank TEXT,
-  financing_installments INTEGER,
-  financing_installment_value DECIMAL(15,2),
-  notes TEXT,
+  sale_price DECIMAL(15,2) DEFAULT 0,
+  sale_price_currency TEXT DEFAULT 'ARS' CHECK (sale_price_currency IN ('ARS', 'USD')),
+  sale_price_exchange_rate DECIMAL(10,2),
+  deposit JSONB,
+  cash_payment JSONB,
+  trade_ins JSONB DEFAULT '[]'::jsonb,
+  financing JSONB,
+  balance_due_date DATE,
+  sale_status TEXT DEFAULT 'PENDIENTE' CHECK (sale_status IN ('PENDIENTE', 'FINALIZADA', 'CANCELADA')),
+  reservation_id UUID REFERENCES reservations(id) ON DELETE SET NULL,
   lead_id UUID REFERENCES leads(id) ON DELETE SET NULL,
-  is_multi_quote BOOLEAN DEFAULT false,
-  multi_quote_group_id TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Leads table
-CREATE TABLE IF NOT EXISTS leads (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  consultation_date DATE NOT NULL,
-  consultation_time TIME,
-  source TEXT,
-  client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
-  client_name TEXT,
-  client_phone TEXT,
-  client_email TEXT,
-  interested_vehicles JSONB DEFAULT '[]'::jsonb,
-  other_interests TEXT,
-  budget DECIMAL(15,2),
-  preferred_contact TEXT DEFAULT 'WhatsApp',
-  status TEXT DEFAULT 'Nuevo' CHECK (status IN ('Nuevo', 'Contactado', 'En negociación', 'Concretado', 'Perdido')),
-  interest_level TEXT DEFAULT 'Medio' CHECK (interest_level IN ('Bajo', 'Medio', 'Alto', 'Muy alto')),
+  quote_id UUID REFERENCES quotes(id) ON DELETE SET NULL,
   observations TEXT,
-  follow_up_date DATE,
-  follow_up_time TIME,
+  documents JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tasks table
+-- Tasks table (references vehicles, clients, sales, leads)
 CREATE TABLE IF NOT EXISTS tasks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
@@ -279,19 +289,6 @@ CREATE TABLE IF NOT EXISTS vehicle_inspections (
   approved_by TEXT,
   approved_date DATE,
   revision_notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Sellers table
-CREATE TABLE IF NOT EXISTS sellers (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  full_name TEXT NOT NULL,
-  phone TEXT,
-  email TEXT,
-  role TEXT DEFAULT 'Vendedor' CHECK (role IN ('Gerente', 'Administrador', 'Vendedor', 'Gestor', 'Comisionista', 'Mecánico')),
-  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

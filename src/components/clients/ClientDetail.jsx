@@ -24,7 +24,7 @@ export default function ClientDetail({ client, onClose, onEdit, onDelete }) {
 
   const { data: suppliedVehicles = [] } = useQuery({
     queryKey: ['supplier-vehicles', client.id],
-    queryFn: () => base44.entities.Vehicle.filter({ supplier_client_id: client.id }, '-created_date'),
+    queryFn: () => base44.entities.Vehicle.filter({ supplier_client_id: client.id }, '-created_at'),
   });
 
   const updateClientMutation = useMutation({

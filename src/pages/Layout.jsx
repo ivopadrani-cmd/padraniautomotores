@@ -94,11 +94,11 @@ export default function Layout({ children }) {
             const users = await base44.entities.User?.list() || [];
             const dbUser = users.find(u => u.id === user.id || u.email?.toLowerCase() === 'ivopadrani@gmail.com');
             if (dbUser) {
-              try {
+            try {
                 await base44.entities.User?.update(dbUser.id, { role: 'Gerente' });
                 user.role = 'Gerente';
                 localStorage.setItem('current_user', JSON.stringify(user));
-              } catch (e) {
+            } catch (e) {
                 // If User entity doesn't exist, just set role locally
                 user.role = 'Gerente';
                 localStorage.setItem('current_user', JSON.stringify(user));
@@ -123,13 +123,13 @@ export default function Layout({ children }) {
               (s.user_id === user.id) || 
               (s.email?.toLowerCase() === user.email?.toLowerCase())
             );
-            
-            if (seller && seller.role && seller.is_active !== false) {
-              setUserRole(seller.role);
+        
+        if (seller && seller.role && seller.is_active !== false) {
+          setUserRole(seller.role);
               // Update user with role from seller
               user.role = seller.role;
               localStorage.setItem('current_user', JSON.stringify(user));
-            } else {
+        } else {
               // Default to Administrador if no role found
               setUserRole('Administrador');
               user.role = 'Administrador';

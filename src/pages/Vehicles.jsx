@@ -78,7 +78,7 @@ export default function Vehicles() {
 
   const { data: vehicles = [], isLoading } = useQuery({
     queryKey: ['vehicles'],
-    queryFn: () => base44.entities.Vehicle.list('-created_date'),
+    queryFn: () => base44.entities.Vehicle.list('-created_at'),
   });
 
   const { data: clients = [] } = useQuery({
