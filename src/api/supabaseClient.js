@@ -107,27 +107,59 @@ class Entity {
   async create(data) {
     if (!useSupabase) return this.localEntity.create(data);
     
+    // Clean data: remove empty strings, undefined, and fields that don't exist in Supabase
+    const cleanData = {};
+    Object.keys(data).forEach(key => {
+      const value = data[key];
+      // Skip empty strings, undefined, null (but keep false and 0)
+      if (value !== '' && value !== undefined && value !== null) {
+        cleanData[key] = value;
+      }
+      // Keep false and 0 explicitly
+      if (value === false || value === 0) {
+        cleanData[key] = value;
+      }
+    });
+    
     const { data: result, error } = await supabase
       .from(this.tableName)
-      .insert(data)
+      .insert(cleanData)
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error creating ${this.tableName}:`, error);
+      throw error;
+    }
     return result;
   }
 
   async update(id, data) {
     if (!useSupabase) return this.localEntity.update(id, data);
     
+    // Clean data: remove empty strings, undefined
+    const cleanData = {};
+    Object.keys(data).forEach(key => {
+      const value = data[key];
+      if (value !== '' && value !== undefined && value !== null) {
+        cleanData[key] = value;
+      }
+      if (value === false || value === 0) {
+        cleanData[key] = value;
+      }
+    });
+    
     const { data: result, error } = await supabase
       .from(this.tableName)
-      .update(data)
+      .update(cleanData)
       .eq('id', id)
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error(`Error updating ${this.tableName}:`, error);
+      throw error;
+    }
     if (!result) throw new Error(`${this.tableName} with id ${id} not found`);
     return result;
   }
