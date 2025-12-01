@@ -28,6 +28,7 @@ import InspectionForm from "./InspectionForm";
 import InspectionView from "./InspectionView";
 import RequestInspectionDialog from "./RequestInspectionDialog";
 import InspectionApprovalDialog from "./InspectionApprovalDialog";
+import PriceEditDialog from "./PriceEditDialog";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -99,6 +100,9 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
     // Document edit state
     const [editingDocument, setEditingDocument] = useState(null);
     const [editingDocumentIndex, setEditingDocumentIndex] = useState(null);
+
+    // Price edit state
+    const [showPriceEditDialog, setShowPriceEditDialog] = useState(false);
 
     // Inspection state
     const [showInspectionForm, setShowInspectionForm] = useState(false);
@@ -220,6 +224,21 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
       queryClient.invalidateQueries({ queryKey: ['vehicle', updatedVehicle.id] });
       toast.success("Gasto actualizado");
     },
+  });
+
+  const updatePriceMutation = useMutation({
+    mutationFn: async (priceData) => {
+      await base44.entities.Vehicle.update(updatedVehicle.id, priceData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle', updatedVehicle.id] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      setShowPriceEditDialog(false);
+      toast.success("Precios actualizados");
+    },
+    onError: (error) => {
+      toast.error("Error al actualizar precios: " + error.message);
+    }
   });
 
   const handleSaveExpense = (index, expenseData) => {
@@ -855,12 +874,12 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                       <p className="font-bold text-base">{formatValDual(infoautoArs).ars}</p>
                       {infoautoArs > 0 && <p className="text-[11px] font-semibold text-cyan-500">{formatValDual(infoautoArs).usd}</p>}
                     </div>
-                    <div className="p-3 bg-gray-50 rounded">
+                    <div className="p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setShowPriceEditDialog(true)}>
                       <p className="text-gray-500">Objetivo</p>
                       <p className="font-bold text-base">{formatValDual(targetArs).ars}</p>
                       {targetArs > 0 && <p className="text-[11px] font-semibold text-cyan-500">{formatValDual(targetArs).usd}</p>}
                     </div>
-                    <div className="p-3 bg-gray-50 rounded">
+                    <div className="p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setShowPriceEditDialog(true)}>
                       <p className="text-gray-500">Público</p>
                       <p className="font-bold text-base">{formatValDual(publicArs).ars}</p>
                       {publicArs > 0 && <p className="text-[11px] font-semibold text-cyan-500">{formatValDual(publicArs).usd}</p>}

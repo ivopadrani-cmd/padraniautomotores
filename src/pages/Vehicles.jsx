@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import VehicleView from "../components/vehicles/VehicleView";
 import VehicleFormDialog from "../components/vehicles/VehicleFormDialog";
+import PriceEditDialog from "../components/vehicles/PriceEditDialog";
 import ClientDetail from "../components/clients/ClientDetail";
 import SaleFormDialog from "../components/sales/SaleFormDialog";
 import ReservationForm from "../components/reservations/ReservationForm";
@@ -64,6 +65,10 @@ export default function Vehicles() {
   const [showReservationDialog, setShowReservationDialog] = useState(false);
   const [showInspectionDialog, setShowInspectionDialog] = useState(false);
   const [actionVehicle, setActionVehicle] = useState(null);
+
+  // Price edit dialog from list
+  const [showPriceEditDialog, setShowPriceEditDialog] = useState(false);
+  const [priceEditVehicle, setPriceEditVehicle] = useState(null);
 
   // Reset to list when clicking module in sidebar
   React.useEffect(() => {
@@ -226,6 +231,18 @@ export default function Vehicles() {
     toast.success(`${selectedVehicles.length} vehículo(s) eliminado(s)`);
   };
 
+  const handlePriceEdit = (vehicle) => {
+    setPriceEditVehicle(vehicle);
+    setShowPriceEditDialog(true);
+  };
+
+  const handlePriceSubmit = async (priceData) => {
+    if (!priceEditVehicle) return;
+    await updateMutation.mutateAsync({ id: priceEditVehicle.id, data: priceData });
+    setShowPriceEditDialog(false);
+    setPriceEditVehicle(null);
+  };
+
   const toggleSelectAll = () => {
     if (selectedVehicles.length === paginatedVehicles.length) {
       setSelectedVehicles([]);
@@ -252,6 +269,13 @@ export default function Vehicles() {
       const infoautoArs = convertValue(v.infoauto_value, v.infoauto_currency, v.infoauto_exchange_rate, 'ARS');
       const targetArs = convertValue(v.target_price_value, v.target_price_currency, v.target_price_exchange_rate, 'ARS');
       const publicArs = convertValue(v.public_price_value, v.public_price_currency, v.public_price_exchange_rate, 'ARS');
+
+      // Calcular valores en USD
+      const costoUsd = costoTotal / currentBlueRate;
+      const infoautoUsd = infoautoArs / currentBlueRate;
+      const targetUsd = targetArs / currentBlueRate;
+      const publicUsd = publicArs / currentBlueRate;
+
       const isCons = v.ownership === 'CONSIGNACIÓN' || v.is_consignment;
       return '<tr>' +
         '<td class="uppercase">' + (isCons ? 'CONSIG.' : (v.ownership || '-')) + '</td>' +
@@ -261,10 +285,10 @@ export default function Vehicles() {
         '<td class="uppercase">' + (v.plate || '-') + '</td>' +
         '<td>' + (v.kilometers ? v.kilometers.toLocaleString('es-AR') : '-') + '</td>' +
         '<td class="uppercase">' + (v.color || '-') + '</td>' +
-        '<td class="text-right">' + (costoTotal ? '$' + costoTotal.toLocaleString('es-AR', {maximumFractionDigits: 0}) : '-') + '</td>' +
-        '<td class="text-right">' + (infoautoArs ? '$' + infoautoArs.toLocaleString('es-AR', {maximumFractionDigits: 0}) : '-') + '</td>' +
-        '<td class="text-right">' + (targetArs ? '$' + targetArs.toLocaleString('es-AR', {maximumFractionDigits: 0}) : '-') + '</td>' +
-        '<td class="text-right">' + (publicArs ? '$' + publicArs.toLocaleString('es-AR', {maximumFractionDigits: 0}) : '-') + '</td>' +
+        '<td class="text-right">' + (costoTotal ? '$' + costoTotal.toLocaleString('es-AR', {maximumFractionDigits: 0}) + '<br/><span class="text-xs text-gray-600">U$D ' + costoUsd.toLocaleString('en-US', {maximumFractionDigits: 0}) + '</span>' : '-') + '</td>' +
+        '<td class="text-right">' + (infoautoArs ? '$' + infoautoArs.toLocaleString('es-AR', {maximumFractionDigits: 0}) + '<br/><span class="text-xs text-gray-600">U$D ' + infoautoUsd.toLocaleString('en-US', {maximumFractionDigits: 0}) + '</span>' : '-') + '</td>' +
+        '<td class="text-right">' + (targetArs ? '$' + targetArs.toLocaleString('es-AR', {maximumFractionDigits: 0}) + '<br/><span class="text-xs text-gray-600">U$D ' + targetUsd.toLocaleString('en-US', {maximumFractionDigits: 0}) + '</span>' : '-') + '</td>' +
+        '<td class="text-right">' + (publicArs ? '$' + publicArs.toLocaleString('es-AR', {maximumFractionDigits: 0}) + '<br/><span class="text-xs text-gray-600">U$D ' + publicUsd.toLocaleString('en-US', {maximumFractionDigits: 0}) + '</span>' : '-') + '</td>' +
         '<td>' + (v.status || '-') + '</td>' +
         '</tr>';
     }).join('');
@@ -275,8 +299,8 @@ export default function Vehicles() {
       '.logo { font-size: 16px; font-weight: bold; } .logo span { font-size: 10px; font-weight: normal; color: #666; } .date { font-size: 10px; color: #666; } ' +
       '.title { font-size: 14px; font-weight: bold; margin-bottom: 10px; } table { width: 100%; border-collapse: collapse; } ' +
       'th { text-align: left; padding: 6px 4px; border-bottom: 1px solid #333; font-size: 9px; text-transform: uppercase; } ' +
-      'td { padding: 5px 4px; border-bottom: 1px solid #eee; font-size: 9px; } tr:nth-child(even) { background: #fafafa; } ' +
-      '.text-right { text-align: right; } .uppercase { text-transform: uppercase; } @media print { body { padding: 10px; } }</style></head>' +
+      'td { padding: 5px 4px; border-bottom: 1px solid #eee; font-size: 9px; line-height: 1.4; } tr:nth-child(even) { background: #fafafa; } ' +
+      '.text-right { text-align: right; } .uppercase { text-transform: uppercase; } .text-xs { font-size: 8px; } .text-gray-600 { color: #666; } @media print { body { padding: 10px; } }</style></head>' +
       '<body><div class="header"><div class="logo">PADRANI<br/><span>Automotores</span></div><div class="date">' + today + '</div></div>' +
       '<div class="title">Stock Disponible (' + printVehicles.length + ' unidades)</div>' +
       '<table><thead><tr><th>Propiedad</th><th>Marca</th><th>Modelo</th><th>Año</th><th>Dominio</th><th>KM</th><th>Color</th>' +
@@ -538,11 +562,12 @@ export default function Vehicles() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedVehicles.map((v) => {
+                      {paginatedVehicles.map((v, index) => {
                         const isCons = v.ownership === 'CONSIGNACIÓN';
                         const StatusIcon = STATUS_CONFIG[v.status]?.icon || CheckCircle;
+                        const rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
                         return (
-                          <tr key={v.id} className={`border-b hover:bg-gray-50 cursor-pointer ${selectedVehicles.includes(v.id) ? 'bg-cyan-50' : v.status === 'VENDIDO' ? 'bg-yellow-50' : ''}`} onClick={() => selectionMode ? toggleSelectVehicle(v.id, { stopPropagation: () => {} }) : selectVehicle(v)}>
+                          <tr key={v.id} className={`border-b hover:bg-gray-50 cursor-pointer ${rowClass} ${selectedVehicles.includes(v.id) ? 'bg-cyan-50' : v.status === 'VENDIDO' ? 'bg-yellow-50' : ''}`} onClick={() => selectionMode ? toggleSelectVehicle(v.id, { stopPropagation: () => {} }) : selectVehicle(v)}>
                             {selectionMode && (
                               <td className="px-2 py-2" onClick={(e) => toggleSelectVehicle(v.id, e)}>
                                 <Checkbox 
@@ -581,10 +606,10 @@ export default function Vehicles() {
                             <td className="px-2 py-3 w-28">
                               {(() => { const p = getPriceDisplay(v, 'infoauto'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
                             </td>
-                            <td className="px-2 py-3 w-28">
+                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handlePriceEdit(v); }}>
                               {(() => { const p = getPriceDisplay(v, 'target'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
                             </td>
-                            <td className="px-2 py-3 w-28">
+                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handlePriceEdit(v); }}>
                               {(() => { const p = getPriceDisplay(v, 'public'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
                             </td>
                             <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
@@ -704,10 +729,19 @@ export default function Vehicles() {
             />
 
             {/* Inspection Request Dialog from list */}
-            <RequestInspectionDialog 
-              open={showInspectionDialog} 
-              onOpenChange={(o) => { setShowInspectionDialog(o); if (!o) setActionVehicle(null); }} 
+            <RequestInspectionDialog
+              open={showInspectionDialog}
+              onOpenChange={(o) => { setShowInspectionDialog(o); if (!o) setActionVehicle(null); }}
               vehicle={actionVehicle}
+            />
+
+            {/* Price Edit Dialog from list */}
+            <PriceEditDialog
+              open={showPriceEditDialog}
+              onOpenChange={(o) => { setShowPriceEditDialog(o); if (!o) setPriceEditVehicle(null); }}
+              vehicle={priceEditVehicle}
+              onSubmit={handlePriceSubmit}
+              isLoading={updateMutation.isPending}
             />
             </div>
             </div>
