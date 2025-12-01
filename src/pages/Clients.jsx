@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, Users, List, Grid3x3, Trash2, Eye, Edit, Phone, Mail } from "lucide-react";
 import ClientForm from "../components/clients/ClientForm";
 import ClientDetail from "../components/clients/ClientDetail";
+import { useParams, useNavigate } from "react-router-dom";
 
 export default function Clients() {
+  const { clientId } = useParams();
+  const navigate = useNavigate();
+  
   const [showForm, setShowForm] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -24,6 +28,22 @@ export default function Clients() {
     queryKey: ['clients'],
     queryFn: () => base44.entities.Client.list('-created_at'),
   });
+
+  // Query para cliente específico
+  const { data: specificClient, isLoading: isLoadingClient } = useQuery({
+    queryKey: ['client', clientId],
+    queryFn: () => base44.entities.Client.get(clientId),
+    enabled: !!clientId,
+  });
+
+  // Sincronizar selectedClient con URL
+  useEffect(() => {
+    if (clientId && specificClient) {
+      setSelectedClient(specificClient);
+    } else if (!clientId) {
+      setSelectedClient(null);
+    }
+  }, [clientId, specificClient]);
 
   const createMutation = useMutation({
     mutationFn: async ({ clientData, spouseData }) => {
@@ -52,22 +72,38 @@ export default function Clients() {
         }
       }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clients'] }); setShowForm(false); setEditingClient(null); setSelectedClient(null); },
+    onSuccess: () => { 
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['client', selectedClient?.id] });
+      setShowForm(false); 
+      setEditingClient(null);
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Client.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clients'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      navigate('/Clients');
+    },
   });
 
-  const handleDelete = (clientId, e) => {
+  const handleDelete = (id, e) => {
     if (e) e.stopPropagation();
-    if (window.confirm('¿Eliminar este cliente?')) deleteMutation.mutate(clientId);
+    if (window.confirm('¿Eliminar este cliente?')) deleteMutation.mutate(id);
   };
 
   const handleSubmit = (clientData, spouseData) => {
     if (editingClient) updateMutation.mutate({ id: editingClient.id, data: clientData, spouseData });
     else createMutation.mutate({ clientData, spouseData });
+  };
+
+  const handleSelectClient = (client) => {
+    navigate(`/clients/${client.id}`);
+  };
+
+  const handleCloseDetail = () => {
+    navigate('/Clients');
   };
 
   const filteredClients = clients.filter(client => {
@@ -76,7 +112,16 @@ export default function Clients() {
     return matchesSearch && (filterStatus === 'ALL' || client.client_status === filterStatus);
   });
 
-  if (selectedClient) return <ClientDetail client={selectedClient} onClose={() => setSelectedClient(null)} onEdit={(c) => { setEditingClient(c); setShowForm(true); setSelectedClient(null); }} onDelete={(id) => { deleteMutation.mutate(id); setSelectedClient(null); }} />;
+  // Mostrar spinner si está cargando un cliente específico
+  if (clientId && isLoadingClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600" />
+      </div>
+    );
+  }
+
+  if (selectedClient) return <ClientDetail client={selectedClient} onClose={handleCloseDetail} onEdit={(c) => { setEditingClient(c); setShowForm(true); }} onDelete={handleDelete} />;
   if (showForm) return <ClientForm client={editingClient} onSubmit={handleSubmit} onCancel={() => { setShowForm(false); setEditingClient(null); }} isLoading={createMutation.isPending || updateMutation.isPending} />;
 
   return (
@@ -134,7 +179,11 @@ export default function Clients() {
                     </thead>
                     <tbody>
                       {filteredClients.map((c) => (
-                        <tr key={c.id} className="border-b hover:bg-gray-50">
+                        <tr 
+                          key={c.id} 
+                          className="border-b hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleSelectClient(c)}
+                        >
                           <td className="px-2 py-2 font-medium">{c.full_name}</td>
                           <td className="px-2 py-2">{c.dni || '-'}</td>
                           <td className="px-2 py-2">{c.phone}</td>
@@ -145,9 +194,8 @@ export default function Clients() {
                           </td>
                           <td className="px-1 py-2">
                             <div className="flex gap-0.5">
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedClient(c)}><Eye className="w-3 h-3" /></Button>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingClient(c); setShowForm(true); }}><Edit className="w-3 h-3" /></Button>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDelete(c.id)}><Trash2 className="w-3 h-3 text-red-500" /></Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); setEditingClient(c); setShowForm(true); }}><Edit className="w-3 h-3" /></Button>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleDelete(c.id, e); }}><Trash2 className="w-3 h-3 text-red-500" /></Button>
                             </div>
                           </td>
                         </tr>
@@ -158,7 +206,7 @@ export default function Clients() {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-2">
                   {filteredClients.map((c) => (
-                    <Card key={c.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedClient(c)}>
+                    <Card key={c.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleSelectClient(c)}>
                       <CardContent className="p-2">
                         <div className="flex items-center gap-2 mb-1">
                           <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"><Users className="w-4 h-4 text-gray-500" /></div>

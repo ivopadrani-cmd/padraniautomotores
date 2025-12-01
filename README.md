@@ -120,6 +120,41 @@ padraniautomotores/
 3. Subir fotos de vehículos
 4. Verificar que aparezcan en Supabase Storage
 
+## 📦 Importación desde Base44 (CSV)
+
+Si tenés datos exportados de Base44 en formato CSV, podés importarlos automáticamente:
+
+### 1. Requisitos previos
+- Tener los CSV exportados de Base44 en `C:\Users\usuario\Downloads\`
+- Archivos deben llamarse: `Vehicle_export.csv`, `Client_export.csv`, etc.
+- Tener la **Service Role Key** de Supabase
+
+### 2. Configurar Service Role Key
+Agregá en `.env`:
+```env
+SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key-aqui
+```
+
+**⚠️ NUNCA subas esta key a Git**
+
+### 3. Ejecutar importación
+```bash
+node scripts/import-csv-to-supabase.js
+```
+
+El script:
+- ✅ Importa todos los CSV en orden correcto
+- ✅ Respeta relaciones entre tablas
+- ✅ Reporta progreso en tiempo real
+- ✅ Maneja errores y continúa
+
+### 4. Post-importación
+- 🔗 **URLs de Base44 ya no funcionan**: Re-subir fotos/documentos
+- 👤 **Usuarios**: Crear manualmente en Supabase Auth
+- ✅ **Verificar datos** antes de usar en producción
+
+---
+
 ## ⚠️ Importante
 
 - **Siempre consultar `context-negocio.md`** antes de hacer cambios

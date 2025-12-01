@@ -84,14 +84,18 @@ export default function VehicleDetail({ vehicle, onClose, onEdit, onDelete }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Vehicle.update(id, data),
-    onSuccess: () => {
+    mutationFn: ({ id, data }) => {
+      console.log('💾 Guardando vehículo...', { id, data });
+      return base44.entities.Vehicle.update(id, data);
+    },
+    onSuccess: (result) => {
+      console.log('✅ Guardado exitoso:', result);
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       queryClient.invalidateQueries({ queryKey: ['vehicle', formData.id] });
       toast.success("Vehículo actualizado");
-      onClose(); // Close after successful update
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('❌ Error al guardar:', error);
       toast.error("Error al guardar el vehículo");
     }
   });
@@ -104,26 +108,47 @@ export default function VehicleDetail({ vehicle, onClose, onEdit, onDelete }) {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    // Validar tamaño de archivos
+    const maxSize = type === 'photos' ? 10 * 1024 * 1024 : 20 * 1024 * 1024; // 10MB fotos, 20MB docs
+    const invalidFiles = files.filter(f => f.size > maxSize);
+    if (invalidFiles.length > 0) {
+      const maxSizeMB = type === 'photos' ? '10MB' : '20MB';
+      toast.error(`Algunos archivos son muy grandes (máx ${maxSizeMB}): ${invalidFiles.map(f => f.name).join(', ')}`);
+      e.target.value = null;
+      return;
+    }
+
     setUploading(true);
     try {
       const uploadPromises = files.map(async (file) => {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        return {
-          url: file_url,
-          name: file.name,
-          date: new Date().toISOString().split('T')[0]
-        };
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          return {
+            url: file_url,
+            name: file.name,
+            date: new Date().toISOString().split('T')[0]
+          };
+        } catch (error) {
+          console.error('Error subiendo archivo:', file.name, error);
+          return null;
+        }
       });
 
-      const uploadedFiles = await Promise.all(uploadPromises);
+      const uploadedFiles = (await Promise.all(uploadPromises)).filter(f => f);
 
-      if (type === 'photos') {
-        handleChange('photos', [...(formData.photos || []), ...uploadedFiles]);
-      } else if (type === 'documents') {
-        handleChange('documents', [...(formData.documents || []), ...uploadedFiles]);
+      if (uploadedFiles.length > 0) {
+        if (type === 'photos') {
+          handleChange('photos', [...(formData.photos || []), ...uploadedFiles]);
+        } else if (type === 'documents') {
+          handleChange('documents', [...(formData.documents || []), ...uploadedFiles]);
+        }
+        
+        toast.success(`${uploadedFiles.length} archivo(s) cargado(s)`);
       }
-
-      toast.success(`${uploadedFiles.length} archivo(s) cargado(s)`);
+      
+      if (uploadedFiles.length < files.length) {
+        toast.error(`${files.length - uploadedFiles.length} archivo(s) no se pudieron subir`);
+      }
     } catch (error) {
       toast.error("Error al subir los archivos");
       console.error(error);
@@ -150,19 +175,23 @@ export default function VehicleDetail({ vehicle, onClose, onEdit, onDelete }) {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const totalArs = (formData.cost_ars || 0) + expenses.reduce((sum, exp) => sum + exp.amount_ars, 0);
     const totalUsd = (formData.cost_usd || 0) + expenses.reduce((sum, exp) => sum + exp.amount_usd, 0);
 
-    updateMutation.mutate({
-      id: formData.id,
-      data: {
-        ...formData,
-        expenses,
-        total_cost_ars: totalArs,
-        total_cost_usd: totalUsd
-      }
-    });
+    try {
+      await updateMutation.mutateAsync({
+        id: formData.id,
+        data: {
+          ...formData,
+          expenses,
+          total_cost_ars: totalArs,
+          total_cost_usd: totalUsd
+        }
+      });
+    } catch (error) {
+      console.error('Error al guardar:', error);
+    }
   };
 
   const handleChecklistChange = (section, field, value) => {
@@ -227,7 +256,7 @@ export default function VehicleDetail({ vehicle, onClose, onEdit, onDelete }) {
   const documents = formData.documents || [];
 
   return (
-    <div className="p-4 md:p-8 min-h-screen">
+    <div className="p-4 md:p-8 min-h-screen relative">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <Button variant="outline" onClick={onClose}>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import TaskDetailDialog from "../components/tasks/TaskDetailDialog";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isToday } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+import { useParams, useNavigate } from "react-router-dom";
 
 const TASK_TYPE_CONFIG = {
   'Tarea': { bg: 'bg-gray-200 text-gray-700', dot: 'bg-gray-500', icon: '○' },
@@ -34,16 +35,21 @@ const STATUS_CONFIG = {
 };
 
 export default function Tasks() {
+  const { taskId } = useParams();
+  const navigate = useNavigate();
+
   // Reset to list when clicking module in sidebar
   React.useEffect(() => {
     const handleReset = (e) => {
       if (e.detail === 'Tasks') {
         setSelectedTask(null);
+        navigate('/Tasks');
       }
     };
     window.addEventListener('resetModuleView', handleReset);
     return () => window.removeEventListener('resetModuleView', handleReset);
-  }, []);
+  }, [navigate]);
+  
   const [view, setView] = useState('calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
@@ -71,6 +77,22 @@ export default function Tasks() {
   const { data: sellers = [] } = useQuery({ queryKey: ['sellers'], queryFn: () => base44.entities.Seller.filter({ is_active: true }) });
   const { data: sales = [] } = useQuery({ queryKey: ['sales'], queryFn: () => base44.entities.Sale.list('-sale_date') });
   const { data: leads = [] } = useQuery({ queryKey: ['leads'], queryFn: () => base44.entities.Lead.list('-consultation_date') });
+
+  // Query para tarea específica
+  const { data: specificTask, isLoading: isLoadingTask } = useQuery({
+    queryKey: ['task', taskId],
+    queryFn: () => base44.entities.Task.get(taskId),
+    enabled: !!taskId,
+  });
+
+  // Sincronizar selectedTask con URL
+  useEffect(() => {
+    if (taskId && specificTask) {
+      setSelectedTask(specificTask);
+    } else if (!taskId) {
+      setSelectedTask(null);
+    }
+  }, [taskId, specificTask]);
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Task.create(data),
@@ -100,6 +122,14 @@ export default function Tasks() {
     setShowForm(false);
     setEditingTask(null);
     setFormData({ title: '', task_date: new Date().toISOString().split('T')[0], task_time: '', task_type: 'Tarea', related_vehicle_id: '', related_vehicle_description: '', related_client_id: '', related_client_name: '', related_sale_id: '', related_sale_description: '', related_lead_id: '', related_lead_description: '', responsible: '', description: '', status: 'Pendiente', priority: 'Media', cost: '' });
+  };
+
+  const handleSelectTask = (task) => {
+    navigate(`/tasks/${task.id}`);
+  };
+
+  const handleCloseTask = () => {
+    navigate('/Tasks');
   };
 
   const handleEdit = (task) => {
@@ -211,15 +241,21 @@ export default function Tasks() {
           </div>
         </div>
 
-        <TaskDetailDialog 
-          open={!!selectedTask} 
-          onOpenChange={() => setSelectedTask(null)} 
-          task={selectedTask} 
-          onEdit={handleEdit} 
-          onComplete={toggleComplete} 
-          onDelete={(id) => deleteMutation.mutate(id)}
-          clientPhone={selectedTask?.related_client_id ? clients.find(c => c.id === selectedTask.related_client_id)?.phone : (selectedTask?.related_lead_id ? leads.find(l => l.id === selectedTask.related_lead_id)?.client_phone : null)}
-        />
+        {taskId && isLoadingTask ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600" />
+          </div>
+        ) : (
+          <TaskDetailDialog 
+            open={!!selectedTask} 
+            onOpenChange={handleCloseTask} 
+            task={selectedTask} 
+            onEdit={handleEdit} 
+            onComplete={toggleComplete} 
+            onDelete={(id) => { deleteMutation.mutate(id); handleCloseTask(); }}
+            clientPhone={selectedTask?.related_client_id ? clients.find(c => c.id === selectedTask.related_client_id)?.phone : (selectedTask?.related_lead_id ? leads.find(l => l.id === selectedTask.related_lead_id)?.client_phone : null)}
+          />
+        )}
 
         <Dialog open={showForm} onOpenChange={(open) => { if (!open) resetForm(); }}>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
@@ -424,7 +460,7 @@ export default function Tasks() {
                       </div>
                     )}
                     {filteredTasks.map(task => (
-                      <div key={task.id} className={`p-4 flex items-center justify-between hover:bg-gray-50 cursor-pointer ${task.status === 'Completada' ? 'opacity-60' : ''} ${selectedTasks.includes(task.id) ? 'bg-cyan-50' : ''}`} onClick={() => selectionMode ? setSelectedTasks(prev => prev.includes(task.id) ? prev.filter(x => x !== task.id) : [...prev, task.id]) : setSelectedTask(task)}>
+                      <div key={task.id} className={`p-4 flex items-center justify-between hover:bg-gray-50 cursor-pointer ${task.status === 'Completada' ? 'opacity-60' : ''} ${selectedTasks.includes(task.id) ? 'bg-cyan-50' : ''}`} onClick={() => selectionMode ? setSelectedTasks(prev => prev.includes(task.id) ? prev.filter(x => x !== task.id) : [...prev, task.id]) : handleSelectTask(task)}>
                         <div className="flex items-center gap-3 flex-1">
                           {selectionMode ? (
                             <Checkbox checked={selectedTasks.includes(task.id)} className="h-4 w-4" onClick={(e) => e.stopPropagation()} />

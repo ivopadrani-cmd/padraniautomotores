@@ -233,21 +233,42 @@ export default function SaleForm({ sale, clients, vehicles, onSubmit, onCancel, 
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    setUploading(true);
-    const uploadPromises = files.map(async (file) => {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      return {
-        url: file_url,
-        name: file.name,
-        date: new Date().toISOString().split('T')[0],
-        type: file.type
-      };
-    });
+    // Validar tamaño de archivos (máx 20MB por documento)
+    const maxSize = 20 * 1024 * 1024;
+    const invalidFiles = files.filter(f => f.size > maxSize);
+    if (invalidFiles.length > 0) {
+      toast.error(`Algunos archivos son muy grandes (máx 20MB): ${invalidFiles.map(f => f.name).join(', ')}`);
+      e.target.value = null;
+      return;
+    }
 
+    setUploading(true);
     try {
-      const uploadedFiles = await Promise.all(uploadPromises);
-      handleChange('documents', [...(formData.documents || []), ...uploadedFiles]);
-      toast.success("Archivos subidos exitosamente.");
+      const uploadPromises = files.map(async (file) => {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          return {
+            url: file_url,
+            name: file.name,
+            date: new Date().toISOString().split('T')[0],
+            type: file.type
+          };
+        } catch (error) {
+          console.error('Error subiendo archivo:', file.name, error);
+          return null;
+        }
+      });
+
+      const uploadedFiles = (await Promise.all(uploadPromises)).filter(f => f);
+      
+      if (uploadedFiles.length > 0) {
+        handleChange('documents', [...(formData.documents || []), ...uploadedFiles]);
+        toast.success("Archivos subidos exitosamente.");
+      }
+      
+      if (uploadedFiles.length < files.length) {
+        toast.error(`${files.length - uploadedFiles.length} archivo(s) no se pudieron subir`);
+      }
     } catch (error) {
       console.error("Error uploading files:", error);
       toast.error("Error al subir los archivos: " + error.message);

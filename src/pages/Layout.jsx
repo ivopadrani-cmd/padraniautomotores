@@ -21,7 +21,8 @@ const getNavigationItems = (userRole) => {
   // Mecánicos solo ven Peritajes
   if (userRole === 'Mecánico') {
     return [
-      { title: "Peritajes", pageName: "Inspections", icon: Wrench }
+      { title: "Peritajes", pageName: "Inspections", icon: Wrench },
+      { title: "Vehículos", pageName: "Vehicles", icon: Car, hidden: true } // Permitido para ver detalles de vehículos desde peritajes
     ];
   }
   
@@ -31,6 +32,7 @@ const getNavigationItems = (userRole) => {
       { title: "Dashboard", pageName: "Dashboard", icon: LayoutDashboard },
       { title: "Vehículos", pageName: "Vehicles", icon: Car },
       { title: "CRM", pageName: "CRM", icon: Users },
+      { title: "Clientes", pageName: "Clients", icon: Users, hidden: true }, // No visible en sidebar, pero permitido
       { title: "Tareas", pageName: "Tasks", icon: ClipboardList },
       { title: "Agencia", pageName: "Agency", icon: Building2 }
     ];
@@ -42,6 +44,7 @@ const getNavigationItems = (userRole) => {
       { title: "Dashboard", pageName: "Dashboard", icon: LayoutDashboard },
       { title: "Vehículos", pageName: "Vehicles", icon: Car },
       { title: "CRM", pageName: "CRM", icon: Users },
+      { title: "Clientes", pageName: "Clients", icon: Users, hidden: true }, // No visible en sidebar, pero permitido
       { title: "Tareas", pageName: "Tasks", icon: ClipboardList }
     ];
   }
@@ -64,6 +67,7 @@ export default function Layout({ children }) {
   const queryClient = useQueryClient();
   const [isUpdatingRate, setIsUpdatingRate] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const { data: rates = [] } = useQuery({
     queryKey: ['exchange-rates'],
@@ -145,6 +149,8 @@ export default function Layout({ children }) {
       } catch (error) {
         console.error('Error loading user role:', error);
         setUserRole('__none__');
+      } finally {
+        setIsInitializing(false);
       }
     };
     
@@ -191,6 +197,15 @@ export default function Layout({ children }) {
     base44.auth.logout();
   };
 
+  // Mostrar spinner mientras se inicializa
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600" />
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <style>{`
@@ -203,8 +218,13 @@ export default function Layout({ children }) {
         <Sidebar>
           <SidebarHeader className="p-4 pt-6 border-b border-gray-800">
             {/* Logo */}
-            <div className="flex items-center justify-start mb-4 px-1">
-              <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6907cb67c59a0c423133fafc/b58f98fe8_LogosinfondoBOLDsinrueda.png" alt="Automotores" className="w-3/4 object-contain" />
+            <div className="flex items-center justify-start mb-4 px-1 min-h-[60px]">
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6907cb67c59a0c423133fafc/b58f98fe8_LogosinfondoBOLDsinrueda.png" 
+                alt="Automotores" 
+                className="w-3/4 object-contain"
+                loading="eager"
+              />
             </div>
 
             {/* User Profile Button */}
@@ -240,7 +260,7 @@ export default function Layout({ children }) {
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-1.5">
-                      {getNavigationItems(userRole).map((item) => {
+                      {getNavigationItems(userRole).filter(item => !item.hidden).map((item) => {
                     const pageUrl = createPageUrl(item.pageName);
                     const isActive = location.pathname === pageUrl;
                     return (
@@ -357,10 +377,19 @@ export default function Layout({ children }) {
               // Verificar si la página actual está permitida para este rol
               const allowedPages = getAllowedPages(userRole);
               const currentPath = location.pathname.toLowerCase();
-              const isAllowed = allowedPages.some(page => currentPath.includes(page.toLowerCase())) || currentPath === '/' || currentPath === '';
+              
+              // Extraer el nombre de la página base (sin IDs de rutas dinámicas)
+              const pathSegments = currentPath.split('/').filter(Boolean);
+              const basePath = pathSegments[0] || '';
+              
+              const isAllowed = allowedPages.some(page => 
+                basePath.includes(page.toLowerCase()) || 
+                currentPath.includes(page.toLowerCase())
+              ) || currentPath === '/' || currentPath === '';
               
               // Si no está permitida, redirigir a la primera página permitida
               if (!isAllowed && allowedPages.length > 0) {
+                console.warn('⚠️ Acceso denegado a:', currentPath, '- Redirigiendo a:', allowedPages[0]);
                 window.location.href = createPageUrl(allowedPages[0]);
                 return (
                   <div className="flex items-center justify-center h-full">

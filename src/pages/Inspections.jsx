@@ -11,8 +11,12 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import InspectionForm from "@/components/vehicles/InspectionForm";
 import InspectionView from "@/components/vehicles/InspectionView";
+import { useParams, useNavigate } from "react-router-dom";
 
 export default function Inspections() {
+  const { inspectionId } = useParams();
+  const navigate = useNavigate();
+  
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showInspectionForm, setShowInspectionForm] = useState(false);
   const [showInspectionView, setShowInspectionView] = useState(false);
@@ -39,6 +43,33 @@ export default function Inspections() {
     queryFn: () => base44.entities.VehicleInspection.list('-inspection_date'),
     refetchInterval: 15000,
   });
+
+  // Query para inspección específica
+  const { data: specificInspection, isLoading: isLoadingInspection } = useQuery({
+    queryKey: ['inspection', inspectionId],
+    queryFn: () => base44.entities.VehicleInspection.get(inspectionId),
+    enabled: !!inspectionId,
+  });
+
+  // Query para el vehículo de la inspección específica
+  const { data: inspectionVehicle } = useQuery({
+    queryKey: ['vehicle', specificInspection?.vehicle_id],
+    queryFn: () => base44.entities.Vehicle.get(specificInspection.vehicle_id),
+    enabled: !!specificInspection?.vehicle_id,
+  });
+
+  // Sincronizar con URL
+  useEffect(() => {
+    if (inspectionId && specificInspection && inspectionVehicle) {
+      setSelectedInspection(specificInspection);
+      setSelectedVehicle(inspectionVehicle);
+      setShowInspectionView(true);
+    } else if (!inspectionId) {
+      setSelectedInspection(null);
+      setSelectedVehicle(null);
+      setShowInspectionView(false);
+    }
+  }, [inspectionId, specificInspection, inspectionVehicle]);
 
   // Filtrar solo los asignados a este mecánico (por email)
   const myVehicles = vehicles.filter(v => 
@@ -73,9 +104,14 @@ export default function Inspections() {
   };
 
   const handleViewInspection = (vehicle) => {
-    setSelectedVehicle(vehicle);
-    setSelectedInspection(getInspection(vehicle.id));
-    setShowInspectionView(true);
+    const inspection = getInspection(vehicle.id);
+    if (inspection) {
+      navigate(`/inspections/${inspection.id}`);
+    }
+  };
+
+  const handleCloseInspectionView = () => {
+    navigate('/Inspections');
   };
 
   const handleRequestEdit = (vehicle) => {
@@ -252,20 +288,24 @@ export default function Inspections() {
       />
 
       {/* Inspection View Dialog */}
-      <InspectionView
-        open={showInspectionView}
-        onOpenChange={(open) => {
-          setShowInspectionView(open);
-          if (!open) {
-            setSelectedVehicle(null);
-            setSelectedInspection(null);
-          }
-        }}
-        inspection={selectedInspection}
-        vehicle={selectedVehicle}
-        onEdit={null}
-        onDelete={null}
-      />
+      {inspectionId && isLoadingInspection ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600" />
+        </div>
+      ) : (
+        <InspectionView 
+          open={showInspectionView}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCloseInspectionView();
+            }
+          }}
+          inspection={selectedInspection}
+          vehicle={selectedVehicle}
+          onEdit={null}
+          onDelete={null}
+        />
+      )}
 
       {/* Edit Request Dialog */}
       <Dialog open={showEditRequest} onOpenChange={setShowEditRequest}>

@@ -7,16 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Edit, Phone, DollarSign, Car, CheckCircle, FileText, Receipt, ShoppingCart, Trash2, MessageCircle } from "lucide-react";
+import { ArrowLeft, Edit, Phone, DollarSign, Car, CheckCircle, FileText, Receipt, ShoppingCart, Trash2, MessageCircle, User, Eye } from "lucide-react";
 import WhatsAppButton, { QuickContactButton } from "../common/WhatsAppButton";
 import SaleFormDialog from "../sales/SaleFormDialog";
+import SaleDetail from "../sales/SaleDetail";
 import ReservationForm from "../reservations/ReservationForm";
+import ReservationDetail from "../reservations/ReservationDetail";
 import { format } from "date-fns";
 import VehicleView from "../vehicles/VehicleView";
 import QuoteForm from "../quotes/QuoteForm";
 import QuotePrintView from "../quotes/QuotePrintView";
 import MultiQuotePrintView from "../quotes/MultiQuotePrintView";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const STATUS_CONFIG = {
   'Nuevo': 'bg-cyan-100 text-gray-900',
@@ -27,6 +30,8 @@ const STATUS_CONFIG = {
 };
 
 export default function LeadDetail({ lead, onClose, onEdit }) {
+  const navigate = useNavigate();
+  
   const [showConvertDialog, setShowConvertDialog] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
@@ -63,6 +68,17 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
 
   const interestedVehicles = lead.interested_vehicles?.map(iv => vehicles.find(v => v.id === iv.vehicle_id)).filter(Boolean) || [];
 
+  // Query para todas las ventas y reservas (para detectar si ya existen)
+  const { data: allSales = [] } = useQuery({
+    queryKey: ['all-sales'],
+    queryFn: () => base44.entities.Sale.list('-sale_date')
+  });
+  
+  const { data: allReservations = [] } = useQuery({
+    queryKey: ['all-reservations'],
+    queryFn: () => base44.entities.Reservation.list('-reservation_date')
+  });
+
   const convertToClientMutation = useMutation({
     mutationFn: async (data) => {
       const newClient = await base44.entities.Client.create({
@@ -84,7 +100,12 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
   });
 
   const createQuoteMutation = useMutation({
-    mutationFn: (data) => data.id ? base44.entities.Quote.update(data.id, data) : base44.entities.Quote.create({ ...data, quote_date: data.date }),
+    mutationFn: (data) => {
+      // Mapear 'date' a 'quote_date' y remover 'date'
+      const { date, ...restData } = data;
+      const quoteData = { ...restData, quote_date: date };
+      return data.id ? base44.entities.Quote.update(data.id, quoteData) : base44.entities.Quote.create(quoteData);
+    },
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
       queryClient.invalidateQueries({ queryKey: ['lead-quotes'] });
@@ -108,6 +129,8 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
 
   const [showReservationForm, setShowReservationForm] = useState(false);
   const [reservationPrefillData, setReservationPrefillData] = useState(null);
+  const [showSaleDetail, setShowSaleDetail] = useState(null);
+  const [showReservationDetail, setShowReservationDetail] = useState(null);
   const [salePrefillData, setSalePrefillData] = useState(null);
 
   const handleCreateQuote = (vehicle) => {
@@ -139,9 +162,6 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
     setShowReservationForm(true);
   };
 
-  if (selectedVehicle) {
-    return <VehicleView vehicle={selectedVehicle} onClose={() => setSelectedVehicle(null)} onEdit={() => {}} />;
-  }
 
   // Render QuotePrintView as dialog
   const renderQuotePrint = showQuotePrint && (
@@ -177,6 +197,11 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
         onOpenChange={(o) => { setShowSaleForm(o); if (!o) { setSelectedVehicleForSale(null); setSalePrefillData(null); } }} 
         vehicle={selectedVehicleForSale}
         prefillData={salePrefillData}
+        onSaleCreated={(sale) => {
+          // Abrir SaleDetail cuando faltan datos o siempre después de crear
+          setShowSaleDetail(sale);
+          setShowSaleForm(false);
+        }}
       />
       <ReservationForm
         open={showReservationForm}
@@ -207,7 +232,8 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
           if (Array.isArray(data)) {
             const createdQuotes = [];
             for (const q of data) {
-              const result = await base44.entities.Quote.create({ ...q, quote_date: q.date, lead_id: lead.id, client_id: lead.client_id });
+              const { date, ...restQ } = q;
+              const result = await base44.entities.Quote.create({ ...restQ, quote_date: date, lead_id: lead.id, client_id: lead.client_id });
               createdQuotes.push({ ...q, id: result.id });
             }
             queryClient.invalidateQueries({ queryKey: ['quotes'] });
@@ -227,13 +253,39 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
             <ArrowLeft className="w-3 h-3 mr-1" /> Volver
           </Button>
           <div className="flex gap-1.5">
-            {!lead.client_id && (
-              <Button variant="outline" size="sm" className="h-6 text-[9px] border-green-300 text-green-700" onClick={() => setShowConvertDialog(true)}>
-                <CheckCircle className="w-3 h-3 mr-1" /> Convertir a Cliente
+            {lead.client_id && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-[10px] border-sky-200 text-sky-700 hover:bg-sky-50"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const clientUrl = `/clients/${lead.client_id}`;
+                  console.log('🔵 NAVEGANDO A CLIENTE:');
+                  console.log('  - lead.client_id:', lead.client_id);
+                  console.log('  - URL destino:', clientUrl);
+                  console.log('  - Cliente data:', client);
+                  // Navegar directamente sin replace para permitir volver atrás
+                  navigate(clientUrl);
+                }}
+              >
+                <User className="w-3.5 h-3.5 mr-1.5" /> 
+                {client?.client_status === 'Prospecto' ? 'Ver Prospecto' : 'Ver Cliente'}
               </Button>
             )}
-            <Button onClick={() => onEdit(lead)} className="h-6 text-[9px] bg-sky-600 hover:bg-sky-700">
-              <Edit className="w-3 h-3 mr-1" /> Editar
+            {!lead.client_id && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-[10px] border-green-200 text-green-700 hover:bg-green-50" 
+                onClick={() => setShowConvertDialog(true)}
+              >
+                <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Convertir a Cliente
+              </Button>
+            )}
+            <Button onClick={() => onEdit(lead)} className="h-7 text-[10px] bg-sky-600 hover:bg-sky-700">
+              <Edit className="w-3.5 h-3.5 mr-1.5" /> Editar
             </Button>
           </div>
         </div>
@@ -277,7 +329,7 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
                 <QuickContactButton phone={lead.client_phone} name={lead.client_name} />
               </div>
               <div className="text-right text-[10px] text-gray-500">
-                <p>Consulta: {lead.consultation_date && format(new Date(lead.consultation_date), 'dd/MM/yy')}</p>
+                <p>Consulta: {lead.consultation_date && format(new Date(lead.consultation_date), 'dd/MM/yy')}{lead.consultation_time && ` ${lead.consultation_time}`}</p>
                 {lead.follow_up_date && <p>Seguimiento: {format(new Date(lead.follow_up_date), 'dd/MM/yy')}</p>}
               </div>
             </div>
@@ -328,27 +380,89 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
               </Button>
             </CardHeader>
             <CardContent className="p-2 space-y-1">
-              {interestedVehicles.map(vehicle => (
-                <div key={vehicle.id} className="p-2 bg-gray-50 rounded flex justify-between items-center hover:bg-gray-100">
-                  <div className="cursor-pointer flex-1" onClick={() => setSelectedVehicle(vehicle)}>
-                    <p className="font-medium text-[12px]">{vehicle.brand} {vehicle.model} {vehicle.year}</p>
-                    <p className="text-[10px] text-gray-500">{vehicle.plate} • {vehicle.kilometers?.toLocaleString('es-AR')} km</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-[12px]">${vehicle.public_price_value?.toLocaleString('es-AR')}</p>
-                    {['DISPONIBLE', 'A INGRESAR', 'EN REPARACION', 'PAUSADO'].includes(vehicle.status) && (
+              {interestedVehicles.map(vehicle => {
+                // Buscar si ya existe venta o reserva para este vehículo
+                const existingSale = allSales.find(s => s.vehicle_id === vehicle.id && s.sale_status !== 'CANCELADA');
+                const existingReservation = allReservations.find(r => r.vehicle_id === vehicle.id && r.status !== 'CANCELADA' && r.status !== 'CONVERTIDA');
+                
+                // Verificar si es del mismo cliente o de otro
+                const isSaleToSameClient = existingSale && existingSale.client_id === lead.client_id;
+                const isReservationToSameClient = existingReservation && existingReservation.client_id === lead.client_id;
+                
+                return (
+                  <div key={vehicle.id} className="p-2 bg-gray-50 rounded flex justify-between items-center hover:bg-gray-100">
+                    <div className="cursor-pointer flex-1" onClick={() => navigate(`/vehicles/${vehicle.id}`)}>
+                      <p className="font-medium text-[12px]">{vehicle.brand} {vehicle.model} {vehicle.year}</p>
+                      <p className="text-[10px] text-gray-500">{vehicle.plate} • {vehicle.kilometers?.toLocaleString('es-AR')} km</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-[12px]">${vehicle.public_price_value?.toLocaleString('es-AR')}</p>
+                      
+                      {/* Si ya existe venta */}
+                      {existingSale ? (
+                        isSaleToSameClient ? (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-6 text-[9px] border-green-200 text-green-700" 
+                            onClick={() => setShowSaleDetail(existingSale)}
+                          >
+                            <Eye className="w-3 h-3 mr-1" /> Ver Venta
+                          </Button>
+                        ) : (
+                          <Badge className="text-[9px] px-2 py-1 bg-red-50 text-red-700 border border-red-200">
+                            🚫 Vendido a otra persona
+                          </Badge>
+                        )
+                      ) : existingReservation ? (
+                        /* Si ya existe reserva */
+                        isReservationToSameClient ? (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-6 text-[9px] border-sky-200 text-sky-700" 
+                              onClick={() => setShowReservationDetail(existingReservation)}
+                            >
+                              <Eye className="w-3 h-3 mr-1" /> Ver Reserva
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              className="h-6 text-[9px] bg-cyan-600 hover:bg-cyan-700" 
+                              onClick={() => handleStartSale(vehicle)}
+                            >
+                              <ShoppingCart className="w-3 h-3 mr-1" /> Vender
+                            </Button>
+                          </>
+                        ) : (
+                          <Badge className="text-[9px] px-2 py-1 bg-orange-50 text-orange-700 border border-orange-200">
+                            ⏳ Reservado a otra persona
+                          </Badge>
+                        )
+                      ) : ['DISPONIBLE', 'A INGRESAR', 'EN REPARACION', 'PAUSADO'].includes(vehicle.status) && (
+                        /* Botones normales si no hay venta ni reserva */
                         <>
-                          <Button variant="outline" size="sm" className="h-6 text-[9px]" onClick={() => handleStartReservation(vehicle)}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-6 text-[9px]" 
+                            onClick={() => handleStartReservation(vehicle)}
+                          >
                             <Receipt className="w-3 h-3 mr-1" /> Reservar
                           </Button>
-                          <Button size="sm" className="h-6 text-[9px] bg-cyan-600 hover:bg-cyan-700" onClick={() => handleStartSale(vehicle)}>
+                          <Button 
+                            size="sm" 
+                            className="h-6 text-[9px] bg-cyan-600 hover:bg-cyan-700" 
+                            onClick={() => handleStartSale(vehicle)}
+                          >
                             <ShoppingCart className="w-3 h-3 mr-1" /> Vender
                           </Button>
                         </>
                       )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         )}
@@ -404,6 +518,26 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
           </Card>
         )}
       </div>
+
+      {/* Modales de vista de venta/reserva */}
+      {showSaleDetail && (
+        <SaleDetail 
+          sale={showSaleDetail} 
+          onClose={() => {
+            setShowSaleDetail(null);
+            queryClient.invalidateQueries({ queryKey: ['all-sales'] });
+          }} 
+        />
+      )}
+      {showReservationDetail && (
+        <ReservationDetail 
+          reservation={showReservationDetail} 
+          onClose={() => {
+            setShowReservationDetail(null);
+            queryClient.invalidateQueries({ queryKey: ['all-reservations'] });
+          }} 
+        />
+      )}
     </div>
   );
 }

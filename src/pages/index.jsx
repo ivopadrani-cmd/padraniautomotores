@@ -78,10 +78,13 @@ function PagesContent() {
                 <Route path="/Dashboard" element={<Dashboard />} />
                 
                 <Route path="/Vehicles" element={<Vehicles />} />
+                <Route path="/vehicles/:vehicleId" element={<Vehicles />} />
                 
                 <Route path="/Clients" element={<Clients />} />
+                <Route path="/clients/:clientId" element={<Clients />} />
                 
                 <Route path="/CRM" element={<CRM />} />
+                <Route path="/crm/:leadId" element={<CRM />} />
                 
                 <Route path="/ContractTemplates" element={<ContractTemplates />} />
                 
@@ -94,8 +97,10 @@ function PagesContent() {
                 <Route path="/Agency" element={<Agency />} />
                 
                 <Route path="/Tasks" element={<Tasks />} />
+                <Route path="/tasks/:taskId" element={<Tasks />} />
                 
                 <Route path="/Inspections" element={<Inspections />} />
+                <Route path="/inspections/:inspectionId" element={<Inspections />} />
                 
             </Routes>
         </Layout>

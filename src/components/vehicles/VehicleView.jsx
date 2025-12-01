@@ -29,6 +29,7 @@ import InspectionView from "./InspectionView";
 import RequestInspectionDialog from "./RequestInspectionDialog";
 import InspectionApprovalDialog from "./InspectionApprovalDialog";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const STATUS_CONFIG = {
   'A PERITAR': { bg: 'bg-amber-100 text-amber-700', icon: Wrench },
@@ -51,6 +52,8 @@ const convertValue = (value, currency, exchangeRate, targetCurrency) => {
 };
 
 export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
+  const navigate = useNavigate();
+  
   const [selectedClient, setSelectedClient] = useState(null);
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -147,14 +150,25 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
   const [quoteToReserve, setQuoteToReserve] = useState(null);
 
   const createQuoteMutation = useMutation({
-    mutationFn: (data) => data.id ? base44.entities.Quote.update(data.id, data) : base44.entities.Quote.create({ ...data, quote_date: data.date }),
+    mutationFn: (data) => {
+      console.log('📋 Guardando presupuesto:', data);
+      // Mapear 'date' a 'quote_date' y remover 'date' 
+      const { date, ...restData } = data;
+      const quoteData = { ...restData, quote_date: date };
+      return data.id ? base44.entities.Quote.update(data.id, quoteData) : base44.entities.Quote.create(quoteData);
+    },
     onSuccess: (result, variables) => {
+      console.log('✅ Presupuesto guardado:', result);
       queryClient.invalidateQueries({ queryKey: ['vehicle-quotes'] });
       setShowQuotePrint({ ...variables, id: result?.id || variables.id });
       setShowQuoteForm(false);
       setEditingQuote(null);
       toast.success(variables.id ? "Presupuesto actualizado" : "Presupuesto guardado");
     },
+    onError: (error) => {
+      console.error('❌ Error guardando presupuesto:', error);
+      toast.error("Error al guardar el presupuesto: " + error.message);
+    }
   });
 
   const deleteQuoteMutation = useMutation({
@@ -164,7 +178,9 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
 
   const createReservationMutation = useMutation({
     mutationFn: async (data) => {
+      console.log('📝 Creando reserva:', data);
       const res = await base44.entities.Reservation.create(data);
+      console.log('✅ Reserva creada:', res);
       await base44.entities.Vehicle.update(updatedVehicle.id, { status: 'RESERVADO' });
       return res;
     },
@@ -175,6 +191,10 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
       setShowReservationForm(false);
       toast.success("Reserva creada");
     },
+    onError: (error) => {
+      console.error('❌ Error creando reserva:', error);
+      toast.error("Error al crear la reserva: " + error.message);
+    }
   });
 
   const cancelReservationMutation = useMutation({
@@ -488,22 +508,47 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
               <div className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Badge className={`${STATUS_CONFIG[updatedVehicle.status]?.bg} text-[12px] px-3 py-1.5 flex items-center gap-1.5 rounded cursor-pointer hover:opacity-90 transition-opacity`}>
+                        <button className={`${STATUS_CONFIG[updatedVehicle.status]?.bg} text-[12px] px-3 py-1.5 flex items-center gap-1.5 rounded cursor-pointer hover:opacity-90 transition-opacity border-0 font-medium`}>
                           <StatusIcon className="w-4 h-4" />
                           {updatedVehicle.status}
                           <ChevronDown className="w-3 h-3 ml-1" />
-                        </Badge>
+                        </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {['A PERITAR', 'A INGRESAR', 'EN REPARACION', 'DISPONIBLE', 'PAUSADO', 'RESERVADO', 'VENDIDO', 'ENTREGADO', 'DESCARTADO'].map(status => (
                           <DropdownMenuItem 
                             key={status} 
-                            className="text-[11px]"
+                            className="text-[11px] cursor-pointer"
                             onClick={async () => {
-                              await base44.entities.Vehicle.update(updatedVehicle.id, { status });
-                              queryClient.invalidateQueries({ queryKey: ['vehicle', updatedVehicle.id] });
-                              queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+                              const previousStatus = updatedVehicle.status;
+                              
+                              // Actualizar INSTANTÁNEAMENTE en la query cache
+                              queryClient.setQueryData(['vehicle', updatedVehicle.id], (old) => 
+                                old ? { ...old, status } : old
+                              );
+                              queryClient.setQueryData(['vehicles'], (old) =>
+                                old?.map((v) => (v.id === updatedVehicle.id ? { ...v, status } : v))
+                              );
+                              
                               toast.success(`Estado cambiado a ${status}`);
+                              
+                              // Luego guardar en el servidor
+                              try {
+                                await base44.entities.Vehicle.update(updatedVehicle.id, { status });
+                                // Refrescar después de 500ms
+                                setTimeout(() => {
+                                  queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+                                }, 500);
+                              } catch (error) {
+                                // Revertir si falla
+                                queryClient.setQueryData(['vehicle', updatedVehicle.id], (old) => 
+                                  old ? { ...old, status: previousStatus } : old
+                                );
+                                queryClient.setQueryData(['vehicles'], (old) =>
+                                  old?.map((v) => (v.id === updatedVehicle.id ? { ...v, status: previousStatus } : v))
+                                );
+                                toast.error("Error al cambiar estado");
+                              }
                             }}
                           >
                             <span className={`w-2 h-2 rounded-full mr-2 ${STATUS_CONFIG[status]?.bg?.split(' ')[0] || 'bg-gray-200'}`} />
@@ -1235,7 +1280,7 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                 <div 
                   key={l.id} 
                   className="p-3 bg-gray-50 rounded text-[11px] hover:bg-gray-100 cursor-pointer"
-                  onClick={() => setSelectedLead(l)}
+                  onClick={() => navigate(`/crm/${l.id}`)}
                 >
                   <p className="font-medium">{l.client_name}</p>
                   <p className="text-gray-500">{l.client_phone}</p>

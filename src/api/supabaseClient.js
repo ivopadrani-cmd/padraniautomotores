@@ -384,8 +384,8 @@ class Integrations {
         return { success: true, messageId: 'mock-' + Date.now() };
       },
       
-      UploadFile: async (file) => {
-        if (!useSupabase) return localClient.integrations.Core.UploadFile(file);
+      UploadFile: async ({ file }) => {
+        if (!useSupabase) return localClient.integrations.Core.UploadFile({ file });
         
         if (!file) throw new Error('File is required');
         

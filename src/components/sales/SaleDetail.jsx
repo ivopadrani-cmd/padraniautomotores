@@ -4,9 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Car, User, DollarSign, FileText, CheckCircle, Upload, Download, X } from "lucide-react";
+import { Car, User, DollarSign, FileText, CheckCircle, Upload, Download, X, Edit, Ban, Printer, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import SalesContractView from "./SalesContractView";
+import DepositReceiptView from "../reservations/DepositReceiptView";
+import SaleFormDialog from "./SaleFormDialog";
 
 const STATUS_CONFIG = {
   PENDIENTE: 'bg-gray-200 text-gray-700',
@@ -18,18 +21,29 @@ const STATUS_CONFIG = {
 
 export default function SaleDetail({ sale, onClose }) {
   const [uploading, setUploading] = useState(false);
+  const [showBoleto, setShowBoleto] = useState(false);
+  const [showRecibo, setShowRecibo] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const queryClient = useQueryClient();
 
+  // Query refetchable para la venta actual
+  const { data: currentSale } = useQuery({
+    queryKey: ['sale', sale.id],
+    queryFn: () => base44.entities.Sale.get(sale.id),
+    initialData: sale,
+    enabled: !!sale.id
+  });
+
   const { data: client } = useQuery({
-    queryKey: ['client', sale.client_id],
-    queryFn: () => base44.entities.Client.list().then(clients => clients.find(c => c.id === sale.client_id)),
-    enabled: !!sale.client_id
+    queryKey: ['client', currentSale.client_id],
+    queryFn: () => base44.entities.Client.list().then(clients => clients.find(c => c.id === currentSale.client_id)),
+    enabled: !!currentSale.client_id
   });
 
   const { data: vehicle } = useQuery({
-    queryKey: ['vehicle', sale.vehicle_id],
-    queryFn: () => base44.entities.Vehicle.list().then(vehicles => vehicles.find(v => v.id === sale.vehicle_id)),
-    enabled: !!sale.vehicle_id
+    queryKey: ['vehicle', currentSale.vehicle_id],
+    queryFn: () => base44.entities.Vehicle.list().then(vehicles => vehicles.find(v => v.id === currentSale.vehicle_id)),
+    enabled: !!currentSale.vehicle_id
   });
 
   const finalizeMutation = useMutation({
@@ -46,27 +60,114 @@ export default function SaleDetail({ sale, onClose }) {
     },
   });
 
+  const cancelSaleMutation = useMutation({
+    mutationFn: async () => {
+      console.log('🔴 Cancelando venta:', currentSale.id);
+      await base44.entities.Sale.update(currentSale.id, { sale_status: 'CANCELADA' });
+      if (currentSale.vehicle_id) {
+        console.log('🔄 Cambiando estado del vehículo a DISPONIBLE:', currentSale.vehicle_id);
+        await base44.entities.Vehicle.update(currentSale.vehicle_id, { status: 'DISPONIBLE' });
+      }
+    },
+    onSuccess: () => {
+      console.log('✅ Venta cancelada exitosamente');
+      // Actualizar TODOS los queries relacionados
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['sale', currentSale.id] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicle-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['client-sales', currentSale.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['vehicle', currentSale.vehicle_id] });
+      // Refetch inmediato de la venta actual
+      queryClient.refetchQueries({ queryKey: ['sale', currentSale.id] });
+      toast.success("Venta cancelada - Vehículo vuelto a DISPONIBLE");
+    },
+    onError: (error) => {
+      console.error('❌ Error cancelando venta:', error);
+      toast.error("Error al cancelar venta");
+    },
+  });
+
+  const deleteSaleMutation = useMutation({
+    mutationFn: async () => {
+      console.log('🗑️ Eliminando venta:', currentSale.id);
+      if (currentSale.vehicle_id) {
+        console.log('🔄 Cambiando estado del vehículo a DISPONIBLE:', currentSale.vehicle_id);
+        await base44.entities.Vehicle.update(currentSale.vehicle_id, { status: 'DISPONIBLE' });
+      }
+      await base44.entities.Sale.delete(currentSale.id);
+    },
+    onSuccess: () => {
+      console.log('✅ Venta eliminada exitosamente');
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicle-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['client-sales', currentSale.client_id] });
+      queryClient.invalidateQueries({ queryKey: ['vehicle', currentSale.vehicle_id] });
+      toast.success("Venta eliminada - Vehículo vuelto a DISPONIBLE");
+      onClose();
+    },
+    onError: (error) => {
+      console.error('❌ Error eliminando venta:', error);
+      toast.error("Error al eliminar venta");
+    },
+  });
+
   const updateDocsMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Sale.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['sales'] }); toast.success("Documentos actualizados"); },
+    onSuccess: () => { 
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['sale', currentSale.id] });
+      toast.success("Documentos actualizados"); 
+    },
   });
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+    
+    // Validar tamaño de archivos (máx 20MB por documento)
+    const maxSize = 20 * 1024 * 1024;
+    const invalidFiles = files.filter(f => f.size > maxSize);
+    if (invalidFiles.length > 0) {
+      toast.error(`Algunos archivos son muy grandes (máx 20MB): ${invalidFiles.map(f => f.name).join(', ')}`);
+      e.target.value = null;
+      return;
+    }
+    
     setUploading(true);
-    const uploaded = await Promise.all(files.map(async (file) => {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
-    }));
-    await updateDocsMutation.mutateAsync({ id: sale.id, data: { documents: [...(sale.documents || []), ...uploaded] } });
-    setUploading(false);
-    e.target.value = null;
+    try {
+      const uploadPromises = files.map(async (file) => {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile(file);
+          return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
+        } catch (error) {
+          console.error('Error subiendo archivo:', file.name, error);
+          return null;
+        }
+      });
+      
+      const uploaded = (await Promise.all(uploadPromises)).filter(f => f);
+      
+      if (uploaded.length > 0) {
+        await updateDocsMutation.mutateAsync({ id: currentSale.id, data: { documents: [...(currentSale.documents || []), ...uploaded] } });
+      }
+      
+      if (uploaded.length < files.length) {
+        toast.error(`${files.length - uploaded.length} archivo(s) no se pudieron subir`);
+      }
+    } catch (error) {
+      toast.error("Error al subir archivos");
+      console.error(error);
+    } finally {
+      setUploading(false);
+      e.target.value = null;
+    }
   };
 
   const handleRemoveDoc = async (index) => {
     if (!window.confirm('¿Eliminar documento?')) return;
-    await updateDocsMutation.mutateAsync({ id: sale.id, data: { documents: sale.documents.filter((_, i) => i !== index) } });
+    await updateDocsMutation.mutateAsync({ id: currentSale.id, data: { documents: currentSale.documents.filter((_, i) => i !== index) } });
   };
 
   return (
@@ -74,43 +175,43 @@ export default function SaleDetail({ sale, onClose }) {
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg flex flex-row items-center justify-between">
           <DialogTitle className="text-sm font-semibold">Venta</DialogTitle>
-          <Badge className={`${STATUS_CONFIG[sale.sale_status]} text-[10px]`}>{sale.sale_status}</Badge>
+          <Badge className={`${STATUS_CONFIG[currentSale.sale_status]} text-[10px]`}>{currentSale.sale_status}</Badge>
         </DialogHeader>
         
         <div className="p-4 space-y-4">
           {/* Vehicle */}
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-2 mb-1"><Car className="w-4 h-4 text-gray-500" /><span className="text-[10px] font-medium text-gray-500">VEHÍCULO</span></div>
-            <p className="font-bold">{sale.vehicle_description}</p>
+            <p className="font-bold">{currentSale.vehicle_description}</p>
           </div>
 
           {/* Client */}
           <div>
             <div className="flex items-center gap-2 mb-1"><User className="w-4 h-4 text-gray-500" /><span className="text-[10px] font-medium text-gray-500">CLIENTE</span></div>
-            <p className="font-semibold">{sale.client_name}</p>
+            <p className="font-semibold">{currentSale.client_name}</p>
             {client?.phone && <p className="text-[11px] text-gray-500">{client.phone}</p>}
-            {sale.seller && <p className="text-[10px] text-gray-400 mt-1">Vendedor: {sale.seller}</p>}
+            {currentSale.seller && <p className="text-[10px] text-gray-400 mt-1">Vendedor: {currentSale.seller}</p>}
           </div>
 
           {/* Sale Price */}
           <div className="p-4 bg-gray-100 rounded-lg">
             <div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-gray-500" /><span className="text-[10px] font-medium text-gray-500">PRECIO DE VENTA</span></div>
-            <p className="text-2xl font-bold">${sale.sale_price_ars?.toLocaleString('es-AR')}</p>
+            <p className="text-2xl font-bold">${currentSale.sale_price_ars?.toLocaleString('es-AR')}</p>
           </div>
 
           {/* Deposit */}
-          {sale.deposit_amount_ars > 0 && (
+          {currentSale.deposit_amount_ars > 0 && (
             <div className="p-3 border rounded-lg">
               <div className="text-[10px] font-medium text-gray-500 mb-1">SEÑA</div>
               <div className="flex justify-between items-center">
-                <p className="font-bold">${sale.deposit_amount_ars?.toLocaleString('es-AR')}</p>
-                <p className="text-[11px] text-gray-500">{sale.deposit_date && format(new Date(sale.deposit_date), 'dd/MM/yy')}</p>
+                <p className="font-bold">${currentSale.deposit_amount_ars?.toLocaleString('es-AR')}</p>
+                <p className="text-[11px] text-gray-500">{currentSale.deposit_date && format(new Date(currentSale.deposit_date), 'dd/MM/yy')}</p>
               </div>
             </div>
           )}
 
           {/* Trade Ins */}
-          {sale.trade_ins?.map((ti, i) => (
+          {currentSale.trade_ins?.map((ti, i) => (
             <div key={i} className="p-3 border border-dashed rounded-lg">
               <div className="text-[10px] font-medium text-gray-500 mb-1">PERMUTA</div>
               <p className="font-semibold">{ti.brand} {ti.model} {ti.year}</p>
@@ -120,26 +221,26 @@ export default function SaleDetail({ sale, onClose }) {
           ))}
 
           {/* Financing */}
-          {sale.financing_amount_ars > 0 && (
+          {currentSale.financing_amount_ars > 0 && (
             <div className="p-3 border rounded-lg">
               <div className="text-[10px] font-medium text-gray-500 mb-1">FINANCIACIÓN</div>
-              <p className="font-bold">${sale.financing_amount_ars?.toLocaleString('es-AR')}</p>
-              <p className="text-[11px] text-gray-500">{sale.financing_bank} • {sale.financing_installments} cuotas</p>
+              <p className="font-bold">${currentSale.financing_amount_ars?.toLocaleString('es-AR')}</p>
+              <p className="text-[11px] text-gray-500">{currentSale.financing_bank} • {currentSale.financing_installments} cuotas</p>
             </div>
           )}
 
           {/* Documents */}
           <div className="border rounded-lg p-3">
             <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-gray-500" /><span className="text-[10px] font-medium text-gray-500">DOCUMENTOS ({sale.documents?.length || 0})</span></div>
+              <div className="flex items-center gap-2"><FileText className="w-4 h-4 text-gray-500" /><span className="text-[10px] font-medium text-gray-500">DOCUMENTOS ({currentSale.documents?.length || 0})</span></div>
               <label className="cursor-pointer">
                 <Button type="button" variant="outline" size="sm" className="h-7 text-[10px]" disabled={uploading}><Upload className="w-3 h-3 mr-1" />{uploading ? 'Subiendo...' : 'Adjuntar'}</Button>
                 <input type="file" multiple className="hidden" onChange={handleFileUpload} />
               </label>
             </div>
-            {sale.documents?.length > 0 ? (
+            {currentSale.documents?.length > 0 ? (
               <div className="space-y-1">
-                {sale.documents.map((doc, i) => (
+                {currentSale.documents.map((doc, i) => (
                   <div key={i} className="flex items-center justify-between p-2 bg-gray-50 rounded text-[11px]">
                     <span className="truncate flex-1">{doc.name}</span>
                     <div className="flex gap-1">
@@ -153,19 +254,128 @@ export default function SaleDetail({ sale, onClose }) {
           </div>
 
           {/* Date & Observations */}
-          <div className="text-[10px] text-gray-400">Venta del {format(new Date(sale.sale_date), 'dd/MM/yyyy')}</div>
-          {sale.observations && <div className="text-[11px] p-2 bg-gray-50 rounded">{sale.observations}</div>}
+          <div className="text-[10px] text-gray-400">Venta del {format(new Date(currentSale.sale_date), 'dd/MM/yyyy')}</div>
+          {currentSale.observations && <div className="text-[11px] p-2 bg-gray-50 rounded">{currentSale.observations}</div>}
 
-          {/* Actions */}
-          {sale.sale_status !== 'FINALIZADA' && sale.sale_status !== 'CANCELADA' && (
-            <div className="flex gap-2 pt-2 border-t">
-              <Button className="flex-1 h-8 text-[11px] bg-gray-900 hover:bg-gray-800" onClick={() => finalizeMutation.mutate()} disabled={finalizeMutation.isPending}>
-                <CheckCircle className="w-3.5 h-3.5 mr-1.5" />{finalizeMutation.isPending ? 'Finalizando...' : 'Finalizar Venta'}
+          {/* Document Actions */}
+          <div className="flex gap-2 pt-2 border-t">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-8 text-[10px]" 
+              onClick={() => setShowBoleto(true)}
+              disabled={currentSale.sale_status === 'CANCELADA'}
+            >
+              <FileText className="w-3.5 h-3.5 mr-1.5" />Ver Boleto
+            </Button>
+            {currentSale.deposit_amount_ars > 0 && (
+              <Button 
+                variant="outline" 
+                className="flex-1 h-8 text-[10px]" 
+                onClick={() => setShowRecibo(true)}
+                disabled={currentSale.sale_status === 'CANCELADA'}
+              >
+                <Printer className="w-3.5 h-3.5 mr-1.5" />Ver Recibo
               </Button>
+            )}
+          </div>
+
+          {/* Edit & Cancel Actions */}
+          {currentSale.sale_status !== 'FINALIZADA' && currentSale.sale_status !== 'CANCELADA' && (
+            <>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 h-8 text-[10px]" 
+                  onClick={() => setShowEditDialog(true)}
+                >
+                  <Edit className="w-3.5 h-3.5 mr-1.5" />Editar
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="flex-1 h-8 text-[10px] border-red-200 text-red-600 hover:bg-red-50" 
+                  onClick={() => {
+                    if (window.confirm('¿Estás seguro de cancelar esta venta? El vehículo volverá a DISPONIBLE.')) {
+                      cancelSaleMutation.mutate();
+                    }
+                  }}
+                  disabled={cancelSaleMutation.isPending}
+                >
+                  <Ban className="w-3.5 h-3.5 mr-1.5" />
+                  {cancelSaleMutation.isPending ? 'Cancelando...' : 'Cancelar Venta'}
+                </Button>
+              </div>
+              <Button 
+                className="w-full h-8 text-[11px] bg-gray-900 hover:bg-gray-800" 
+                onClick={() => finalizeMutation.mutate()} 
+                disabled={finalizeMutation.isPending}
+              >
+                <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                {finalizeMutation.isPending ? 'Finalizando...' : 'Finalizar Venta'}
+              </Button>
+            </>
+          )}
+
+          {/* Mostrar mensaje si está cancelada */}
+          {currentSale.sale_status === 'CANCELADA' && (
+            <div className="p-4 bg-red-50 rounded-lg border border-red-200">
+              <p className="text-[12px] font-bold text-red-700">❌ Venta Cancelada</p>
+              <p className="text-[10px] text-red-600 mt-1">El vehículo fue devuelto a estado DISPONIBLE</p>
             </div>
           )}
+
+          {/* Botón de eliminar (siempre disponible) */}
+          <div className="pt-2 border-t">
+            <Button 
+              variant="ghost" 
+              className="w-full h-8 text-[10px] text-gray-500 hover:text-red-600 hover:bg-red-50" 
+              onClick={() => {
+                if (window.confirm('⚠️ ¿Eliminar esta venta permanentemente?\n\nEsta acción NO se puede deshacer. El vehículo volverá a estado DISPONIBLE.')) {
+                  deleteSaleMutation.mutate();
+                }
+              }}
+              disabled={deleteSaleMutation.isPending}
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+              {deleteSaleMutation.isPending ? 'Eliminando...' : 'Eliminar Venta'}
+            </Button>
+          </div>
         </div>
       </DialogContent>
+
+      {/* Modals */}
+      {showBoleto && (
+        <SalesContractView 
+          open={showBoleto} 
+          onOpenChange={setShowBoleto} 
+          sale={currentSale} 
+          vehicle={vehicle} 
+          client={client} 
+          spouse={client?.spouse}
+        />
+      )}
+      {showRecibo && (
+        <DepositReceiptView 
+          open={showRecibo} 
+          onOpenChange={setShowRecibo} 
+          reservation={{ ...currentSale, reservation_date: currentSale.deposit_date, deposit_amount: currentSale.deposit_amount_ars }}
+          vehicle={vehicle}
+          client={client}
+        />
+      )}
+      {showEditDialog && (
+        <SaleFormDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          existingSale={currentSale}
+          vehicle={vehicle}
+          onSaleCreated={(sale) => {
+            // Actualizar la venta actual y refrescar queries
+            queryClient.invalidateQueries({ queryKey: ['sales'] });
+            queryClient.invalidateQueries({ queryKey: ['sale', currentSale.id] });
+            setShowEditDialog(false);
+          }}
+        />
+      )}
     </Dialog>
   );
 }

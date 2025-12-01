@@ -101,3 +101,36 @@ Una vez migrado:
 2. Actualiza las variables de entorno en producción
 3. Configura backups automáticos en Supabase
 
+---
+
+## 📦 Importar datos desde Base44 (CSV)
+
+Si exportaste datos de Base44, podés importarlos automáticamente:
+
+### 1. Preparar archivos CSV
+Todos los CSV deben estar en: `C:\Users\usuario\Downloads\`
+
+### 2. Obtener Service Role Key
+1. Ve a https://app.supabase.com
+2. **Settings** → **API**
+3. Copiá la **`service_role` key**
+
+### 3. Configurar Service Role Key
+Agregá en `.env.local`:
+```env
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
+```
+
+**⚠️ NO subas esta key a Git**
+
+### 4. Ejecutar importación
+```bash
+node scripts/import-csv-to-supabase.js
+```
+
+### 5. Crear usuarios en Auth
+Los sellers se importan a la tabla, pero debes crear los usuarios manualmente en **Authentication** → **Users**
+
+### 6. Re-subir archivos
+Las URLs de Base44 ya no funcionan. Debés re-subir fotos y documentos.
+

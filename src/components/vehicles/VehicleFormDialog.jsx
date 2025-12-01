@@ -139,31 +139,79 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
   const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+    
+    // Validar tamaño de archivos (máx 10MB por foto)
+    const maxSize = 10 * 1024 * 1024;
+    const invalidFiles = files.filter(f => f.size > maxSize);
+    if (invalidFiles.length > 0) {
+      alert(`Algunos archivos son muy grandes (máx 10MB): ${invalidFiles.map(f => f.name).join(', ')}`);
+      e.target.value = null;
+      return;
+    }
+    
     setUploadingPhotos(true);
-    const uploaded = await Promise.all(files.map(async (file) => {
-      try {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
-      } catch { return null; }
-    }));
-    handleChange('photos', [...(formData.photos || []), ...uploaded.filter(f => f)]);
-    setUploadingPhotos(false);
-    e.target.value = null;
+    try {
+      const uploaded = await Promise.all(files.map(async (file) => {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
+        } catch (error) {
+          console.error('Error subiendo foto:', file.name, error);
+          return null;
+        }
+      }));
+      
+      const successfulUploads = uploaded.filter(f => f);
+      if (successfulUploads.length > 0) {
+        handleChange('photos', [...(formData.photos || []), ...successfulUploads]);
+      }
+      
+      if (successfulUploads.length < files.length) {
+        alert(`${files.length - successfulUploads.length} foto(s) no se pudieron subir. Intenta nuevamente.`);
+      }
+    } finally {
+      setUploadingPhotos(false);
+      e.target.value = null;
+    }
   };
 
   const handleDocUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
+    
+    // Validar tamaño de archivos (máx 20MB por documento)
+    const maxSize = 20 * 1024 * 1024;
+    const invalidFiles = files.filter(f => f.size > maxSize);
+    if (invalidFiles.length > 0) {
+      alert(`Algunos archivos son muy grandes (máx 20MB): ${invalidFiles.map(f => f.name).join(', ')}`);
+      e.target.value = null;
+      return;
+    }
+    
     setUploadingDocs(true);
-    const uploaded = await Promise.all(files.map(async (file) => {
-      try {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
-      } catch { return null; }
-    }));
-    handleChange('documents', [...(formData.documents || []), ...uploaded.filter(f => f)]);
-    setUploadingDocs(false);
-    e.target.value = null;
+    try {
+      const uploaded = await Promise.all(files.map(async (file) => {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
+        } catch (error) {
+          console.error('Error subiendo documento:', file.name, error);
+          return null;
+        }
+      }));
+      
+      const successfulUploads = uploaded.filter(f => f);
+      if (successfulUploads.length > 0) {
+        handleChange('documents', [...(formData.documents || []), ...successfulUploads]);
+      }
+      
+      if (successfulUploads.length < files.length) {
+        alert(`${files.length - successfulUploads.length} documento(s) no se pudieron subir. Intenta nuevamente.`);
+      }
+    } finally {
+      setUploadingDocs(false);
+      e.target.value = null;
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -178,8 +226,15 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
         processedData[field] = parseFloat(processedData[field]) || 0;
       }
     });
+    
+    const finalData = { ...processedData, expenses };
+    console.log('📤 Enviando datos del vehículo:', finalData);
+    
     try {
-      await onSubmit({ ...processedData, expenses });
+      await onSubmit(finalData);
+      console.log('✅ Vehículo guardado correctamente');
+    } catch (error) {
+      console.error('❌ Error al guardar vehículo:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -224,6 +279,12 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
     <>
       <ConfirmDialog open={showConfirm} onOpenChange={setShowConfirm} onConfirm={() => onOpenChange(false)} />
       <Dialog open={open} onOpenChange={handleClose}>
+        {/* Loading Overlay */}
+        {(isLoading || uploadingPhotos || uploadingDocs || isSubmitting) && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600" />
+          </div>
+        )}
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
           <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
             <DialogTitle className="text-sm font-semibold">{vehicle?.id ? 'Editar' : 'Nuevo'} Vehículo</DialogTitle>

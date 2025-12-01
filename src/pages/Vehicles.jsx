@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,6 +44,9 @@ const formatPrice = (value, currency) => {
 };
 
 export default function Vehicles() {
+  const navigate = useNavigate();
+  const { vehicleId } = useParams();
+  
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -86,6 +90,30 @@ export default function Vehicles() {
     queryFn: () => base44.entities.Client.list(),
   });
 
+  // Sincronizar URL con selectedVehicle
+  useEffect(() => {
+    if (vehicleId && vehicles.length > 0) {
+      const vehicle = vehicles.find(v => v.id === vehicleId);
+      if (vehicle) {
+        setSelectedVehicle(vehicle);
+      } else {
+        // Si el ID no existe, volver a la lista
+        navigate('/vehicles', { replace: true });
+      }
+    } else if (!vehicleId) {
+      setSelectedVehicle(null);
+    }
+  }, [vehicleId, vehicles, navigate]);
+
+  // Función helper para seleccionar vehículo y actualizar URL
+  const selectVehicle = (vehicle) => {
+    if (vehicle) {
+      navigate(`/vehicles/${vehicle.id}`);
+    } else {
+      navigate('/vehicles');
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Vehicle.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['vehicles'] }); setEditingVehicle(null); },
@@ -93,13 +121,55 @@ export default function Vehicles() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Vehicle.update(id, data),
-    onSuccess: (_, variables) => { 
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] }); 
-      // Actualizar el vehículo seleccionado si es el mismo que se editó
-      if (selectedVehicle && selectedVehicle.id === variables.id) {
-        setSelectedVehicle(prev => ({ ...prev, ...variables.data }));
+    onMutate: async ({ id, data }) => {
+      // Cancelar TODAS las queries relacionadas
+      await queryClient.cancelQueries({ queryKey: ['vehicles'] });
+      await queryClient.cancelQueries({ queryKey: ['vehicle', id] });
+      
+      // Snapshots
+      const previousVehicles = queryClient.getQueryData(['vehicles']);
+      const previousVehicle = queryClient.getQueryData(['vehicle', id]);
+      const previousSelected = selectedVehicle;
+      
+      // Actualizar optimísticamente la lista
+      queryClient.setQueryData(['vehicles'], (old) =>
+        old?.map((v) => (v.id === id ? { ...v, ...data } : v))
+      );
+      
+      // Actualizar optimísticamente la query individual (la que usa VehicleView)
+      queryClient.setQueryData(['vehicle', id], (old) => {
+        if (!old) return old;
+        return { ...old, ...data };
+      });
+      
+      // Actualizar vehículo seleccionado INSTANTÁNEAMENTE
+      if (selectedVehicle && selectedVehicle.id === id) {
+        const updatedVehicle = { ...selectedVehicle, ...data };
+        setSelectedVehicle(updatedVehicle);
       }
+      
+      return { previousVehicles, previousVehicle, previousSelected };
+    },
+    onSuccess: () => { 
       setEditingVehicle(null); 
+      toast.success("Vehículo actualizado");
+      // Refrescar después de 1 segundo para sincronizar con servidor
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      }, 1000);
+    },
+    onError: (err, variables, context) => {
+      // Revertir TODOS los cambios en caso de error
+      if (context?.previousVehicles) {
+        queryClient.setQueryData(['vehicles'], context.previousVehicles);
+      }
+      if (context?.previousVehicle) {
+        queryClient.setQueryData(['vehicle', variables.id], context.previousVehicle);
+      }
+      if (context?.previousSelected) {
+        setSelectedVehicle(context.previousSelected);
+      }
+      toast.error("Error al actualizar el vehículo");
     },
   });
 
@@ -318,10 +388,21 @@ export default function Vehicles() {
     };
   };
 
+  // Si hay vehicleId en URL pero no hay vehículo seleccionado, mostrar spinner
+  if (vehicleId && !selectedVehicle) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600" />
+      </div>
+    );
+  }
+
   if (selectedClient) return <ClientDetail client={selectedClient} onClose={() => setSelectedClient(null)} onEdit={() => {}} />;
+  
+  // Si hay vehículo seleccionado, mostrar solo la vista de detalle
   if (selectedVehicle) return (
     <>
-      <VehicleView vehicle={selectedVehicle} onClose={() => setSelectedVehicle(null)} onEdit={(v) => { setEditingVehicle(v); }} onDelete={(id) => { deleteMutation.mutate(id); setSelectedVehicle(null); }} />
+      <VehicleView vehicle={selectedVehicle} onClose={() => selectVehicle(null)} onEdit={(v) => { setEditingVehicle(v); }} onDelete={(id) => { deleteMutation.mutate(id); selectVehicle(null); }} />
       <VehicleFormDialog 
         open={editingVehicle !== null} 
         onOpenChange={(open) => { if (!open) setEditingVehicle(null); }} 
@@ -461,7 +542,7 @@ export default function Vehicles() {
                         const isCons = v.ownership === 'CONSIGNACIÓN';
                         const StatusIcon = STATUS_CONFIG[v.status]?.icon || CheckCircle;
                         return (
-                          <tr key={v.id} className={`border-b hover:bg-gray-50 cursor-pointer ${selectedVehicles.includes(v.id) ? 'bg-cyan-50' : v.status === 'VENDIDO' ? 'bg-yellow-50' : ''}`} onClick={() => selectionMode ? toggleSelectVehicle(v.id, { stopPropagation: () => {} }) : setSelectedVehicle(v)}>
+                          <tr key={v.id} className={`border-b hover:bg-gray-50 cursor-pointer ${selectedVehicles.includes(v.id) ? 'bg-cyan-50' : v.status === 'VENDIDO' ? 'bg-yellow-50' : ''}`} onClick={() => selectionMode ? toggleSelectVehicle(v.id, { stopPropagation: () => {} }) : selectVehicle(v)}>
                             {selectionMode && (
                               <td className="px-2 py-2" onClick={(e) => toggleSelectVehicle(v.id, e)}>
                                 <Checkbox 
@@ -531,7 +612,7 @@ export default function Vehicles() {
                                 </td>
                             <td className="px-1 py-2" onClick={(e) => e.stopPropagation()}>
                               <div className="flex gap-0.5">
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedVehicle(v)}><Eye className="w-3 h-3" /></Button>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => selectVehicle(v)}><Eye className="w-3 h-3" /></Button>
                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingVehicle(v)}><Edit className="w-3 h-3" /></Button>
                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleDelete(v.id, e)}><Trash2 className="w-3 h-3 text-red-500" /></Button>
                               </div>
@@ -545,7 +626,7 @@ export default function Vehicles() {
               ) : (
                 <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 p-2">
                   {paginatedVehicles.map((v) => (
-                    <Card key={v.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedVehicle(v)}>
+                    <Card key={v.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => selectVehicle(v)}>
                       <div className="h-20 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative">
                         <Car className="w-8 h-8 text-gray-400" />
                         <Badge className={`absolute top-1 right-1 text-[8px] px-1 py-0 ${STATUS_CONFIG[v.status]?.bg}`}>{v.status}</Badge>

@@ -118,19 +118,25 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
         financing: { amount: reservation.financing_amount || '', currency: 'ARS', exchange_rate: rate, bank: reservation.financing_bank || '', installments: reservation.financing_installments || '', installment_value: reservation.financing_installment_value || '' }
       });
     } else if (prefillData) {
-      setSelectedClientId(prefillData.client_id || '');
+      const clientIdFromPrefill = prefillData.client_id || '';
+      setSelectedClientId(clientIdFromPrefill);
+      setShowNewClientForm(false); // NO mostrar form de nuevo cliente si viene con client_id
       setIncludeTradeIn(!!prefillData.trade_in?.brand);
       setIncludeFinancing(!!prefillData.financing_amount_ars);
       setFormData({
         ...getInitialFormData(rate),
+        client_id: clientIdFromPrefill,
         client_name: prefillData.client_name || '',
+        client_phone: prefillData.client_phone || '',
         sale_price: prefillData.sale_price_ars || getInitialFormData(rate).sale_price,
         trade_ins: prefillData.trade_in?.brand ? [{ ...prefillData.trade_in, value: prefillData.trade_in.value_ars, currency: 'ARS', exchange_rate: rate }] : [],
         financing: { amount: prefillData.financing_amount_ars || '', currency: 'ARS', exchange_rate: rate, bank: prefillData.financing_bank || '', installments: prefillData.financing_installments || '', installment_value: prefillData.financing_installment_value || '' }
       });
+      console.log('📋 SaleForm prefillData - client_id:', clientIdFromPrefill, 'client_name:', prefillData.client_name);
     } else {
       setFormData(getInitialFormData(rate));
       setSelectedClientId('');
+      setShowNewClientForm(false);
       setIncludeDeposit(false);
       setIncludeCashPayment(false);
       setIncludeTradeIn(false);
@@ -138,14 +144,26 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
     }
     setEditingClientData({});
     setEditingVehicleData({});
+    setNewClientData({ full_name: '', phone: '', dni: '', cuit_cuil: '', email: '', birth_date: '', address: '', city: '', province: '', postal_code: '', marital_status: '', observations: '' });
     setHasChanges(false);
   }, [reservation, prefillData, vehicle, open, existingSale, currentBlueRate]);
 
   const createSaleMutation = useMutation({
     mutationFn: async (data) => {
-      let clientId = data.client_id;
-      // Create new client if form was filled
-      if (showNewClientForm && newClientData.full_name && newClientData.phone) {
+      let clientId = data.client_id || selectedClientId;
+      
+      // Si viene de un lead con client_id (prospecto), actualizar ese prospecto a "Cliente"
+      if (clientId && !showNewClientForm) {
+        console.log('✅ Actualizando cliente/prospecto existente:', clientId);
+        await base44.entities.Client.update(clientId, { 
+          client_status: 'Cliente',
+          ...editingClientData 
+        });
+        data.client_id = clientId;
+      }
+      // Crear nuevo cliente solo si el formulario de nuevo cliente está visible Y no hay client_id previo
+      else if (showNewClientForm && newClientData.full_name && newClientData.phone && !clientId) {
+        console.log('✅ Creando nuevo cliente:', newClientData.full_name);
         const newClient = await base44.entities.Client.create({
           ...newClientData,
           client_status: 'Cliente'
@@ -154,10 +172,15 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
         data.client_id = clientId;
         data.client_name = newClientData.full_name;
       }
-      
-      // Update existing client with missing data
-      if (selectedClientId && Object.keys(editingClientData).length > 0) {
-        await base44.entities.Client.update(selectedClientId, editingClientData);
+      // Actualizar cliente existente con datos faltantes
+      else if (selectedClientId && Object.keys(editingClientData).length > 0) {
+        console.log('✅ Actualizando cliente existente con datos faltantes:', selectedClientId);
+        await base44.entities.Client.update(selectedClientId, {
+          client_status: 'Cliente',
+          ...editingClientData
+        });
+        clientId = selectedClientId;
+        data.client_id = clientId;
       }
       
       // Update vehicle with missing data
@@ -182,12 +205,34 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       queryClient.invalidateQueries({ queryKey: ['vehicle-sales'] });
       queryClient.invalidateQueries({ queryKey: ['vehicle', vehicle?.id] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      setCreatedSale({ ...sale, id: sale.id || existingSale?.id });
-      setShowContract(true);
+      
+      const saleWithId = { ...sale, id: sale.id || existingSale?.id };
+      setCreatedSale(saleWithId);
+      
+      // Validar si hay datos suficientes para el boleto
+      const clientHasData = selectedClient && selectedClient.dni && selectedClient.address && selectedClient.city;
+      const vehicleHasData = vehicle && vehicle.brand && vehicle.model && vehicle.year && vehicle.plate && vehicle.engine && vehicle.chassis;
+      
+      if (!clientHasData || !vehicleHasData) {
+        // Faltan datos: mostrar advertencia y NO abrir boleto
+        const missingData = [];
+        if (!clientHasData) missingData.push('datos del cliente (DNI, dirección, ciudad)');
+        if (!vehicleHasData) missingData.push('datos del vehículo (motor, chasis)');
+        
+        toast.warning(`Venta creada, pero faltan ${missingData.join(' y ')} para generar el boleto de compraventa.`);
+        // Cerrar el formulario sin mostrar el boleto
+        onOpenChange(false);
+        // Si hay un callback onSaleCreated, llamarlo con el sale para que abra el SaleDetail
+        if (onSaleCreated) onSaleCreated(saleWithId);
+      } else {
+        // Todos los datos están completos: mostrar boleto
+        setShowContract(true);
+        toast.success(existingSale ? "Venta actualizada" : "Venta creada");
+        if (onSaleCreated) onSaleCreated(saleWithId);
+      }
+      
       setShowNewClientForm(false);
       setNewClientData({ full_name: '', phone: '', dni: '', cuit_cuil: '', email: '', birth_date: '', address: '', city: '', province: '', postal_code: '', marital_status: '', observations: '' });
-      toast.success(existingSale ? "Venta actualizada" : "Venta creada");
-      if (onSaleCreated) onSaleCreated(sale);
     },
   });
 
