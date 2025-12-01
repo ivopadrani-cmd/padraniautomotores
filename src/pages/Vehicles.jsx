@@ -13,7 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import VehicleView from "../components/vehicles/VehicleView";
 import VehicleFormDialog from "../components/vehicles/VehicleFormDialog";
-import PriceEditDialog from "../components/vehicles/PriceEditDialog";
+import CostPriceDialog from "../components/vehicles/CostPriceDialog";
+import InfoAutoPriceDialog from "../components/vehicles/InfoAutoPriceDialog";
+import TargetPriceDialog from "../components/vehicles/TargetPriceDialog";
+import PublicPriceDialog from "../components/vehicles/PublicPriceDialog";
 import ClientDetail from "../components/clients/ClientDetail";
 import SaleFormDialog from "../components/sales/SaleFormDialog";
 import ReservationForm from "../components/reservations/ReservationForm";
@@ -66,8 +69,11 @@ export default function Vehicles() {
   const [showInspectionDialog, setShowInspectionDialog] = useState(false);
   const [actionVehicle, setActionVehicle] = useState(null);
 
-  // Price edit dialog from list
-  const [showPriceEditDialog, setShowPriceEditDialog] = useState(false);
+  // Price edit dialogs from list
+  const [showCostDialog, setShowCostDialog] = useState(false);
+  const [showInfoAutoDialog, setShowInfoAutoDialog] = useState(false);
+  const [showTargetDialog, setShowTargetDialog] = useState(false);
+  const [showPublicDialog, setShowPublicDialog] = useState(false);
   const [priceEditVehicle, setPriceEditVehicle] = useState(null);
 
   // Reset to list when clicking module in sidebar
@@ -231,15 +237,51 @@ export default function Vehicles() {
     toast.success(`${selectedVehicles.length} vehículo(s) eliminado(s)`);
   };
 
-  const handlePriceEdit = (vehicle) => {
+  const handleCostEdit = (vehicle) => {
     setPriceEditVehicle(vehicle);
-    setShowPriceEditDialog(true);
+    setShowCostDialog(true);
   };
 
-  const handlePriceSubmit = async (priceData) => {
+  const handleInfoAutoEdit = (vehicle) => {
+    setPriceEditVehicle(vehicle);
+    setShowInfoAutoDialog(true);
+  };
+
+  const handleTargetEdit = (vehicle) => {
+    setPriceEditVehicle(vehicle);
+    setShowTargetDialog(true);
+  };
+
+  const handlePublicEdit = (vehicle) => {
+    setPriceEditVehicle(vehicle);
+    setShowPublicDialog(true);
+  };
+
+  const handleCostSubmit = async (priceData) => {
     if (!priceEditVehicle) return;
     await updateMutation.mutateAsync({ id: priceEditVehicle.id, data: priceData });
-    setShowPriceEditDialog(false);
+    setShowCostDialog(false);
+    setPriceEditVehicle(null);
+  };
+
+  const handleInfoAutoSubmit = async (priceData) => {
+    if (!priceEditVehicle) return;
+    await updateMutation.mutateAsync({ id: priceEditVehicle.id, data: priceData });
+    setShowInfoAutoDialog(false);
+    setPriceEditVehicle(null);
+  };
+
+  const handleTargetSubmit = async (priceData) => {
+    if (!priceEditVehicle) return;
+    await updateMutation.mutateAsync({ id: priceEditVehicle.id, data: priceData });
+    setShowTargetDialog(false);
+    setPriceEditVehicle(null);
+  };
+
+  const handlePublicSubmit = async (priceData) => {
+    if (!priceEditVehicle) return;
+    await updateMutation.mutateAsync({ id: priceEditVehicle.id, data: priceData });
+    setShowPublicDialog(false);
     setPriceEditVehicle(null);
   };
 
@@ -600,16 +642,16 @@ export default function Vehicles() {
                             <td className="px-2 py-2 font-mono uppercase">{v.plate || '-'}</td>
                             <td className="px-2 py-2">{v.kilometers?.toLocaleString('es-AR') || '-'}</td>
                             <td className="px-2 py-2 uppercase">{v.color || '-'}</td>
-                            <td className="px-2 py-3 w-28">
+                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handleCostEdit(v); }}>
                               {(() => { const p = getPriceDisplay(v, 'cost'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
                             </td>
-                            <td className="px-2 py-3 w-28">
+                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handleInfoAutoEdit(v); }}>
                               {(() => { const p = getPriceDisplay(v, 'infoauto'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
                             </td>
-                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handlePriceEdit(v); }}>
+                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handleTargetEdit(v); }}>
                               {(() => { const p = getPriceDisplay(v, 'target'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
                             </td>
-                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handlePriceEdit(v); }}>
+                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handlePublicEdit(v); }}>
                               {(() => { const p = getPriceDisplay(v, 'public'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
                             </td>
                             <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
@@ -735,12 +777,33 @@ export default function Vehicles() {
               vehicle={actionVehicle}
             />
 
-            {/* Price Edit Dialog from list */}
-            <PriceEditDialog
-              open={showPriceEditDialog}
-              onOpenChange={(o) => { setShowPriceEditDialog(o); if (!o) setPriceEditVehicle(null); }}
+            {/* Price Edit Dialogs from list */}
+            <CostPriceDialog
+              open={showCostDialog}
+              onOpenChange={(o) => { setShowCostDialog(o); if (!o) setPriceEditVehicle(null); }}
               vehicle={priceEditVehicle}
-              onSubmit={handlePriceSubmit}
+              onSubmit={handleCostSubmit}
+              isLoading={updateMutation.isPending}
+            />
+            <InfoAutoPriceDialog
+              open={showInfoAutoDialog}
+              onOpenChange={(o) => { setShowInfoAutoDialog(o); if (!o) setPriceEditVehicle(null); }}
+              vehicle={priceEditVehicle}
+              onSubmit={handleInfoAutoSubmit}
+              isLoading={updateMutation.isPending}
+            />
+            <TargetPriceDialog
+              open={showTargetDialog}
+              onOpenChange={(o) => { setShowTargetDialog(o); if (!o) setPriceEditVehicle(null); }}
+              vehicle={priceEditVehicle}
+              onSubmit={handleTargetSubmit}
+              isLoading={updateMutation.isPending}
+            />
+            <PublicPriceDialog
+              open={showPublicDialog}
+              onOpenChange={(o) => { setShowPublicDialog(o); if (!o) setPriceEditVehicle(null); }}
+              vehicle={priceEditVehicle}
+              onSubmit={handlePublicSubmit}
               isLoading={updateMutation.isPending}
             />
             </div>

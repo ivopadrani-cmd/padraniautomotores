@@ -28,7 +28,10 @@ import InspectionForm from "./InspectionForm";
 import InspectionView from "./InspectionView";
 import RequestInspectionDialog from "./RequestInspectionDialog";
 import InspectionApprovalDialog from "./InspectionApprovalDialog";
-import PriceEditDialog from "./PriceEditDialog";
+import CostPriceDialog from "./CostPriceDialog";
+import InfoAutoPriceDialog from "./InfoAutoPriceDialog";
+import TargetPriceDialog from "./TargetPriceDialog";
+import PublicPriceDialog from "./PublicPriceDialog";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -101,8 +104,11 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
     const [editingDocument, setEditingDocument] = useState(null);
     const [editingDocumentIndex, setEditingDocumentIndex] = useState(null);
 
-    // Price edit state
-    const [showPriceEditDialog, setShowPriceEditDialog] = useState(false);
+    // Price edit states
+    const [showCostDialog, setShowCostDialog] = useState(false);
+    const [showInfoAutoDialog, setShowInfoAutoDialog] = useState(false);
+    const [showTargetDialog, setShowTargetDialog] = useState(false);
+    const [showPublicDialog, setShowPublicDialog] = useState(false);
 
     // Inspection state
     const [showInspectionForm, setShowInspectionForm] = useState(false);
@@ -226,18 +232,63 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
     },
   });
 
-  const updatePriceMutation = useMutation({
+  const updateCostMutation = useMutation({
     mutationFn: async (priceData) => {
       await base44.entities.Vehicle.update(updatedVehicle.id, priceData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicle', updatedVehicle.id] });
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      setShowPriceEditDialog(false);
-      toast.success("Precios actualizados");
+      setShowCostDialog(false);
+      toast.success("Costo y gastos actualizados");
     },
     onError: (error) => {
-      toast.error("Error al actualizar precios: " + error.message);
+      toast.error("Error al actualizar costo: " + error.message);
+    }
+  });
+
+  const updateInfoAutoMutation = useMutation({
+    mutationFn: async (priceData) => {
+      await base44.entities.Vehicle.update(updatedVehicle.id, priceData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle', updatedVehicle.id] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      setShowInfoAutoDialog(false);
+      toast.success("Precio InfoAuto actualizado");
+    },
+    onError: (error) => {
+      toast.error("Error al actualizar precio InfoAuto: " + error.message);
+    }
+  });
+
+  const updateTargetMutation = useMutation({
+    mutationFn: async (priceData) => {
+      await base44.entities.Vehicle.update(updatedVehicle.id, priceData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle', updatedVehicle.id] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      setShowTargetDialog(false);
+      toast.success("Precio Objetivo actualizado");
+    },
+    onError: (error) => {
+      toast.error("Error al actualizar precio objetivo: " + error.message);
+    }
+  });
+
+  const updatePublicMutation = useMutation({
+    mutationFn: async (priceData) => {
+      await base44.entities.Vehicle.update(updatedVehicle.id, priceData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicle', updatedVehicle.id] });
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      setShowPublicDialog(false);
+      toast.success("Precio Público actualizado");
+    },
+    onError: (error) => {
+      toast.error("Error al actualizar precio público: " + error.message);
     }
   });
 
@@ -515,6 +566,36 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Price Edit Dialogs */}
+        <CostPriceDialog
+          open={showCostDialog}
+          onOpenChange={setShowCostDialog}
+          vehicle={updatedVehicle}
+          onSubmit={updateCostMutation.mutate}
+          isLoading={updateCostMutation.isPending}
+        />
+        <InfoAutoPriceDialog
+          open={showInfoAutoDialog}
+          onOpenChange={setShowInfoAutoDialog}
+          vehicle={updatedVehicle}
+          onSubmit={updateInfoAutoMutation.mutate}
+          isLoading={updateInfoAutoMutation.isPending}
+        />
+        <TargetPriceDialog
+          open={showTargetDialog}
+          onOpenChange={setShowTargetDialog}
+          vehicle={updatedVehicle}
+          onSubmit={updateTargetMutation.mutate}
+          isLoading={updateTargetMutation.isPending}
+        />
+        <PublicPriceDialog
+          open={showPublicDialog}
+          onOpenChange={setShowPublicDialog}
+          vehicle={updatedVehicle}
+          onSubmit={updatePublicMutation.mutate}
+          isLoading={updatePublicMutation.isPending}
+        />
 
         {/* Main Info */}
         <Card className="shadow-sm">
@@ -864,22 +945,22 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
               return (
                 <>
                   <div className="grid grid-cols-4 gap-3 text-[11px]">
-                    <div className="p-3 bg-gray-100 rounded">
+                    <div className="p-3 bg-gray-100 rounded cursor-pointer hover:bg-gray-200 transition-colors" onClick={() => setShowCostDialog(true)}>
                       <p className="text-gray-500">Costo Total</p>
                       <p className="font-bold text-base">{formatValDual(totalCostArsCalc).ars}</p>
                       {totalCostArsCalc > 0 && <p className="text-[11px] font-semibold text-cyan-500">U$D {totalCostUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>}
                     </div>
-                    <div className="p-3 bg-gray-50 rounded">
+                    <div className="p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setShowInfoAutoDialog(true)}>
                       <p className="text-gray-500">InfoAuto</p>
                       <p className="font-bold text-base">{formatValDual(infoautoArs).ars}</p>
                       {infoautoArs > 0 && <p className="text-[11px] font-semibold text-cyan-500">{formatValDual(infoautoArs).usd}</p>}
                     </div>
-                    <div className="p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setShowPriceEditDialog(true)}>
+                    <div className="p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setShowTargetDialog(true)}>
                       <p className="text-gray-500">Objetivo</p>
                       <p className="font-bold text-base">{formatValDual(targetArs).ars}</p>
                       {targetArs > 0 && <p className="text-[11px] font-semibold text-cyan-500">{formatValDual(targetArs).usd}</p>}
                     </div>
-                    <div className="p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setShowPriceEditDialog(true)}>
+                    <div className="p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => setShowPublicDialog(true)}>
                       <p className="text-gray-500">Público</p>
                       <p className="font-bold text-base">{formatValDual(publicArs).ars}</p>
                       {publicArs > 0 && <p className="text-[11px] font-semibold text-cyan-500">{formatValDual(publicArs).usd}</p>}
