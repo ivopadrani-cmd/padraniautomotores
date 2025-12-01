@@ -5,6 +5,7 @@ import { createPageUrl } from "@/utils";
 import { LayoutDashboard, Car, Users, ClipboardList, Building2, RefreshCw, User, ChevronDown, Settings, LogOut, HelpCircle, Bell, FileText, Calculator, Wrench } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import LoginScreen from "@/components/auth/LoginScreen";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarProvider, SidebarTrigger,
@@ -197,6 +198,16 @@ export default function Layout({ children }) {
     base44.auth.logout();
   };
 
+  const handleLogin = async (user) => {
+    console.log('Usuario logueado:', user);
+    // Actualizar el estado local
+    setCurrentUser(user);
+    setUserRole(user.role);
+
+    // Forzar recarga de la página para reinicializar todo
+    window.location.reload();
+  };
+
   // Mostrar spinner mientras se inicializa
   if (isInitializing) {
     return (
@@ -363,16 +374,7 @@ export default function Layout({ children }) {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
               </div>
             ) : userRole === '__none__' ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center p-8">
-                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <User className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h2 className="text-lg font-semibold text-gray-700 mb-2">Sin acceso</h2>
-                  <p className="text-sm text-gray-500 mb-4">No tenés permisos para acceder a esta sección.<br/>Contactá al administrador.</p>
-                  <button onClick={handleLogout} className="text-sm text-cyan-600 hover:underline">Cerrar sesión</button>
-                </div>
-              </div>
+              <LoginScreen onLogin={handleLogin} />
             ) : (() => {
               // Verificar si la página actual está permitida para este rol
               const allowedPages = getAllowedPages(userRole);
