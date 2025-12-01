@@ -612,7 +612,6 @@ export default function Vehicles() {
                                 </td>
                             <td className="px-1 py-2" onClick={(e) => e.stopPropagation()}>
                               <div className="flex gap-0.5">
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => selectVehicle(v)}><Eye className="w-3 h-3" /></Button>
                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingVehicle(v)}><Edit className="w-3 h-3" /></Button>
                                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleDelete(v.id, e)}><Trash2 className="w-3 h-3 text-red-500" /></Button>
                               </div>

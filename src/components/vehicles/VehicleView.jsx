@@ -757,8 +757,8 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                     <Button size="sm" variant="outline" className={`h-8 text-[11px] bg-transparent ${isEntregado ? 'border-red-400' : 'border-gray-600'} text-white hover:bg-gray-800`} onClick={() => setShowContractView(activeSale)}>
                       Ver Boleto
                     </Button>
-                    <Button size="sm" variant="outline" className={`h-8 text-[11px] bg-transparent ${isEntregado ? 'border-red-400' : 'border-gray-600'} text-white hover:bg-gray-800`} onClick={() => { setEditingSale(activeSale); setShowSaleForm(true); }}>
-                      Editar
+                    <Button size="sm" variant="outline" className={`h-8 text-[11px] bg-transparent ${isEntregado ? 'border-red-400' : 'border-gray-600'} text-white hover:bg-gray-800`} onClick={() => setShowSaleDetail(activeSale)}>
+                      Ver venta
                     </Button>
                     {!isEntregado && (
                       <>

@@ -433,7 +433,6 @@ export default function Tasks() {
                           </div>
                         </div>
                         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedTask(task)}><Eye className="w-3 h-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEdit(task)}><Edit className="w-3 h-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { if (window.confirm('¿Eliminar?')) deleteMutation.mutate(task.id); }}><Trash2 className="w-3 h-3 text-red-500" /></Button>
                         </div>
@@ -481,7 +480,6 @@ export default function Tasks() {
                         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           <Badge className={`text-[9px] ${TASK_TYPE_CONFIG[task.task_type]?.bg || 'bg-gray-200 text-gray-700'}`}><span className="mr-1">{TASK_TYPE_CONFIG[task.task_type]?.icon}</span>{task.task_type}</Badge>
                           <Badge className={`text-[9px] ${STATUS_CONFIG[task.status]?.bg}`}><span className="mr-1">{STATUS_CONFIG[task.status]?.icon}</span>{task.status}</Badge>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedTask(task)}><Eye className="w-3.5 h-3.5" /></Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(task)}><Edit className="w-3.5 h-3.5" /></Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { if (window.confirm('¿Eliminar?')) deleteMutation.mutate(task.id); }}><Trash2 className="w-3.5 h-3.5 text-red-500" /></Button>
                         </div>
