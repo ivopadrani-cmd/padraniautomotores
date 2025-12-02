@@ -366,6 +366,9 @@ export default function CRM() {
   // Cliente ahora se maneja con navegación a /clients/:clientId
   if (selectedLead && !showLeadForm && !editingLead) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} />;
 
+  // Mostrar LeadDetail de fondo cuando está abierto el modal de edición
+  if (selectedLead && showLeadForm) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} />;
+
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
       <div className="max-w-6xl mx-auto space-y-3">

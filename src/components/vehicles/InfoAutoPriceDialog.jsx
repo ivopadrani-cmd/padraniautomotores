@@ -119,12 +119,14 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
     console.log('📤 Datos procesados para guardar:', processedData);
 
     try {
-      await onSubmit(processedData);
-      console.log('✅ InfoAuto guardado exitosamente');
+      console.log('🚀 Enviando datos a onSubmit:', processedData);
+      const result = await onSubmit(processedData);
+      console.log('✅ InfoAuto guardado exitosamente, resultado:', result);
       onOpenChange(false);
       toast.success("Precio InfoAuto actualizado correctamente");
     } catch (error) {
       console.error('❌ Error guardando InfoAuto:', error);
+      console.error('❌ Detalles del error:', error);
       toast.error("Error al actualizar precio InfoAuto: " + error.message);
     }
   };
