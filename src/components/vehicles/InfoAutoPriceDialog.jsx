@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSubmit, isLoading }) {
@@ -14,20 +14,60 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
     infoauto_exchange_rate: ''
   });
   const [hasChanges, setHasChanges] = useState(false);
+  const [currentBlueRate, setCurrentBlueRate] = useState(1200);
+  const [isLoadingRate, setIsLoadingRate] = useState(false);
+
+  // Función para obtener cotización BLUE actual
+  const fetchCurrentBlueRate = async () => {
+    setIsLoadingRate(true);
+    try {
+      const response = await fetch('https://dolarapi.com/v1/dolares/blue');
+      const data = await response.json();
+      const rate = data.venta;
+      setCurrentBlueRate(rate);
+      return rate;
+    } catch (error) {
+      console.error('Error fetching blue rate:', error);
+      toast.error('Error al obtener cotización actual');
+      return currentBlueRate;
+    } finally {
+      setIsLoadingRate(false);
+    }
+  };
+
+  // Calcular conversión automática (InfoAuto siempre se pacta en ARS)
+  const calculateConversion = (value, exchangeRate) => {
+    if (!value || !exchangeRate) return null;
+    return value / exchangeRate; // ARS a USD
+  };
 
   useEffect(() => {
     if (open && vehicle) {
       setFormData({
         infoauto_value: vehicle.infoauto_value || '',
-        infoauto_currency: vehicle.infoauto_currency || 'ARS',
+        infoauto_currency: vehicle.infoauto_currency || 'ARS', // Siempre ARS
         infoauto_exchange_rate: vehicle.infoauto_exchange_rate || ''
       });
       setHasChanges(false);
+
+      // Obtener cotización actual al abrir el diálogo
+      fetchCurrentBlueRate();
     }
   }, [open, vehicle]);
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+
+      // InfoAuto siempre se pacta en ARS
+      if (field === 'infoauto_currency' && value !== 'ARS') {
+        // Si intentan cambiar la moneda, mantener ARS
+        newData.infoauto_currency = 'ARS';
+        toast.info('El precio InfoAuto siempre se pacta en pesos (ARS)');
+      }
+
+      return newData;
+    });
     setHasChanges(true);
   };
 
@@ -73,38 +113,71 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-4 bg-gray-100 rounded">
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label className="text-[11px] text-gray-600">Moneda</Label>
-                <Select value={formData.infoauto_currency} onValueChange={(v) => handleChange('infoauto_currency', v)}>
-                  <SelectTrigger className="h-9 text-[12px] bg-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ARS" className="text-[12px]">ARS</SelectItem>
-                    <SelectItem value="USD" className="text-[12px]">USD</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-semibold text-gray-700">PRECIO INFOAUTO</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[10px] text-blue-600 hover:bg-blue-50"
+                onClick={fetchCurrentBlueRate}
+                disabled={isLoadingRate}
+              >
+                <RefreshCw className={`w-3 h-3 mr-1 ${isLoadingRate ? 'animate-spin' : ''}`} />
+                Actualizar Cotización
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {/* Fila principal */}
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-[11px] text-gray-600">Moneda</Label>
+                  <div className="h-9 bg-gray-200 rounded px-3 flex items-center text-[12px] font-semibold text-gray-700">
+                    ARS
+                  </div>
+                  <p className="text-[9px] text-gray-500 mt-1">Siempre en pesos</p>
+                </div>
+                <div>
+                  <Label className="text-[11px] text-gray-600">Cotización USD Histórica</Label>
+                  <div className="flex gap-1">
+                    <Input
+                      className="h-9 text-[12px] bg-white flex-1"
+                      type="text"
+                      inputMode="decimal"
+                      value={formData.infoauto_exchange_rate}
+                      onChange={(e) => handleChange('infoauto_exchange_rate', e.target.value)}
+                      placeholder={currentBlueRate.toString()}
+                    />
+                    <span className="text-[10px] text-gray-500 self-center">ACTUAL: ${currentBlueRate.toLocaleString('es-AR')}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[11px] text-gray-600">Valor (ARS)</Label>
+                  <Input
+                    className="h-9 text-[13px] font-semibold bg-white"
+                    type="text"
+                    inputMode="decimal"
+                    value={formData.infoauto_value}
+                    onChange={(e) => handleChange('infoauto_value', e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-gray-600">Equivalente (USD)</Label>
+                  <div className="h-9 bg-gray-200 rounded px-3 flex items-center text-[13px] font-semibold text-gray-700">
+                    {formData.infoauto_value && formData.infoauto_exchange_rate ?
+                      `U$D ${calculateConversion(parseFloat(formData.infoauto_value), parseFloat(formData.infoauto_exchange_rate))?.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                      : '-'
+                    }
+                  </div>
+                </div>
               </div>
-              <div>
-                <Label className="text-[11px] text-gray-600">Cotización USD</Label>
-                <Input
-                  className="h-9 text-[12px] bg-white"
-                  type="text"
-                  inputMode="decimal"
-                  value={formData.infoauto_exchange_rate}
-                  onChange={(e) => handleChange('infoauto_exchange_rate', e.target.value)}
-                  placeholder="1200"
-                />
-              </div>
-              <div>
-                <Label className="text-[11px] text-gray-600">Valor</Label>
-                <Input
-                  className="h-9 text-[13px] font-semibold bg-white"
-                  type="text"
-                  inputMode="decimal"
-                  value={formData.infoauto_value}
-                  onChange={(e) => handleChange('infoauto_value', e.target.value)}
-                  placeholder="0"
-                />
+
+              {/* Información adicional */}
+              <div className="text-[10px] text-gray-600 bg-orange-50 p-2 rounded">
+                <strong>Precio InfoAuto:</strong> Siempre pactado en pesos (ARS) con cotización histórica del momento de actualización.
+                Muestra cuánto valía en dólares cuando se actualizó el precio.
               </div>
             </div>
           </div>

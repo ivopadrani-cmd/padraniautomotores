@@ -305,18 +305,24 @@ export default function Vehicles() {
     const printVehicles = filteredVehicles.filter(v => v.status !== 'VENDIDO');
 
     const rows = printVehicles.map(v => {
-      const tomaArs = convertValue(v.cost_value, v.cost_currency, v.cost_exchange_rate, 'ARS');
-      const gastosArs = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate, 'ARS'), 0);
-      const costoTotal = tomaArs + gastosArs;
-      const infoautoArs = convertValue(v.infoauto_value, v.infoauto_currency, v.infoauto_exchange_rate, 'ARS');
-      const targetArs = convertValue(v.target_price_value, v.target_price_currency, v.target_price_exchange_rate, 'ARS');
-      const publicArs = convertValue(v.public_price_value, v.public_price_currency, v.public_price_exchange_rate, 'ARS');
+      // Usar currentBlueRate como fallback cuando no hay cotización específica
+      const costRate = v.cost_exchange_rate || currentBlueRate;
+      const infoautoRate = v.infoauto_exchange_rate || currentBlueRate;
+      const targetRate = v.target_price_exchange_rate || currentBlueRate;
+      const publicRate = v.public_price_exchange_rate || currentBlueRate;
 
-      // Calcular valores en USD
-      const costoUsd = costoTotal / currentBlueRate;
-      const infoautoUsd = infoautoArs / currentBlueRate;
-      const targetUsd = targetArs / currentBlueRate;
-      const publicUsd = publicArs / currentBlueRate;
+      const tomaArs = convertValue(v.cost_value, v.cost_currency, costRate, 'ARS');
+      const gastosArs = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate || currentBlueRate, 'ARS'), 0);
+      const costoTotal = tomaArs + gastosArs;
+      const infoautoArs = convertValue(v.infoauto_value, v.infoauto_currency, infoautoRate, 'ARS');
+      const targetArs = convertValue(v.target_price_value, v.target_price_currency, targetRate, 'ARS');
+      const publicArs = convertValue(v.public_price_value, v.public_price_currency, publicRate, 'ARS');
+
+      // Calcular valores en USD usando currentBlueRate para consistencia
+      const costoUsd = costoTotal ? costoTotal / currentBlueRate : null;
+      const infoautoUsd = infoautoArs ? infoautoArs / currentBlueRate : null;
+      const targetUsd = targetArs ? targetArs / currentBlueRate : null;
+      const publicUsd = publicArs ? publicArs / currentBlueRate : null;
 
       const isCons = v.ownership === 'CONSIGNACIÓN' || v.is_consignment;
       return '<tr>' +

@@ -173,6 +173,57 @@ Plantillas de contratos
 
 Cotizaciones internas del dólar
 
+#### Sistema de Precios y Cotizaciones
+
+El sistema maneja un complejo sistema de precios y cotizaciones diseñado específicamente para el contexto argentino de alta inflación y devaluación constante. Cada tipo de precio tiene una lógica específica de conversión y actualización.
+
+##### 1. Cotización USD (Dólar Blue)
+- **Propósito**: Establecer la tasa de cambio base para todas las conversiones
+- **Autocompletado**: Se carga automáticamente con el valor BLUE actual desde APIs externas
+- **Editabilidad**: Puede modificarse manualmente si es necesario
+- **Uso**: Sirve como base para todas las conversiones entre ARS y USD en el sistema
+- **Actualización**: Se actualiza periódicamente (cada 3 horas) desde APIs de cotización
+
+##### 2. Valor de Toma
+- **Propósito**: Costo base de adquisición del vehículo
+- **Moneda principal**: Generalmente pactado en USD para mantener estabilidad
+- **Lógica de conversión**:
+  - Si está pactado en USD: el valor en USD queda fijo, el valor en ARS se actualiza con la cotización actual
+  - Si está pactado en ARS: el valor en ARS queda fijo, el valor en USD se calcula con la cotización actual
+- **Función de negocio**: Permite detectar cuando la devaluación hace que el costo en ARS supere los márgenes esperados
+
+##### 3. Valor InfoAuto
+- **Propósito**: Referencia de mercado para comparación de precios
+- **Moneda**: Siempre pactado en ARS (pesos argentinos)
+- **Cotización histórica**: Se registra la cotización USD del momento de la actualización del precio
+- **Lógica**: Valor en ARS ÷ Cotización histórica = Valor en USD al momento de la actualización
+- **Función de negocio**: Permite ver cuánto valía en dólares al momento de actualizarse el precio, útil para detectar devaluación
+
+##### 4. Precio Objetivo
+- **Propósito**: Precio mínimo de venta esperado
+- **Moneda principal**: Generalmente pactado en USD
+- **Lógica de conversión**:
+  - Si está pactado en USD: valor USD fijo, valor ARS actualizado con cotización actual
+  - Si está pactado en ARS: valor ARS fijo, valor USD calculado con cotización actual
+- **Función de negocio**: Establecer márgenes mínimos de ganancia, ocultando costos reales a vendedores
+
+##### 5. Precio Público
+- **Propósito**: Precio de venta al público
+- **Moneda principal**: Generalmente pactado en ARS para mantener estabilidad durante devaluación
+- **Lógica de conversión**: Valor en ARS ÷ Cotización actual = Valor en USD actual
+- **Función de negocio**: Controlar márgenes reales durante períodos de devaluación, permitiendo mantener precios en ARS mientras se preserva rentabilidad
+
+##### Conversión Automática con Vista Previa
+- **Interfaz**: Al ingresar un valor en una moneda, se muestra automáticamente la conversión en la otra moneda
+- **Cotización**: Usa la cotización BLUE actual para todas las conversiones en tiempo real
+- **Vista previa**: Se actualiza instantáneamente al cambiar valores o cotizaciones
+
+##### Reglas Generales
+- **Cotización = 0**: Si la cotización específica de un precio es 0, no se muestra el valor convertido
+- **Consistencia**: Todos los cálculos usan la misma fuente de cotización (BLUE) para mantener consistencia
+- **Actualización automática**: Los valores en ARS se recalculan automáticamente cuando cambia la cotización
+- **Preservación de márgenes**: El sistema permite mantener precios en ARS durante devaluación mientras se controla la rentabilidad real en USD
+
 3.6 Dashboard
 
 Resumen del día.
