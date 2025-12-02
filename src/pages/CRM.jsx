@@ -19,7 +19,6 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import LeadDetail from "../components/crm/LeadDetail";
 import ScheduleFollowUpDialog from "../components/crm/ScheduleFollowUpDialog";
-import { useParams, useNavigate } from "react-router-dom";
 
 const STATUS_CONFIG = {
   'Nuevo': { bg: 'bg-cyan-100 text-cyan-700', icon: '○' },
