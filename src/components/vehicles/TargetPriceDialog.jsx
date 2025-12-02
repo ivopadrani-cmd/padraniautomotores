@@ -5,7 +5,7 @@ import { HelpCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, HelpCircle } from "lucide-react";
+import { Save } from "lucide-react";
 import { toast } from "sonner";
 import PriceManualDialog from "./PriceManualDialog";
 
