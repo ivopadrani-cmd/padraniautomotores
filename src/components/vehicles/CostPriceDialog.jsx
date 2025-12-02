@@ -119,16 +119,16 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
   useEffect(() => {
     if (open && vehicle) {
-      setFormData({
-        cost_value: vehicle.cost_value || '',
-        cost_currency: vehicle.cost_currency || 'ARS',
-        cost_exchange_rate: vehicle.cost_exchange_rate || ''
-      });
-      setExpenses(vehicle.expenses || []);
-      setHasChanges(false);
-
       // Obtener cotización actual al abrir el diálogo
-      fetchCurrentBlueRate();
+      fetchCurrentBlueRate().then((rate) => {
+        setFormData({
+          cost_value: vehicle.cost_value || '',
+          cost_currency: vehicle.cost_currency || 'ARS',
+          cost_exchange_rate: vehicle.cost_exchange_rate || rate.toString()
+        });
+        setExpenses(vehicle.expenses || []);
+        setHasChanges(false);
+      });
     }
   }, [open, vehicle]);
 
@@ -139,6 +139,8 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       // Autocompletar cotización si está vacía y se cambia la moneda
       if (field === 'cost_currency' && (!prev.cost_exchange_rate || prev.cost_exchange_rate === '')) {
         newData.cost_exchange_rate = currentBlueRate.toString();
+        // Marcar que ha habido cambios para que se pueda guardar
+        setTimeout(() => setHasChanges(true), 0);
       }
 
       return newData;
@@ -251,7 +253,9 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-[11px] text-gray-600">Cotización USD</Label>
+                  <Label className="text-[11px] text-gray-600">
+                    {formData.cost_currency === 'USD' ? 'Cotización Pactada' : 'Cotización USD'}
+                  </Label>
                   <div className="flex gap-1">
                     <Input
                       className="h-9 text-[12px] bg-white flex-1"
@@ -261,12 +265,12 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                       onChange={(e) => handleChange('cost_exchange_rate', e.target.value)}
                       placeholder={currentBlueRate.toString()}
                     />
-                    <span className="text-[10px] text-gray-500 self-center">BLUE: ${currentBlueRate.toLocaleString('es-AR')}</span>
+                    <span className="text-[10px] text-gray-500 self-center">ACTUAL: ${currentBlueRate.toLocaleString('es-AR')}</span>
                   </div>
                 </div>
                 <div>
                   <Label className="text-[11px] text-gray-600">
-                    Valor ({formData.cost_currency})
+                    Valor Pactado ({formData.cost_currency})
                   </Label>
                   <Input
                     className="h-9 text-[13px] font-semibold bg-white"
@@ -279,7 +283,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                 </div>
                 <div>
                   <Label className="text-[11px] text-gray-600">
-                    Equivalente ({formData.cost_currency === 'ARS' ? 'USD' : 'ARS'})
+                    Valor Actual ({formData.cost_currency === 'ARS' ? 'USD' : 'ARS'})
                   </Label>
                   <div className="h-9 bg-gray-200 rounded px-3 flex items-center text-[13px] font-semibold text-gray-700">
                     {formData.cost_value && formData.cost_exchange_rate ?
@@ -293,8 +297,11 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
               {/* Información adicional */}
               <div className="text-[10px] text-gray-600 bg-blue-50 p-2 rounded">
                 <strong>Valor de Toma:</strong> {formData.cost_currency === 'USD' ?
-                  'Fijo en dólares, se convierte automáticamente a pesos según cotización actual.' :
-                  'Fijo en pesos, equivalente en dólares se calcula con cotización actual.'
+                  `Pactado en U$D ${formData.cost_value || '0'} con cotización ${formData.cost_exchange_rate || 'actual'}.
+                  En tabla se muestra: U$D ${formData.cost_value || '0'} × $${currentBlueRate.toLocaleString('es-AR')} = $${formData.cost_value ? (parseFloat(formData.cost_value) * currentBlueRate).toLocaleString('es-AR', { maximumFractionDigits: 0 }) : '0'}`
+                  :
+                  `Pactado en $${formData.cost_value || '0'} con cotización ${formData.cost_exchange_rate || 'actual'}.
+                  Equivalente actual: U$D ${formData.cost_value && formData.cost_exchange_rate ? (parseFloat(formData.cost_value) / parseFloat(formData.cost_exchange_rate)).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '0'}`
                 }
               </div>
             </div>

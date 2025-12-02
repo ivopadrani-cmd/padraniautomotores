@@ -431,12 +431,35 @@ export default function Vehicles() {
   const getPriceDisplay = (v, type) => {
     let valueArs = 0;
     let rateForUsd = currentBlueRate;
+    let historicalInfo = null;
 
     if (type === 'cost') {
-      const tomaArs = convertValue(v.cost_value, v.cost_currency, v.cost_exchange_rate, 'ARS');
-      const gastosArs = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate, 'ARS'), 0);
+      // Para costo: si está pactado en USD, usar cotización ACTUAL para convertir a pesos
+      // Si está pactado en ARS, usar cotización pactada para calcular USD equivalente
+      const costRate = v.cost_currency === 'USD' ? currentBlueRate : (v.cost_exchange_rate || currentBlueRate);
+      const tomaArs = convertValue(v.cost_value, v.cost_currency, costRate, 'ARS');
+      const gastosArs = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate || currentBlueRate, 'ARS'), 0);
       valueArs = tomaArs + gastosArs;
-      rateForUsd = v.cost_exchange_rate || currentBlueRate;
+
+      // Información histórica para costo
+      if (v.cost_value && v.cost_currency && v.cost_exchange_rate) {
+        const pactadoValue = v.cost_value;
+        const pactadoCurrency = v.cost_currency;
+        const pactadoRate = v.cost_exchange_rate;
+
+        // Calcular valor actual vs pactado
+        const actualArs = convertValue(pactadoValue, pactadoCurrency, currentBlueRate, 'ARS');
+        const historicalArs = convertValue(pactadoValue, pactadoCurrency, pactadoRate, 'ARS');
+
+        historicalInfo = {
+          pactado: `${pactadoCurrency === 'USD' ? 'U$D' : '$'}${pactadoValue.toLocaleString(pactadoCurrency === 'USD' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`,
+          cotizacion: `$${pactadoRate.toLocaleString('es-AR')} ${pactadoCurrency}`,
+          diferencia: actualArs - historicalArs
+        };
+      }
+
+      // Para mostrar USD: si pactado en USD usar cotización pactada, si pactado en ARS usar cotización actual
+      rateForUsd = v.cost_currency === 'USD' ? (v.cost_exchange_rate || currentBlueRate) : currentBlueRate;
     } else {
       const keyMap = {
         'target': { value: 'target_price_value', currency: 'target_price_currency', rate: 'target_price_exchange_rate' },
@@ -451,12 +474,13 @@ export default function Vehicles() {
       rateForUsd = currentBlueRate;
     }
 
-    if (!valueArs) return { ars: '-', usd: '' };
-    
+    if (!valueArs) return { ars: '-', usd: '', historical: null };
+
     const valueUsd = valueArs / rateForUsd;
     return {
       ars: `$${valueArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`,
-      usd: `U$D ${valueUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+      usd: `U$D ${valueUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
+      historical: historicalInfo
     };
   };
 
@@ -649,7 +673,23 @@ export default function Vehicles() {
                             <td className="px-2 py-2">{v.kilometers?.toLocaleString('es-AR') || '-'}</td>
                             <td className="px-2 py-2 uppercase">{v.color || '-'}</td>
                             <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handleCostEdit(v); }}>
-                              {(() => { const p = getPriceDisplay(v, 'cost'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
+                              {(() => {
+                                const p = getPriceDisplay(v, 'cost');
+                                const hasHistorical = p.historical;
+                                return (
+                                  <div className="flex flex-col relative">
+                                    <div className="font-semibold text-[11px] text-right">{p.ars}</div>
+                                    <div className="flex items-center justify-end gap-1">
+                                      {p.usd && <div className="text-[10px] font-semibold text-cyan-600">{p.usd}</div>}
+                                      {hasHistorical && (
+                                        <div className="text-[8px] text-amber-600 font-bold" title={`Pactado: ${p.historical.pactado} (${p.historical.cotizacion})`}>
+                                          {p.historical.diferencia > 0 ? '📈' : p.historical.diferencia < 0 ? '📉' : '➡️'}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handleInfoAutoEdit(v); }}>
                               {(() => { const p = getPriceDisplay(v, 'infoauto'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
