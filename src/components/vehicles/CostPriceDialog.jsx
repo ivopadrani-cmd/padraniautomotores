@@ -363,17 +363,24 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
         </form>
 
         {/* Modal de edición de gastos */}
-        <div style={{ zIndex: 1100, position: 'relative' }}>
-          <ExpenseEditDialog
-            open={editingExpense !== null}
-            onOpenChange={(open) => { if (!open) { setEditingExpense(null); setEditingExpenseIndex(-1); } }}
-            expense={editingExpense}
-            index={editingExpenseIndex}
-            onSave={handleSaveExpense}
-            onDelete={handleDeleteExpense}
-            currentBlueRate={currentBlueRate}
-          />
-        </div>
+        {editingExpense !== null && (
+          <div style={{ zIndex: 1100, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+            <ExpenseEditDialog
+              open={true}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setEditingExpense(null);
+                  setEditingExpenseIndex(-1);
+                }
+              }}
+              expense={editingExpense}
+              index={editingExpenseIndex}
+              onSave={handleSaveExpense}
+              onDelete={handleDeleteExpense}
+              currentBlueRate={currentBlueRate}
+            />
+          </div>
+        )}
 
         {/* Modal del manual */}
         <PriceManualDialog

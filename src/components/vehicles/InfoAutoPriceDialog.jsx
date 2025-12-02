@@ -70,6 +70,8 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
         const historicalRate = await getHistoricalRate(formData.infoauto_date);
         if (historicalRate && historicalRate !== parseFloat(formData.infoauto_exchange_rate)) {
           setFormData(prev => ({ ...prev, infoauto_exchange_rate: historicalRate.toString() }));
+          // Marcar que hay cambios cuando se actualiza la cotización automáticamente
+          setHasChanges(true);
         }
       }
     };

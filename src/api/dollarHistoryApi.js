@@ -29,12 +29,43 @@ export const dollarHistoryApi = {
         return rate;
       }
 
-      // Si no encuentra la fecha exacta, buscar fechas cercanas (hasta 7 días atrás)
-      console.log(`⚠️ No se encontró cotización exacta para ${searchDate}, buscando fechas cercanas...`);
+      // Si no encuentra la fecha exacta, buscar la fecha más cercana actualizada
+      console.log(`⚠️ No se encontró cotización exacta para ${searchDate}, buscando fecha más cercana actualizada...`);
 
-      for (let i = 1; i <= 7; i++) {
-        const checkDate = new Date(formattedDate);
-        checkDate.setDate(checkDate.getDate() - i);
+      // Buscar tanto hacia atrás como hacia adelante, pero priorizando fechas más recientes
+      const targetDate = new Date(formattedDate);
+      const today = new Date();
+      const isFutureDate = targetDate > today;
+
+      // Si es fecha futura, buscar hacia atrás desde hoy
+      // Si es fecha pasada, buscar la fecha más cercana (hacia atrás primero, luego hacia adelante si es necesario)
+      const searchRange = isFutureDate ? 30 : 14; // Más amplio para fechas futuras
+      const datesToCheck = [];
+
+      if (isFutureDate) {
+        // Para fechas futuras, buscar desde hoy hacia atrás
+        for (let i = 0; i <= searchRange; i++) {
+          const checkDate = new Date(today);
+          checkDate.setDate(today.getDate() - i);
+          datesToCheck.push(checkDate);
+        }
+      } else {
+        // Para fechas pasadas, buscar primero hacia atrás (fechas más cercanas), luego hacia adelante
+        for (let i = 1; i <= 7; i++) {
+          const checkDate = new Date(targetDate);
+          checkDate.setDate(targetDate.getDate() - i);
+          datesToCheck.push(checkDate);
+        }
+        // Si no encuentra nada cercano hacia atrás, buscar un poco hacia adelante
+        for (let i = 1; i <= 3; i++) {
+          const checkDate = new Date(targetDate);
+          checkDate.setDate(targetDate.getDate() + i);
+          datesToCheck.push(checkDate);
+        }
+      }
+
+      // Buscar en todas las fechas candidate
+      for (const checkDate of datesToCheck) {
         const checkDay = String(checkDate.getDate()).padStart(2, '0');
         const checkMonth = String(checkDate.getMonth() + 1).padStart(2, '0');
         const checkYear = checkDate.getFullYear();
