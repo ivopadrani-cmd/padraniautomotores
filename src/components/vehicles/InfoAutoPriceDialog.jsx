@@ -100,6 +100,8 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log('💾 Intentando guardar InfoAuto:', formData);
+
     const processedData = { ...formData };
 
     // Procesar campos numéricos
@@ -114,11 +116,15 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
       processedData.infoauto_date = processedData.infoauto_date;
     }
 
+    console.log('📤 Datos procesados para guardar:', processedData);
+
     try {
       await onSubmit(processedData);
+      console.log('✅ InfoAuto guardado exitosamente');
       onOpenChange(false);
       toast.success("Precio InfoAuto actualizado correctamente");
     } catch (error) {
+      console.error('❌ Error guardando InfoAuto:', error);
       toast.error("Error al actualizar precio InfoAuto: " + error.message);
     }
   };

@@ -434,8 +434,7 @@ export default function Vehicles() {
     let historicalInfo = null;
 
     if (type === 'cost') {
-      // Para costo: si está pactado en USD, usar cotización ACTUAL para convertir a pesos
-      // Si está pactado en ARS, usar cotización pactada para calcular USD equivalente
+      // Calcular el valor total en ARS usando cotizaciones apropiadas
       const costRate = v.cost_currency === 'USD' ? currentBlueRate : (v.cost_exchange_rate || currentBlueRate);
       const tomaArs = convertValue(v.cost_value, v.cost_currency, costRate, 'ARS');
       const gastosArs = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate || currentBlueRate, 'ARS'), 0);
@@ -458,8 +457,9 @@ export default function Vehicles() {
         };
       }
 
-      // Para mostrar USD: si pactado en USD usar cotización pactada, si pactado en ARS usar cotización actual
-      rateForUsd = v.cost_currency === 'USD' ? (v.cost_exchange_rate || currentBlueRate) : currentBlueRate;
+      // Para mostrar USD: SIEMPRE usar la cotización actual para conversión consistente
+      // Esto asegura que el valor en USD refleje el costo real actual en pesos dividido por cotización actual
+      rateForUsd = currentBlueRate;
     } else {
       const keyMap = {
         'target': { value: 'target_price_value', currency: 'target_price_currency', rate: 'target_price_exchange_rate' },

@@ -272,10 +272,8 @@ export default function CRM() {
       status: lead.status, interest_level: lead.interest_level || 'Medio',
       observations: lead.observations || '', follow_up_date: lead.follow_up_date || '', follow_up_time: lead.follow_up_time || ''
     });
-    // No navegar si ya estamos en LeadDetail (tiene leadId)
-    if (!leadId) {
-      navigate(`/CRM/${lead.id}`);
-    }
+    // NUNCA navegar cuando se edita - siempre mantener la vista actual
+    // Solo abrir el modal
     setShowLeadForm(true);
   };
 
