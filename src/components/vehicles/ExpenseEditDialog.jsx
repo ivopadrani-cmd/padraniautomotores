@@ -5,16 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Trash2 } from "lucide-react";
-import { useDollarHistory } from "@/hooks/useDollarHistory";
 
-export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete, currentBlueRate = 1200 }) {
-  const { getHistoricalRate } = useDollarHistory();
-
+export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete }) {
   const [formData, setFormData] = useState({
     type: 'GESTORIA',
     value: '',
     currency: 'ARS',
-    exchange_rate: currentBlueRate?.toString() || '1200',
+    exchange_rate: '1200',
     date: new Date().toISOString().split('T')[0],
     description: ''
   });
@@ -25,38 +22,12 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
         type: expense.type || 'GESTORIA',
         value: expense.value?.toString() || '',
         currency: expense.currency || 'ARS',
-        exchange_rate: expense.exchange_rate?.toString() || currentBlueRate?.toString() || '1200',
+        exchange_rate: expense.exchange_rate?.toString() || '1200',
         date: expense.date || new Date().toISOString().split('T')[0],
         description: expense.description || ''
       });
-    } else {
-      // Para nuevo gasto, usar cotización actual
-      setFormData({
-        type: 'GESTORIA',
-        value: '',
-        currency: 'ARS',
-        exchange_rate: currentBlueRate?.toString() || '1200',
-        date: new Date().toISOString().split('T')[0],
-        description: ''
-      });
     }
-  }, [expense, currentBlueRate]);
-
-  // Efecto para buscar cotización histórica cuando cambia la fecha
-  useEffect(() => {
-    const updateHistoricalRate = async () => {
-      if (formData.date) {
-        const historicalRate = await getHistoricalRate(formData.date);
-        if (historicalRate && historicalRate !== parseFloat(formData.exchange_rate)) {
-          setFormData(prev => ({ ...prev, exchange_rate: historicalRate.toString() }));
-        }
-      }
-    };
-
-    // Pequeño delay para evitar llamadas excesivas mientras el usuario escribe
-    const timeoutId = setTimeout(updateHistoricalRate, 500);
-    return () => clearTimeout(timeoutId);
-  }, [formData.date, getHistoricalRate]);
+  }, [expense]);
 
   const handleSave = () => {
     onSave(index, {
@@ -72,7 +43,7 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0">
+      <DialogContent className="max-w-md p-0" style={{ zIndex: 1200 }}>
         <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
           <DialogTitle className="text-sm font-semibold">{expense ? 'Editar' : 'Nuevo'} Gasto</DialogTitle>
         </DialogHeader>
@@ -99,16 +70,7 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label className={lbl}>Moneda</Label>
-              <Select value={formData.currency} onValueChange={(v) => {
-                const newCurrency = v;
-                setFormData({
-                  ...formData,
-                  currency: newCurrency,
-                  exchange_rate: newCurrency === 'ARS' && (!formData.exchange_rate || formData.exchange_rate === '1200')
-                    ? (currentBlueRate?.toString() || '1200')
-                    : formData.exchange_rate
-                });
-              }}>
+              <Select value={formData.currency} onValueChange={(v) => setFormData({...formData, currency: v})}>
                 <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ARS" className="text-[11px]">ARS</SelectItem>
@@ -122,20 +84,7 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
             </div>
             <div>
               <Label className={lbl}>Cotización USD</Label>
-              <div className="relative">
-                <Input
-                  className={inp}
-                  type="number"
-                  value={formData.exchange_rate}
-                  onChange={(e) => setFormData({...formData, exchange_rate: e.target.value})}
-                  placeholder={currentBlueRate?.toString() || '1200'}
-                />
-                {currentBlueRate && (
-                  <span className="absolute -bottom-4 left-0 text-[8px] text-gray-400">
-                    Actual: ${currentBlueRate.toLocaleString('es-AR')}
-                  </span>
-                )}
-              </div>
+              <Input className={inp} type="number" value={formData.exchange_rate} onChange={(e) => setFormData({...formData, exchange_rate: e.target.value})} />
             </div>
           </div>
 
