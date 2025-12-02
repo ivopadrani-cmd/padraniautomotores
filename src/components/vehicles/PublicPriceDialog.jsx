@@ -35,9 +35,6 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
         public_price_exchange_rate: vehicle.public_price_exchange_rate || ''
       });
       setHasChanges(false);
-
-      // Obtener cotización actual al abrir el diálogo
-      fetchCurrentBlueRate();
     }
   }, [open, vehicle]);
 

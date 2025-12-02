@@ -35,9 +35,6 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
         target_price_exchange_rate: vehicle.target_price_exchange_rate || ''
       });
       setHasChanges(false);
-
-      // Obtener cotización actual al abrir el diálogo
-      fetchCurrentBlueRate();
     }
   }, [open, vehicle]);
 

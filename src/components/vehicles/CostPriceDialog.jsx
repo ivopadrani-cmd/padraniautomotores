@@ -42,18 +42,15 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
   useEffect(() => {
     if (open && vehicle) {
-      // Obtener cotización actual al abrir el diálogo
-      fetchCurrentBlueRate().then((rate) => {
-        setFormData({
-          cost_value: vehicle.cost_value || '',
-          cost_currency: vehicle.cost_currency || 'ARS',
-          cost_exchange_rate: vehicle.cost_exchange_rate || rate.toString()
-        });
-        setExpenses(vehicle.expenses || []);
-        setHasChanges(false);
+      setFormData({
+        cost_value: vehicle.cost_value || '',
+        cost_currency: vehicle.cost_currency || 'ARS',
+        cost_exchange_rate: vehicle.cost_exchange_rate || currentBlueRate.toString()
       });
+      setExpenses(vehicle.expenses || []);
+      setHasChanges(false);
     }
-  }, [open, vehicle]);
+  }, [open, vehicle, currentBlueRate]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
