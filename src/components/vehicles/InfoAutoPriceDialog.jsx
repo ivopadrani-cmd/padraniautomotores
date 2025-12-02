@@ -5,9 +5,10 @@ import { HelpCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, History } from "lucide-react";
 import { toast } from "sonner";
 import PriceManualDialog from "./PriceManualDialog";
+import { useDollarHistory } from "@/hooks/useDollarHistory";
 
 export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSubmit, isLoading }) {
   const [formData, setFormData] = useState({
@@ -20,6 +21,8 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
   const [isLoadingRate, setIsLoadingRate] = useState(false);
   const [showManual, setShowManual] = useState(false);
+
+  const { getHistoricalRate, isLoading: isLoadingHistorical } = useDollarHistory();
 
   // Función para obtener cotización BLUE actual
   const fetchCurrentBlueRate = async () => {
@@ -102,6 +105,21 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
     }
   };
 
+  const handleGetHistoricalRate = async () => {
+    if (!formData.infoauto_date) {
+      toast.error('Selecciona una fecha primero');
+      return;
+    }
+
+    const historicalRate = await getHistoricalRate(formData.infoauto_date);
+    if (historicalRate) {
+      setFormData(prev => ({ ...prev, infoauto_exchange_rate: historicalRate.toString() }));
+      toast.success(`Cotización histórica: $${historicalRate}`);
+    } else {
+      toast.warning('No se encontró cotización histórica para esa fecha');
+    }
+  };
+
   const handleCancel = () => {
     if (hasChanges) {
       if (window.confirm('¿Descartar cambios?')) {
@@ -135,8 +153,19 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-4 bg-gray-100 rounded">
-            <div className="mb-3">
+            <div className="flex justify-between items-center mb-3">
               <h3 className="text-sm font-semibold text-gray-700">PRECIO INFOAUTO</h3>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[10px] text-blue-600 hover:bg-blue-50"
+                onClick={handleGetHistoricalRate}
+                disabled={!formData.infoauto_date || isLoadingHistorical}
+              >
+                <History className="w-3 h-3 mr-1" />
+                {isLoadingHistorical ? 'Buscando...' : 'Histórica'}
+              </Button>
             </div>
 
             <div className="space-y-3">

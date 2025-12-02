@@ -45,7 +45,7 @@ export default function PriceManualDialog({ open, onOpenChange }) {
                     <p><strong>Moneda:</strong> Puede estar en pesos o dólares según cómo pagaste</p>
                     <p><strong>Cotización histórica:</strong> La cotización BLUE exacta del día de la compra</p>
                     <p><strong>Fecha:</strong> Día en que realizaste la transacción</p>
-                    <p className="text-blue-600 font-medium mt-2">📊 <strong>Importante:</strong> Se mantiene fijo para siempre comparar ganancias reales</p>
+                    <p className="text-red-600 font-medium mt-2"><strong>Importante:</strong> Se mantiene fijo para siempre comparar ganancias reales</p>
                   </div>
                 </div>
               </div>
@@ -60,7 +60,7 @@ export default function PriceManualDialog({ open, onOpenChange }) {
                     <p><strong>Qué son:</strong> Costos extras como gestoría, taller, pintura, verificaciones, etc.</p>
                     <p><strong>Cómo funcionan:</strong> Similar al costo principal, pero siempre se cargan con la cotización actual del día</p>
                     <p><strong>Fecha:</strong> Día en que se realizó cada gasto específico</p>
-                    <p className="text-slate-600 font-medium mt-2">📈 <strong>Diferencia clave:</strong> Los gastos nuevos usan la cotización de HOY, no la del día de compra</p>
+                    <p className="text-red-600 font-medium mt-2"><strong>Diferencia clave:</strong> Los gastos nuevos usan la cotización de HOY, no la del día de compra</p>
                   </div>
                 </div>
               </div>
@@ -81,7 +81,7 @@ export default function PriceManualDialog({ open, onOpenChange }) {
                     <p><strong>Moneda:</strong> Siempre en pesos argentinos</p>
                     <p><strong>Cotización histórica:</strong> Cotización del día en que InfoAuto actualizó sus precios</p>
                     <p><strong>Fecha:</strong> Día de la última actualización de InfoAuto</p>
-                    <p className="text-orange-600 font-medium mt-2">🎯 <strong>Propósito:</strong> Saber cuánto vale el vehículo según el mercado, tanto en pesos como en dólares históricos</p>
+                    <p className="text-red-600 font-medium mt-2"><strong>Propósito:</strong> Saber cuánto vale el vehículo según el mercado, tanto en pesos como en dólares históricos</p>
                   </div>
                 </div>
               </div>
@@ -96,7 +96,7 @@ export default function PriceManualDialog({ open, onOpenChange }) {
                     <p><strong>Qué es:</strong> Tu meta mínima de ganancia por vehículo</p>
                     <p><strong>Moneda:</strong> Siempre en dólares (para que no se devalúe)</p>
                     <p><strong>Conversión automática:</strong> Se calcula automáticamente en pesos según cotización actual</p>
-                    <p className="text-cyan-600 font-medium mt-2">💡 <strong>Control:</strong> Te dice cuánto deberías cobrar MÍNIMO en pesos para no perder dinero real</p>
+                    <p className="text-red-600 font-medium mt-2"><strong>Control:</strong> Te dice cuánto deberías cobrar MÍNIMO en pesos para no perder dinero real</p>
                   </div>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export default function PriceManualDialog({ open, onOpenChange }) {
                     <p><strong>Qué es:</strong> El precio que realmente le cobras al cliente</p>
                     <p><strong>Moneda:</strong> Puede estar en pesos o dólares según acuerdes</p>
                     <p><strong>Ajuste inteligente:</strong> Si pactas en pesos, mantiene estabilidad. Si pactas en dólares, se ajusta automáticamente</p>
-                    <p className="text-green-600 font-medium mt-2">⚖️ <strong>Estrategia:</strong> Permite ceder temporalmente en pesos sin perder el control del valor real en dólares</p>
+                    <p className="text-red-600 font-medium mt-2"><strong>Estrategia:</strong> Permite ceder temporalmente en pesos sin perder el control del valor real en dólares</p>
                   </div>
                 </div>
               </div>
@@ -163,7 +163,7 @@ export default function PriceManualDialog({ open, onOpenChange }) {
               </div>
             </div>
             <div className="mt-4 p-3 bg-cyan-50 rounded border border-cyan-200">
-              <p className="text-cyan-800 text-xs font-medium">
+              <p className="text-red-600 text-xs font-medium">
                 <strong>Sistema diseñado para:</strong> Controlar márgenes reales en contexto de devaluación, permitiendo flexibilidad en pesos sin perder referencia del valor en dólares.
               </p>
             </div>

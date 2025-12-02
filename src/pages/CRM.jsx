@@ -403,7 +403,7 @@ export default function CRM() {
               leadId={editingLead?.id}
               clients={clients}
             />
-            <Dialog open={showLeadForm} onOpenChange={(open) => { if (!open) setShowConfirmLead(true); else setShowLeadForm(true); }}>
+            <Dialog open={showLeadForm} onOpenChange={(open) => { if (!open) { if (editingLead) resetLeadForm(); else setShowConfirmLead(true); } else setShowLeadForm(true); }}>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
                 <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg"><DialogTitle className="text-sm font-semibold">{editingLead ? 'Editar' : 'Nueva'} Consulta</DialogTitle></DialogHeader>
                 <form onSubmit={handleSubmitLead} className="p-4 space-y-3">
@@ -601,20 +601,36 @@ export default function CRM() {
                     <div className="mt-2">
                       <Label className="text-[9px] font-medium text-gray-600 mb-1 block flex items-center gap-1">
                         <Camera className="w-3 h-3" />
-                        Fotos del vehículo (URLs separadas por coma)
+                        Fotos del vehículo
                       </Label>
-                      <Textarea
-                        className="text-[11px] min-h-[40px] bg-white"
-                        placeholder="https://ejemplo.com/foto1.jpg, https://ejemplo.com/foto2.jpg"
-                        value={leadFormData.trade_in?.photos?.join(', ') || ''}
+                      <Input
+                        className={inp}
+                        type="file"
+                        multiple
+                        accept="image/*"
                         onChange={(e) => {
-                          const photos = e.target.value.split(',').map(url => url.trim()).filter(url => url);
+                          const files = Array.from(e.target.files);
+                          // Convertir archivos a URLs de objeto para preview
+                          const photoUrls = files.map(file => URL.createObjectURL(file));
                           setLeadFormData({
                             ...leadFormData,
-                            trade_in: { ...leadFormData.trade_in, photos }
+                            trade_in: {
+                              ...leadFormData.trade_in,
+                              photos: photoUrls,
+                              photoFiles: files // Guardar los archivos reales
+                            }
                           });
                         }}
                       />
+                      {leadFormData.trade_in?.photos?.length > 0 && (
+                        <div className="mt-2 flex gap-1 flex-wrap">
+                          {leadFormData.trade_in.photos.map((photo, index) => (
+                            <div key={index} className="w-8 h-8 bg-gray-100 rounded overflow-hidden">
+                              <img src={photo} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
