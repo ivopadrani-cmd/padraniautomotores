@@ -1,5 +1,6 @@
 // API para obtener cotizaciones históricas del dólar blue
-// Basado en https://dolarhistorico.com/cotizacion-dolar-blue
+// Por ahora usa aproximaciones basadas en cotización actual
+// TODO: Integrar API real de cotizaciones históricas cuando esté disponible
 
 export const dollarHistoryApi = {
   // Obtener cotización histórica para una fecha específica
@@ -7,32 +8,33 @@ export const dollarHistoryApi = {
     try {
       // Formatear fecha como YYYY-MM-DD
       const formattedDate = date instanceof Date ? date.toISOString().split('T')[0] : date;
+      const targetDate = new Date(formattedDate);
+      const today = new Date();
 
-      // La API de dolarhistorico.com no es una API REST real, pero podemos intentar hacer scraping
-      // Por ahora, devolveremos un valor simulado basado en la fecha
-      // En el futuro, si tienen una API real, podemos integrarla aquí
+      // Calcular días de diferencia
+      const diffTime = today.getTime() - targetDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      const response = await fetch(`https://dolarhistorico.com/cotizacion-dolar-blue`);
+      // Obtener cotización actual
+      const currentRate = await this.getCurrentRate();
 
-      if (!response.ok) {
-        throw new Error('Error al obtener cotización histórica');
+      if (!currentRate) return null;
+
+      // Para fechas recientes (últimos 30 días), devolver cotización actual
+      // Para fechas más antiguas, aplicar una aproximación basada en devaluación histórica
+      if (diffDays <= 30) {
+        return currentRate;
+      } else if (diffDays <= 90) {
+        // Aproximación: asumir devaluación del 2% por mes en promedio
+        const monthsBack = Math.floor(diffDays / 30);
+        const estimatedRate = currentRate / Math.pow(1.02, monthsBack);
+        return Math.round(estimatedRate * 100) / 100; // Redondear a 2 decimales
+      } else {
+        // Para fechas muy antiguas, devolver una aproximación conservadora
+        const monthsBack = Math.floor(diffDays / 30);
+        const estimatedRate = currentRate / Math.pow(1.03, monthsBack);
+        return Math.round(estimatedRate * 100) / 100;
       }
-
-      const html = await response.text();
-
-      // Extraer la cotización de la fecha específica del HTML
-      // Esto es un ejemplo básico - necesitaríamos un parser HTML más robusto
-      const datePattern = new RegExp(`${formattedDate.replace(/-/g, '/')}.*?(\\d+,\\d+)`, 'i');
-      const match = html.match(datePattern);
-
-      if (match && match[1]) {
-        // Convertir formato argentino "1.425,00" a número
-        const rateString = match[1].replace(/\./g, '').replace(',', '.');
-        return parseFloat(rateString);
-      }
-
-      // Si no encontramos la fecha específica, devolver null
-      return null;
 
     } catch (error) {
       console.error('Error obteniendo cotización histórica:', error);
@@ -40,7 +42,7 @@ export const dollarHistoryApi = {
     }
   },
 
-  // Obtener cotización actual (fallback)
+  // Obtener cotización actual
   async getCurrentRate() {
     try {
       const response = await fetch('https://dolarapi.com/v1/dolares/blue');

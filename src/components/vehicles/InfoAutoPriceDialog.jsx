@@ -50,18 +50,34 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
 
   useEffect(() => {
     if (open && vehicle) {
-      setFormData({
-        infoauto_value: vehicle.infoauto_value || '',
-        infoauto_currency: vehicle.infoauto_currency || 'ARS', // Siempre ARS
-        infoauto_exchange_rate: vehicle.infoauto_exchange_rate || '',
-        infoauto_date: vehicle.infoauto_date || new Date().toISOString().split('T')[0] // Fecha actual por defecto
-      });
-      setHasChanges(false);
-
       // Obtener cotización actual al abrir el diálogo
-      fetchCurrentBlueRate();
+      fetchCurrentBlueRate().then((currentRate) => {
+        setFormData({
+          infoauto_value: vehicle.infoauto_value || '',
+          infoauto_currency: vehicle.infoauto_currency || 'ARS', // Siempre ARS
+          infoauto_exchange_rate: vehicle.infoauto_exchange_rate || currentRate?.toString() || '',
+          infoauto_date: vehicle.infoauto_date || new Date().toISOString().split('T')[0] // Fecha actual por defecto
+        });
+        setHasChanges(false);
+      });
     }
   }, [open, vehicle]);
+
+  // Efecto para buscar cotización histórica cuando cambia la fecha
+  useEffect(() => {
+    const updateHistoricalRate = async () => {
+      if (formData.infoauto_date && open) {
+        const historicalRate = await getHistoricalRate(formData.infoauto_date);
+        if (historicalRate && historicalRate !== parseFloat(formData.infoauto_exchange_rate)) {
+          setFormData(prev => ({ ...prev, infoauto_exchange_rate: historicalRate.toString() }));
+        }
+      }
+    };
+
+    // Pequeño delay para evitar llamadas excesivas mientras el usuario escribe
+    const timeoutId = setTimeout(updateHistoricalRate, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.infoauto_date, getHistoricalRate, open]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
@@ -105,21 +121,6 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
     }
   };
 
-  const handleGetHistoricalRate = async () => {
-    if (!formData.infoauto_date) {
-      toast.error('Selecciona una fecha primero');
-      return;
-    }
-
-    const historicalRate = await getHistoricalRate(formData.infoauto_date);
-    if (historicalRate) {
-      setFormData(prev => ({ ...prev, infoauto_exchange_rate: historicalRate.toString() }));
-      toast.success(`Cotización histórica: $${historicalRate}`);
-    } else {
-      toast.warning('No se encontró cotización histórica para esa fecha');
-    }
-  };
-
   const handleCancel = () => {
     if (hasChanges) {
       if (window.confirm('¿Descartar cambios?')) {
@@ -153,19 +154,8 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-4 bg-gray-100 rounded">
-            <div className="flex justify-between items-center mb-3">
+            <div className="mb-3">
               <h3 className="text-sm font-semibold text-gray-700">PRECIO INFOAUTO</h3>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 text-[10px] text-blue-600 hover:bg-blue-50"
-                onClick={handleGetHistoricalRate}
-                disabled={!formData.infoauto_date || isLoadingHistorical}
-              >
-                <History className="w-3 h-3 mr-1" />
-                {isLoadingHistorical ? 'Buscando...' : 'Histórica'}
-              </Button>
             </div>
 
             <div className="space-y-3">

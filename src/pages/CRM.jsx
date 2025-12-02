@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -95,10 +96,20 @@ export default function CRM() {
     enabled: !!leadId,
   });
 
-  // Sincronizar selectedLead con URL
+  // Sincronizar selectedLead con URL y manejar edición automática
   useEffect(() => {
-    if (leadId && specificLead) {
-      setSelectedLead(specificLead);
+    if (leadId && specificLead && !isLoadingLead) {
+      // Verificar si la URL contiene parámetros de edición
+      const urlParams = new URLSearchParams(window.location.search);
+      const isEditing = urlParams.get('edit') === 'true';
+
+      if (isEditing && !editingLead) {
+        // Abrir modo edición automáticamente
+        handleEditLead(specificLead);
+      } else if (!isEditing) {
+        // Mostrar vista de detalle normal
+        setSelectedLead(specificLead);
+      }
     } else if (!leadId) {
       setSelectedLead(null);
     }
@@ -250,18 +261,20 @@ export default function CRM() {
   const handleEditLead = (lead) => {
     setEditingLead(lead);
     setLeadFormData({
-      consultation_date: lead.consultation_date, 
+      consultation_date: lead.consultation_date,
       consultation_time: lead.consultation_time || '',
       source: lead.source || '',
       client_name: lead.client_name, client_phone: lead.client_phone || '',
-      client_email: lead.client_email || '', 
+      client_email: lead.client_email || '',
       interested_vehicles: lead.interested_vehicles || [],
       other_interests: lead.other_interests || '', budget: lead.budget?.toString() || '',
-      preferred_contact: lead.preferred_contact || 'WhatsApp', 
+      preferred_contact: lead.preferred_contact || 'WhatsApp',
       trade_in: lead.trade_in || { brand: '', model: '', year: '', kilometers: '', plate: '', color: '', photos: [] },
       status: lead.status, interest_level: lead.interest_level || 'Medio',
       observations: lead.observations || '', follow_up_date: lead.follow_up_date || '', follow_up_time: lead.follow_up_time || ''
     });
+    // Navegar a la URL con el ID del lead
+    navigate(`/CRM/${lead.id}`);
     setShowLeadForm(true);
   };
 
@@ -352,7 +365,7 @@ export default function CRM() {
   }
 
   // Cliente ahora se maneja con navegación a /clients/:clientId
-  if (selectedLead) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} />;
+  if (selectedLead && !showLeadForm) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} />;
 
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
@@ -403,7 +416,7 @@ export default function CRM() {
               leadId={editingLead?.id}
               clients={clients}
             />
-            <Dialog open={showLeadForm} onOpenChange={(open) => { if (!open) { if (editingLead) resetLeadForm(); else setShowConfirmLead(true); } else setShowLeadForm(true); }}>
+            <Dialog open={showLeadForm} onOpenChange={(open) => { if (!open) { if (editingLead) { resetLeadForm(); navigate('/CRM'); } else setShowConfirmLead(true); } else setShowLeadForm(true); }}>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
                 <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg"><DialogTitle className="text-sm font-semibold">{editingLead ? 'Editar' : 'Nueva'} Consulta</DialogTitle></DialogHeader>
                 <form onSubmit={handleSubmitLead} className="p-4 space-y-3">
