@@ -518,3 +518,4 @@ export const supabaseClient = {
 // Export supabase instance for direct access if needed
 export { supabase };
 
+
