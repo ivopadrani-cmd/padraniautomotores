@@ -169,7 +169,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-[11px] text-gray-600">Cotización USD</Label>
+                  <Label className="text-[11px] text-gray-600">Al momento de la toma</Label>
                   <div className="flex gap-1">
                     <Input
                       className="h-9 text-[12px] bg-white flex-1"
@@ -208,17 +208,6 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                     </span>
                     <span className="text-[9px] text-blue-600">BLUE actual</span>
                   </div>
-                </div>
-              </div>
-
-              {/* Información clara */}
-              <div className="text-[10px] text-gray-600 bg-blue-50 p-2 rounded">
-                <div className="grid grid-cols-1 gap-1">
-                  <div><strong>Valor pactado:</strong> {formData.cost_currency === 'USD' ? `U$D ${formData.cost_value || '0'}` : `$${formData.cost_value || '0'}`}</div>
-                  <div><strong>Conversión actual:</strong> {formData.cost_currency === 'USD' ?
-                    `$${formData.cost_value ? (parseFloat(formData.cost_value) * currentBlueRate).toLocaleString('es-AR', { maximumFractionDigits: 0 }) : '0'} ARS` :
-                    `U$D ${formData.cost_value ? (parseFloat(formData.cost_value) / currentBlueRate).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '0'}`
-                  }</div>
                 </div>
               </div>
             </div>

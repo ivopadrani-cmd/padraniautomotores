@@ -113,7 +113,7 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
                 </div>
                 <div>
                   <Label className="text-[11px] text-cyan-700">
-                    Valor pactado ({formData.target_price_currency})
+                    Precio objetivo ({formData.target_price_currency})
                   </Label>
                   <Input
                     className="h-9 text-[13px] font-semibold bg-white"

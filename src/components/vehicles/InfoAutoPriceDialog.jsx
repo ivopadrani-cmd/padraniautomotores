@@ -4,14 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, RefreshCw } from "lucide-react";
+import { Save } from "lucide-react";
 import { toast } from "sonner";
 
 export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSubmit, isLoading }) {
   const [formData, setFormData] = useState({
     infoauto_value: '',
     infoauto_currency: 'ARS',
-    infoauto_exchange_rate: ''
+    infoauto_exchange_rate: '',
+    infoauto_date: ''
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
@@ -46,7 +47,8 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
       setFormData({
         infoauto_value: vehicle.infoauto_value || '',
         infoauto_currency: vehicle.infoauto_currency || 'ARS', // Siempre ARS
-        infoauto_exchange_rate: vehicle.infoauto_exchange_rate || ''
+        infoauto_exchange_rate: vehicle.infoauto_exchange_rate || '',
+        infoauto_date: vehicle.infoauto_date || new Date().toISOString().split('T')[0] // Fecha actual por defecto
       });
       setHasChanges(false);
 
@@ -83,6 +85,10 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
     if (processedData.infoauto_exchange_rate !== '' && processedData.infoauto_exchange_rate !== undefined) {
       processedData.infoauto_exchange_rate = parseFloat(processedData.infoauto_exchange_rate) || 1200;
     }
+    // Procesar fecha
+    if (processedData.infoauto_date !== '' && processedData.infoauto_date !== undefined) {
+      processedData.infoauto_date = processedData.infoauto_date;
+    }
 
     try {
       await onSubmit(processedData);
@@ -113,24 +119,13 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-4 bg-gray-100 rounded">
-            <div className="flex justify-between items-center mb-3">
+            <div className="mb-3">
               <h3 className="text-sm font-semibold text-gray-700">PRECIO INFOAUTO</h3>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 text-[10px] text-blue-600 hover:bg-blue-50"
-                onClick={fetchCurrentBlueRate}
-                disabled={isLoadingRate}
-              >
-                <RefreshCw className={`w-3 h-3 mr-1 ${isLoadingRate ? 'animate-spin' : ''}`} />
-                Actualizar Cotización
-              </Button>
             </div>
 
             <div className="space-y-3">
               {/* Fila principal */}
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-5 gap-3">
                 <div>
                   <Label className="text-[11px] text-gray-600">Moneda</Label>
                   <div className="h-9 bg-gray-200 rounded px-3 flex items-center text-[12px] font-semibold text-gray-700">
@@ -139,7 +134,16 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
                   <p className="text-[9px] text-gray-500 mt-1">Siempre en pesos</p>
                 </div>
                 <div>
-                  <Label className="text-[11px] text-gray-600">Cotización USD Histórica</Label>
+                  <Label className="text-[11px] text-gray-600">Fecha de referencia</Label>
+                  <Input
+                    className="h-9 text-[12px] bg-white"
+                    type="date"
+                    value={formData.infoauto_date}
+                    onChange={(e) => handleChange('infoauto_date', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-gray-600">Cotización al momento</Label>
                   <div className="flex gap-1">
                     <Input
                       className="h-9 text-[12px] bg-white flex-1"
@@ -176,8 +180,8 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
 
               {/* Información adicional */}
               <div className="text-[10px] text-gray-600 bg-orange-50 p-2 rounded">
-                <strong>Precio InfoAuto:</strong> Siempre pactado en pesos (ARS) con cotización histórica del momento de actualización.
-                Muestra cuánto valía en dólares cuando se actualizó el precio.
+                <strong>Precio InfoAuto:</strong> Siempre pactado en pesos (ARS). La fecha permite asociar la cotización histórica correcta
+                y ver cuánto valía realmente en dólares en ese momento. Cuando tengas API histórica, se podrá automatizar.
               </div>
             </div>
           </div>
