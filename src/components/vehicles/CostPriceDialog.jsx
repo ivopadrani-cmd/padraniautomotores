@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Plus, Trash2, Edit } from "lucide-react";
+import { Save, Plus, Trash2, Edit, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import ExpenseEditDialog from "./ExpenseEditDialog";
+import PriceManualDialog from "./PriceManualDialog";
 
 // Función para convertir valores entre monedas
 const convertValue = (value, currency, exchangeRate, targetCurrency) => {
@@ -21,13 +22,15 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [formData, setFormData] = useState({
     cost_value: '',
     cost_currency: 'ARS',
-    cost_exchange_rate: ''
+    cost_exchange_rate: '',
+    cost_date: ''
   });
   const [expenses, setExpenses] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
   const [editingExpense, setEditingExpense] = useState(null);
   const [editingExpenseIndex, setEditingExpenseIndex] = useState(-1);
+  const [showManual, setShowManual] = useState(false);
 
 
   // Calcular conversión automática
@@ -45,7 +48,8 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       setFormData({
         cost_value: vehicle.cost_value || '',
         cost_currency: vehicle.cost_currency || 'ARS',
-        cost_exchange_rate: vehicle.cost_exchange_rate || currentBlueRate.toString()
+        cost_exchange_rate: vehicle.cost_exchange_rate || currentBlueRate.toString(),
+        cost_date: vehicle.cost_date || new Date().toISOString().split('T')[0]
       });
       setExpenses(vehicle.expenses || []);
       setHasChanges(false);
@@ -120,6 +124,10 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
     if (processedData.cost_exchange_rate !== '' && processedData.cost_exchange_rate !== undefined) {
       processedData.cost_exchange_rate = parseFloat(processedData.cost_exchange_rate) || 1200;
     }
+    // Procesar fecha
+    if (processedData.cost_date !== '' && processedData.cost_date !== undefined) {
+      processedData.cost_date = processedData.cost_date;
+    }
 
     try {
       await onSubmit(processedData);
@@ -144,8 +152,21 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
     <Dialog open={open} onOpenChange={handleCancel}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Editar Costo Total</DialogTitle>
-          <p className="text-sm text-gray-500">{vehicle?.brand} {vehicle?.model} {vehicle?.year}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-lg font-semibold">Editar Costo Total</DialogTitle>
+              <p className="text-sm text-gray-500">{vehicle?.brand} {vehicle?.model} {vehicle?.year}</p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowManual(true)}
+              className="h-8 w-8 p-0"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </Button>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -157,7 +178,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
             <div className="space-y-3">
               {/* Fila principal */}
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-5 gap-3">
                 <div>
                   <Label className="text-[11px] text-gray-600">Moneda</Label>
                   <Select value={formData.cost_currency} onValueChange={(v) => handleChange('cost_currency', v)}>
@@ -169,7 +190,16 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-[11px] text-gray-600">Al momento de la toma</Label>
+                  <Label className="text-[11px] text-gray-600">Fecha</Label>
+                  <Input
+                    className="h-9 text-[12px] bg-white"
+                    type="date"
+                    value={formData.cost_date}
+                    onChange={(e) => handleChange('cost_date', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-gray-600">Cotización USD al momento</Label>
                   <div className="flex gap-1">
                     <Input
                       className="h-9 text-[12px] bg-white flex-1"
@@ -322,6 +352,12 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
           onSave={handleSaveExpense}
           onDelete={handleDeleteExpense}
           currentBlueRate={currentBlueRate}
+        />
+
+        {/* Modal del manual */}
+        <PriceManualDialog
+          open={showManual}
+          onOpenChange={setShowManual}
         />
       </DialogContent>
     </Dialog>

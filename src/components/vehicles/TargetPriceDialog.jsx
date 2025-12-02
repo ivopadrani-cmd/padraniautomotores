@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { HelpCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import PriceManualDialog from "./PriceManualDialog";
 
 export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmit, isLoading }) {
   const [formData, setFormData] = useState({
     target_price_value: '',
-    target_price_currency: 'ARS',
+    target_price_currency: 'USD', // Siempre USD
     target_price_exchange_rate: ''
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
+  const [showManual, setShowManual] = useState(false);
 
 
   // Calcular conversión automática
@@ -31,7 +34,7 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
     if (open && vehicle) {
       setFormData({
         target_price_value: vehicle.target_price_value || '',
-        target_price_currency: vehicle.target_price_currency || 'ARS',
+        target_price_currency: 'USD', // Siempre USD
         target_price_exchange_rate: vehicle.target_price_exchange_rate || ''
       });
       setHasChanges(false);
@@ -39,16 +42,7 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
   }, [open, vehicle]);
 
   const handleChange = (field, value) => {
-    setFormData(prev => {
-      const newData = { ...prev, [field]: value };
-
-      // Autocompletar cotización si está vacía y se cambia la moneda
-      if (field === 'target_price_currency' && (!prev.target_price_exchange_rate || prev.target_price_exchange_rate === '')) {
-        newData.target_price_exchange_rate = currentBlueRate.toString();
-      }
-
-      return newData;
-    });
+    setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
 
@@ -88,8 +82,21 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
     <Dialog open={open} onOpenChange={handleCancel}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Editar Precio Objetivo</DialogTitle>
-          <p className="text-sm text-gray-500">{vehicle?.brand} {vehicle?.model} {vehicle?.year}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-lg font-semibold">Editar Precio Objetivo</DialogTitle>
+              <p className="text-sm text-gray-500">{vehicle?.brand} {vehicle?.model} {vehicle?.year}</p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowManual(true)}
+              className="h-8 w-8 p-0"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </Button>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -103,17 +110,13 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label className="text-[11px] text-cyan-700">Moneda</Label>
-                  <Select value={formData.target_price_currency} onValueChange={(v) => handleChange('target_price_currency', v)}>
-                    <SelectTrigger className="h-9 text-[12px] bg-white"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ARS" className="text-[12px]">ARS - Pesos</SelectItem>
-                      <SelectItem value="USD" className="text-[12px]">USD - Dólares</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="h-9 bg-cyan-100 rounded px-3 flex items-center text-[12px] font-semibold text-cyan-700">
+                    USD - Dólares
+                  </div>
                 </div>
                 <div>
                   <Label className="text-[11px] text-cyan-700">
-                    Precio objetivo ({formData.target_price_currency})
+                    Precio objetivo (USD)
                   </Label>
                   <Input
                     className="h-9 text-[13px] font-semibold bg-white"
@@ -126,12 +129,12 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
                 </div>
                 <div>
                   <Label className="text-[11px] text-cyan-700">
-                    Conversión actual
+                    Equivalente en pesos
                   </Label>
                   <div className="h-9 bg-cyan-100 rounded px-3 flex items-center justify-between">
                     <span className="text-[11px] font-medium text-cyan-700">
                       {formData.target_price_value ?
-                        `${formData.target_price_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.target_price_value), formData.target_price_currency, currentBlueRate)?.toLocaleString(formData.target_price_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
+                        `$${calculateConversion(parseFloat(formData.target_price_value), 'USD', currentBlueRate)?.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
                         : '-'
                       }
                     </span>
@@ -142,10 +145,8 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
 
               {/* Información adicional */}
               <div className="text-[10px] text-cyan-700 bg-cyan-100 p-2 rounded">
-                <strong>Precio Objetivo:</strong> {formData.target_price_currency === 'USD' ?
-                  'Mínimo de venta fijo en dólares, se convierte automáticamente a pesos.' :
-                  'Mínimo de venta fijo en pesos, equivalente en dólares se calcula con cotización actual.'
-                } Sirve para organizar ganancias mínimas esperadas.
+                <strong>Precio Objetivo:</strong> Mínimo de venta fijo en dólares. Se convierte automáticamente a pesos según cotización actual.
+                Te permite saber cuánto deberías cobrar en pesos para mantener el margen deseado.
               </div>
             </div>
           </div>
@@ -168,6 +169,12 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
             </Button>
           </div>
         </form>
+
+        {/* Modal del manual */}
+        <PriceManualDialog
+          open={showManual}
+          onOpenChange={setShowManual}
+        />
       </DialogContent>
     </Dialog>
   );

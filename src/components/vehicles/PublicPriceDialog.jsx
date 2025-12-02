@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { HelpCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save } from "lucide-react";
+import { Save, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import PriceManualDialog from "./PriceManualDialog";
 
 export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmit, isLoading }) {
   const [formData, setFormData] = useState({
@@ -15,6 +17,7 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
+  const [showManual, setShowManual] = useState(false);
 
 
   // Calcular conversión automática
@@ -88,8 +91,21 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
     <Dialog open={open} onOpenChange={handleCancel}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Editar Precio Público</DialogTitle>
-          <p className="text-sm text-gray-500">{vehicle?.brand} {vehicle?.model} {vehicle?.year}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-lg font-semibold">Editar Precio Público</DialogTitle>
+              <p className="text-sm text-gray-500">{vehicle?.brand} {vehicle?.model} {vehicle?.year}</p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowManual(true)}
+              className="h-8 w-8 p-0"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </Button>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -168,6 +184,12 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
             </Button>
           </div>
         </form>
+
+        {/* Modal del manual */}
+        <PriceManualDialog
+          open={showManual}
+          onOpenChange={setShowManual}
+        />
       </DialogContent>
     </Dialog>
   );
