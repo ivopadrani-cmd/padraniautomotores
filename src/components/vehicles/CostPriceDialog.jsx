@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Save, Plus, Trash2, Edit, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import ExpenseEditDialog from "./ExpenseEditDialog";
+import { useDollarHistory } from "@/hooks/useDollarHistory";
 import PriceManualDialog from "./PriceManualDialog";
 
 // Función para convertir valores entre monedas
@@ -32,6 +33,8 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [editingExpenseIndex, setEditingExpenseIndex] = useState(-1);
   const [showManual, setShowManual] = useState(false);
 
+  const { getHistoricalRate } = useDollarHistory();
+
 
   // Calcular conversión automática
   const calculateConversion = (value, currency, exchangeRate) => {
@@ -55,6 +58,22 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       setHasChanges(false);
     }
   }, [open, vehicle, currentBlueRate]);
+
+  // Efecto para buscar cotización histórica cuando cambia la fecha
+  useEffect(() => {
+    const updateHistoricalRate = async () => {
+      if (formData.cost_date && open) {
+        const historicalRate = await getHistoricalRate(formData.cost_date);
+        if (historicalRate && historicalRate !== parseFloat(formData.cost_exchange_rate)) {
+          setFormData(prev => ({ ...prev, cost_exchange_rate: historicalRate.toString() }));
+        }
+      }
+    };
+
+    // Pequeño delay para evitar llamadas excesivas mientras el usuario escribe
+    const timeoutId = setTimeout(updateHistoricalRate, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.cost_date, getHistoricalRate, open]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {

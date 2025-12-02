@@ -5,8 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Trash2 } from "lucide-react";
+import { useDollarHistory } from "@/hooks/useDollarHistory";
 
-export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete, currentBlueRate }) {
+export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete, currentBlueRate = 1200 }) {
+  const { getHistoricalRate } = useDollarHistory();
+
   const [formData, setFormData] = useState({
     type: 'GESTORIA',
     value: '',
@@ -38,6 +41,22 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
       });
     }
   }, [expense, currentBlueRate]);
+
+  // Efecto para buscar cotización histórica cuando cambia la fecha
+  useEffect(() => {
+    const updateHistoricalRate = async () => {
+      if (formData.date) {
+        const historicalRate = await getHistoricalRate(formData.date);
+        if (historicalRate && historicalRate !== parseFloat(formData.exchange_rate)) {
+          setFormData(prev => ({ ...prev, exchange_rate: historicalRate.toString() }));
+        }
+      }
+    };
+
+    // Pequeño delay para evitar llamadas excesivas mientras el usuario escribe
+    const timeoutId = setTimeout(updateHistoricalRate, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.date, getHistoricalRate]);
 
   const handleSave = () => {
     onSave(index, {

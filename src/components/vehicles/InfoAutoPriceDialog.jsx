@@ -56,7 +56,7 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
           infoauto_value: vehicle.infoauto_value || '',
           infoauto_currency: vehicle.infoauto_currency || 'ARS', // Siempre ARS
           infoauto_exchange_rate: vehicle.infoauto_exchange_rate || currentRate?.toString() || '',
-          infoauto_date: vehicle.infoauto_date || new Date().toISOString().split('T')[0] // Fecha actual por defecto
+          infoauto_date: vehicle.infoauto_date || '' // Solo fecha guardada, no automática
         });
         setHasChanges(false);
       });

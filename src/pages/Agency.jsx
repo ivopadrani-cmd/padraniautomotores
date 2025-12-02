@@ -9,8 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, User, Edit, Trash2, Phone, Mail, Building2, FileText, DollarSign, RefreshCw } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Search, User, Edit, Trash2, Phone, Mail, Building2, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import ClauseTemplates from "../components/settings/ClauseTemplates";
@@ -42,9 +41,6 @@ export default function Agency() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedBranches, setSelectedBranches] = useState([]);
   const [viewingUser, setViewingUser] = useState(null);
-  const [showRateForm, setShowRateForm] = useState(false);
-  const [editingRate, setEditingRate] = useState(null);
-  const [rateFormData, setRateFormData] = useState({ rate_date: new Date().toISOString().split('T')[0], rate_type: 'Diaria', usd_rate: '', source: 'Manual' });
   const [agencyFormData, setAgencyFormData] = useState({
     business_name: '', legal_name: '', cuit: '', representative_name: '', representative_dni: '',
     address: '', city: '', province: '', postal_code: '', phone: '', email: '', logo_url: ''
@@ -54,7 +50,6 @@ export default function Agency() {
 
   const { data: users = [], isLoading: loadingUsers } = useQuery({ queryKey: ['sellers'], queryFn: () => base44.entities.Seller.list() });
   const { data: branches = [], isLoading: loadingBranches } = useQuery({ queryKey: ['branches'], queryFn: () => base44.entities.Branch.list() });
-  const { data: rates = [], isLoading: loadingRates } = useQuery({ queryKey: ['exchange-rates'], queryFn: () => base44.entities.ExchangeRate.list('-rate_date') });
   const { data: agencySettings, isLoading: loadingAgency } = useQuery({ 
     queryKey: ['agency-settings'], 
     queryFn: async () => { const settings = await base44.entities.AgencySettings.list(); return settings[0] || null; } 
@@ -109,20 +104,6 @@ export default function Agency() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['branches'] }); toast.success("Sucursal eliminada"); },
   });
 
-  const createRateMutation = useMutation({
-    mutationFn: (data) => base44.entities.ExchangeRate.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exchange-rates'] }); resetRateForm(); toast.success("Cotización guardada"); },
-  });
-
-  const updateRateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.ExchangeRate.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exchange-rates'] }); resetRateForm(); toast.success("Cotización actualizada"); },
-  });
-
-  const deleteRateMutation = useMutation({
-    mutationFn: (id) => base44.entities.ExchangeRate.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['exchange-rates'] }); toast.success("Cotización eliminada"); },
-  });
 
   const saveAgencyMutation = useMutation({
     mutationFn: async (data) => {
@@ -155,20 +136,15 @@ export default function Agency() {
 
   const resetUserForm = () => { setShowUserForm(false); setEditingUser(null); setUserFormData({ full_name: '', phone: '', email: '', role: 'Vendedor', is_active: true }); };
   const resetBranchForm = () => { setShowBranchForm(false); setEditingBranch(null); setBranchFormData({ name: '', address: '', city: '', province: '', phone: '', is_main: false }); };
-  const resetRateForm = () => { setShowRateForm(false); setEditingRate(null); setRateFormData({ rate_date: new Date().toISOString().split('T')[0], rate_type: 'Diaria', usd_rate: '', source: 'Manual' }); };
+  const resetUserForm = () => { setShowUserForm(false); setEditingUser(null); setUserFormData({ full_name: '', phone: '', email: '', role: 'Vendedor', is_active: true }); };
+  const resetBranchForm = () => { setShowBranchForm(false); setEditingBranch(null); setBranchFormData({ name: '', address: '', city: '', province: '', phone: '', is_main: false }); };
 
   const handleEditUser = (user) => { setEditingUser(user); setUserFormData({ full_name: user.full_name, phone: user.phone || '', email: user.email || '', role: user.role || 'Vendedor', is_active: user.is_active !== false }); setShowUserForm(true); };
   const handleEditBranch = (branch) => { setEditingBranch(branch); setBranchFormData({ name: branch.name, address: branch.address || '', city: branch.city || '', province: branch.province || '', phone: branch.phone || '', is_main: branch.is_main || false }); setShowBranchForm(true); };
-  const handleEditRate = (rate) => { setEditingRate(rate); setRateFormData({ rate_date: rate.rate_date, rate_type: rate.rate_type, usd_rate: rate.usd_rate?.toString() || '', source: rate.source || 'Manual' }); setShowRateForm(true); };
 
   const handleSubmitUser = (e) => { e.preventDefault(); editingUser ? updateUserMutation.mutate({ id: editingUser.id, data: userFormData }) : createUserMutation.mutate(userFormData); };
   const handleSubmitBranch = (e) => { e.preventDefault(); editingBranch ? updateBranchMutation.mutate({ id: editingBranch.id, data: branchFormData }) : createBranchMutation.mutate(branchFormData); };
-  const handleSubmitRate = (e) => { e.preventDefault(); const data = { ...rateFormData, usd_rate: parseFloat(rateFormData.usd_rate) }; editingRate ? updateRateMutation.mutate({ id: editingRate.id, data }) : createRateMutation.mutate(data); };
 
-  // Get current rates
-  const todayRate = rates.find(r => r.rate_type === 'Diaria' && r.rate_date === new Date().toISOString().split('T')[0]);
-  const latestDailyRate = rates.find(r => r.rate_type === 'Diaria');
-  const currentMonthInfoAutoRate = rates.find(r => r.rate_type === 'Mensual InfoAuto' && r.rate_date?.startsWith(new Date().toISOString().slice(0, 7)));
 
   const filteredUsers = users.filter(u => u.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || u.phone?.includes(searchTerm) || u.email?.toLowerCase().includes(searchTerm.toLowerCase()));
   const filteredBranches = branches.filter(b => b.name?.toLowerCase().includes(searchTerm.toLowerCase()) || b.city?.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -188,7 +164,6 @@ export default function Agency() {
             <TabsTrigger value="agency" className="text-[11px]">Datos Agencia</TabsTrigger>
             <TabsTrigger value="users" className="text-[11px]">Usuarios</TabsTrigger>
             <TabsTrigger value="branches" className="text-[11px]">Sucursales</TabsTrigger>
-            <TabsTrigger value="rates" className="text-[11px]">Cotizaciones</TabsTrigger>
             <TabsTrigger value="templates" className="text-[11px]">Plantillas</TabsTrigger>
           </TabsList>
 
@@ -392,113 +367,6 @@ export default function Agency() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="rates" className="mt-3 space-y-3">
-            {/* Current rates summary */}
-            <div className="grid grid-cols-2 gap-3">
-              <Card className="shadow-sm bg-gray-900 text-white">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] text-gray-400">Cotización del día</p>
-                      <p className="text-2xl font-bold">${latestDailyRate?.usd_rate?.toLocaleString('es-AR') || '-'}</p>
-                      {latestDailyRate && <p className="text-[10px] text-gray-400">{format(new Date(latestDailyRate.rate_date), 'dd/MM/yy')}</p>}
-                    </div>
-                    <DollarSign className="w-8 h-8 text-gray-600" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] text-gray-500">InfoAuto (Mensual)</p>
-                      <p className="text-2xl font-bold text-gray-900">${currentMonthInfoAutoRate?.usd_rate?.toLocaleString('es-AR') || '-'}</p>
-                      {currentMonthInfoAutoRate && <p className="text-[10px] text-gray-400">{format(new Date(currentMonthInfoAutoRate.rate_date), 'MMMM yyyy')}</p>}
-                    </div>
-                    <RefreshCw className="w-8 h-8 text-gray-300" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] text-gray-500">Historial de cotizaciones</p>
-              <Button onClick={() => setShowRateForm(true)} className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
-                <Plus className="w-3.5 h-3.5 mr-1.5" /> Nueva cotización
-              </Button>
-            </div>
-
-            <Dialog open={showRateForm} onOpenChange={(open) => { if (!open) resetRateForm(); }}>
-              <DialogContent className="max-w-md p-0">
-                <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg"><DialogTitle className="text-sm font-semibold">{editingRate ? 'Editar' : 'Nueva'} Cotización</DialogTitle></DialogHeader>
-                <form onSubmit={handleSubmitRate} className="p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div><Label className={lbl}>Fecha *</Label><Input className={inp} type="date" value={rateFormData.rate_date} onChange={(e) => setRateFormData({ ...rateFormData, rate_date: e.target.value })} required /></div>
-                    <div>
-                      <Label className={lbl}>Tipo *</Label>
-                      <Select value={rateFormData.rate_type} onValueChange={(v) => setRateFormData({ ...rateFormData, rate_type: v })}>
-                        <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Diaria" className="text-[11px]">Diaria</SelectItem>
-                          <SelectItem value="Mensual InfoAuto" className="text-[11px]">Mensual InfoAuto</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div><Label className={lbl}>Cotización USD *</Label><Input className={inp} type="number" step="0.01" value={rateFormData.usd_rate} onChange={(e) => setRateFormData({ ...rateFormData, usd_rate: e.target.value })} required placeholder="Ej: 1200" /></div>
-                  <div><Label className={lbl}>Fuente</Label><Input className={inp} value={rateFormData.source} onChange={(e) => setRateFormData({ ...rateFormData, source: e.target.value })} placeholder="Ej: Banco Nación, Dólar Blue..." /></div>
-                  <div className="flex justify-end gap-2 pt-2 border-t">
-                    <Button type="button" variant="outline" onClick={resetRateForm} className="h-8 text-[11px]">Cancelar</Button>
-                    <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">{editingRate ? 'Guardar' : 'Crear'}</Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-
-            <Card className="shadow-sm">
-              <CardContent className="p-0">
-                {loadingRates ? (
-                  <div className="text-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600 mx-auto" /></div>
-                ) : rates.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-[11px]">
-                      <thead className="border-b">
-                        <tr>
-                          <th className="text-left px-4 py-2 font-semibold text-gray-900">Fecha</th>
-                          <th className="text-left px-4 py-2 font-semibold text-gray-900">Tipo</th>
-                          <th className="text-left px-4 py-2 font-semibold text-gray-900">Cotización</th>
-                          <th className="text-left px-4 py-2 font-semibold text-gray-900">Fuente</th>
-                          <th className="px-4 py-2 w-20"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rates.slice(0, 30).map(rate => (
-                          <tr key={rate.id} className="border-b hover:bg-gray-50">
-                            <td className="px-4 py-2">{format(new Date(rate.rate_date), 'dd/MM/yy')}</td>
-                            <td className="px-4 py-2">
-                              <Badge className={`text-[9px] ${rate.rate_type === 'Diaria' ? 'bg-gray-900 text-white' : 'bg-cyan-100 text-cyan-700'}`}>
-                                {rate.rate_type}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-2 font-bold">${rate.usd_rate?.toLocaleString('es-AR')}</td>
-                            <td className="px-4 py-2 text-gray-500">{rate.source || '-'}</td>
-                            <td className="px-4 py-2">
-                              <div className="flex gap-0.5">
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditRate(rate)}><Edit className="w-3 h-3" /></Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { if (window.confirm('¿Eliminar?')) deleteRateMutation.mutate(rate.id); }}><Trash2 className="w-3 h-3 text-red-500" /></Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-10"><DollarSign className="w-8 h-8 text-gray-300 mx-auto mb-2" /><p className="text-[11px] text-gray-500">Sin cotizaciones</p></div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="templates" className="mt-3">
             <ClauseTemplates />
