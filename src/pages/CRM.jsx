@@ -278,7 +278,7 @@ export default function CRM() {
 
   const handleSubmitLead = (e) => {
     e.preventDefault();
-    const data = { ...leadFormData, budget: leadFormData.budget ? parseFloat(leadFormData.budget) : null };
+    const data = { ...leadFormData, budget: leadFormData.budget || null };
     editingLead ? updateLeadMutation.mutate({ id: editingLead.id, data }) : createLeadMutation.mutate(data);
   };
 
@@ -551,7 +551,7 @@ export default function CRM() {
                   </div>
                   <div>
                     <Label className={lbl}>Presupuesto</Label>
-                    <Input className={inp} placeholder="Ej: 10000000" value={leadFormData.budget} onChange={(e) => setLeadFormData({ ...leadFormData, budget: e.target.value })} />
+                    <Input className={inp} placeholder="Ej: 15.000.000 - 18.000.000" value={leadFormData.budget} onChange={(e) => setLeadFormData({ ...leadFormData, budget: e.target.value })} />
                   </div>
                   
                   <div>

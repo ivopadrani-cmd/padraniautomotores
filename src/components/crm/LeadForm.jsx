@@ -27,7 +27,7 @@ export default function LeadForm({ lead, onSubmit, onCancel, isLoading }) {
     client_email: lead?.client_email || '',
     interested_vehicles: lead?.interested_vehicles || [],
     other_interests: lead?.other_interests || '',
-    budget: lead?.budget || 0,
+    budget: lead?.budget || '',
     preferred_contact: lead?.preferred_contact || 'WhatsApp',
     status: lead?.status || 'Nuevo',
     interest_level: lead?.interest_level || 'Media',
@@ -286,7 +286,7 @@ export default function LeadForm({ lead, onSubmit, onCancel, isLoading }) {
                 </div>
                 <div>
                   <Label className={lbl}>Presupuesto</Label>
-                  <Input className={inp} type="number" value={formData.budget} onChange={(e) => handleChange('budget', parseFloat(e.target.value) || 0)} />
+                  <Input className={inp} type="text" value={formData.budget} onChange={(e) => handleChange('budget', e.target.value)} placeholder="Ej: 15.000.000 - 18.000.000" />
                 </div>
                 <div>
                   <Label className={lbl}>Seguimiento</Label>

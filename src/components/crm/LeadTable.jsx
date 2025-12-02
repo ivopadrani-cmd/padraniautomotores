@@ -155,7 +155,7 @@ export default function LeadTable({ leads, onSelectLead }) {
                   <TableCell className="max-w-xs truncate">{lead.other_interests || '-'}</TableCell>
                 )}
                 {isColumnVisible('budget') && (
-                  <TableCell>{lead.budget > 0 ? `$${lead.budget?.toLocaleString('es-AR')}` : '-'}</TableCell>
+                  <TableCell>{lead.budget || '-'}</TableCell>
                 )}
                 {isColumnVisible('consultation_date') && (
                   <TableCell>{new Date(lead.consultation_date).toLocaleDateString('es-AR')}</TableCell>

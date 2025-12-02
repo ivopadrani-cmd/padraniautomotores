@@ -349,12 +349,12 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
                   <p className="font-medium">{lead.client_email}</p>
                 </div>
               )}
-              {lead.budget > 0 && (
+              {lead.budget && (
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-green-500" />
                   <div>
                     <p className="text-gray-400 text-[9px]">Presupuesto</p>
-                    <p className="font-bold text-green-600">${lead.budget?.toLocaleString('es-AR')}</p>
+                    <p className="font-bold text-green-600">{lead.budget}</p>
                   </div>
                 </div>
               )}
