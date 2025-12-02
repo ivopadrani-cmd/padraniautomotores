@@ -201,7 +201,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       }
       return sale;
     },
-    onSuccess: (sale) => {
+    onSuccess: async (sale) => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       queryClient.invalidateQueries({ queryKey: ['vehicle-sales'] });
