@@ -4,79 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Plus, Trash2, RefreshCw } from "lucide-react";
+import { Save, Plus, Trash2, RefreshCw, Edit } from "lucide-react";
 import { toast } from "sonner";
-
-const ExpenseRow = ({ expense, index, onChange, onDelete }) => {
-  return (
-    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-      <Select
-        value={expense.type || 'GESTORIA'}
-        onValueChange={(value) => onChange(index, 'type', value)}
-        className="w-24"
-      >
-        <SelectTrigger className="h-8 text-[11px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="GESTORIA" className="text-[11px]">GESTORIA</SelectItem>
-          <SelectItem value="TALLER" className="text-[11px]">TALLER</SelectItem>
-          <SelectItem value="CHAPISTA" className="text-[11px]">CHAPISTA</SelectItem>
-          <SelectItem value="LIMPIEZA" className="text-[11px]">LIMPIEZA</SelectItem>
-          <SelectItem value="VERIFICACION" className="text-[11px]">VERIFICACION</SelectItem>
-          <SelectItem value="MECANICA" className="text-[11px]">MECANICA</SelectItem>
-          <SelectItem value="OTRO" className="text-[11px]">OTRO</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Input
-        placeholder="Descripción"
-        value={expense.description || ''}
-        onChange={(e) => onChange(index, 'description', e.target.value)}
-        className="h-8 text-[11px] flex-1"
-      />
-
-      <Select
-        value={expense.currency || 'ARS'}
-        onValueChange={(value) => onChange(index, 'currency', value)}
-        className="w-16"
-      >
-        <SelectTrigger className="h-8 text-[11px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="ARS" className="text-[11px]">ARS</SelectItem>
-          <SelectItem value="USD" className="text-[11px]">USD</SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Input
-        type="number"
-        step="0.01"
-        placeholder="Valor"
-        value={expense.value || ''}
-        onChange={(e) => onChange(index, 'value', e.target.value)}
-        className="h-8 text-[11px] w-20"
-      />
-
-      <Input
-        placeholder="Cotización"
-        value={expense.exchange_rate || ''}
-        onChange={(e) => onChange(index, 'exchange_rate', e.target.value)}
-        className="h-8 text-[11px] w-20"
-      />
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-red-500 hover:bg-red-50"
-        onClick={() => onDelete(index)}
-      >
-        <Trash2 className="w-3 h-3" />
-      </Button>
-    </div>
-  );
-};
+import ExpenseEditDialog from "./ExpenseEditDialog";
 
 export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit, isLoading }) {
   const [formData, setFormData] = useState({
@@ -88,6 +18,8 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
   const [isLoadingRate, setIsLoadingRate] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editingExpenseIndex, setEditingExpenseIndex] = useState(-1);
 
   // Función para obtener cotización BLUE actual
   const fetchCurrentBlueRate = async () => {
@@ -148,23 +80,27 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
     setHasChanges(true);
   };
 
-  const handleExpenseChange = (index, field, value) => {
-    const newExpenses = [...expenses];
-    newExpenses[index] = { ...newExpenses[index], [field]: value };
-    setExpenses(newExpenses);
-    setHasChanges(true);
-  };
 
   const handleAddExpense = () => {
-    const newExpense = {
-      type: 'GESTORIA',
-      description: '',
-      currency: 'ARS',
-      value: '',
-      exchange_rate: '1200',
-      date: new Date().toISOString().split('T')[0]
-    };
-    setExpenses([...expenses, newExpense]);
+    setEditingExpense({});
+    setEditingExpenseIndex(-1);
+  };
+
+  const handleEditExpense = (index) => {
+    setEditingExpense(expenses[index]);
+    setEditingExpenseIndex(index);
+  };
+
+  const handleSaveExpense = (index, expenseData) => {
+    if (index === -1) {
+      // Nuevo gasto
+      setExpenses([...expenses, expenseData]);
+    } else {
+      // Editar gasto existente
+      const newExpenses = [...expenses];
+      newExpenses[index] = expenseData;
+      setExpenses(newExpenses);
+    }
     setHasChanges(true);
   };
 
@@ -253,9 +189,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-[11px] text-gray-600">
-                    {formData.cost_currency === 'USD' ? 'Cotización Pactada' : 'Cotización USD'}
-                  </Label>
+                  <Label className="text-[11px] text-gray-600">Cotización USD</Label>
                   <div className="flex gap-1">
                     <Input
                       className="h-9 text-[12px] bg-white flex-1"
@@ -270,7 +204,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                 </div>
                 <div>
                   <Label className="text-[11px] text-gray-600">
-                    Valor Pactado ({formData.cost_currency})
+                    Valor de toma ({formData.cost_currency})
                   </Label>
                   <Input
                     className="h-9 text-[13px] font-semibold bg-white"
@@ -283,26 +217,29 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                 </div>
                 <div>
                   <Label className="text-[11px] text-gray-600">
-                    Valor Actual ({formData.cost_currency === 'ARS' ? 'USD' : 'ARS'})
+                    Conversión actual
                   </Label>
-                  <div className="h-9 bg-gray-200 rounded px-3 flex items-center text-[13px] font-semibold text-gray-700">
-                    {formData.cost_value && formData.cost_exchange_rate ?
-                      `${formData.cost_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.cost_value), formData.cost_currency, parseFloat(formData.cost_exchange_rate))?.toLocaleString(formData.cost_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
-                      : '-'
-                    }
+                  <div className="h-9 bg-blue-50 rounded px-3 flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-blue-700">
+                      {formData.cost_value ?
+                        `${formData.cost_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.cost_value), formData.cost_currency, currentBlueRate)?.toLocaleString(formData.cost_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
+                        : '-'
+                      }
+                    </span>
+                    <span className="text-[9px] text-blue-600">BLUE actual</span>
                   </div>
                 </div>
               </div>
 
-              {/* Información adicional */}
+              {/* Información clara */}
               <div className="text-[10px] text-gray-600 bg-blue-50 p-2 rounded">
-                <strong>Valor de Toma:</strong> {formData.cost_currency === 'USD' ?
-                  `Pactado en U$D ${formData.cost_value || '0'} con cotización ${formData.cost_exchange_rate || 'actual'}.
-                  En tabla se muestra: U$D ${formData.cost_value || '0'} × $${currentBlueRate.toLocaleString('es-AR')} = $${formData.cost_value ? (parseFloat(formData.cost_value) * currentBlueRate).toLocaleString('es-AR', { maximumFractionDigits: 0 }) : '0'}`
-                  :
-                  `Pactado en $${formData.cost_value || '0'} con cotización ${formData.cost_exchange_rate || 'actual'}.
-                  Equivalente actual: U$D ${formData.cost_value && formData.cost_exchange_rate ? (parseFloat(formData.cost_value) / parseFloat(formData.cost_exchange_rate)).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '0'}`
-                }
+                <div className="grid grid-cols-2 gap-2">
+                  <div><strong>Valor pactado:</strong> {formData.cost_currency === 'USD' ? `U$D ${formData.cost_value || '0'}` : `$${formData.cost_value || '0'}`}</div>
+                  <div><strong>En tabla:</strong> {formData.cost_currency === 'USD' ?
+                    `$${formData.cost_value ? (parseFloat(formData.cost_value) * currentBlueRate).toLocaleString('es-AR', { maximumFractionDigits: 0 }) : '0'} ARS` :
+                    `U$D ${formData.cost_value ? (parseFloat(formData.cost_value) / currentBlueRate).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '0'}`
+                  }</div>
+                </div>
               </div>
             </div>
           </div>
@@ -310,28 +247,81 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
           {/* Gastos */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <h3 className="text-sm font-semibold text-gray-700">GASTOS ({expenses.length})</h3>
-              <Button type="button" variant="outline" size="sm" className="h-8 text-[11px]" onClick={handleAddExpense}>
-                <Plus className="w-3 h-3 mr-1" />Agregar Gasto
+              <h3 className="text-sm font-semibold text-gray-700">Gastos</h3>
+              <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={handleAddExpense}>
+                + Agregar
               </Button>
             </div>
 
             <div className="space-y-2 max-h-60 overflow-y-auto">
-              {expenses.length === 0 ? (
-                <div className="text-center py-4 text-gray-500 text-sm">
-                  No hay gastos registrados
-                </div>
-              ) : (
-                expenses.map((expense, index) => (
-                  <ExpenseRow
-                    key={index}
-                    expense={expense}
-                    index={index}
-                    onChange={handleExpenseChange}
-                    onDelete={handleDeleteExpense}
-                  />
-                ))
-              )}
+              {/* Mostrar valor de toma primero */}
+              {(() => {
+                const valorTomaArs = convertValue(parseFloat(formData.cost_value) || 0, formData.cost_currency, currentBlueRate, 'ARS');
+                const valorTomaUsd = formData.cost_currency === 'USD' ? parseFloat(formData.cost_value) || 0 : valorTomaArs / currentBlueRate;
+                return (
+                  <div className="flex justify-between items-center p-2 bg-gray-100 rounded">
+                    <span className="text-[12px] text-gray-600">Valor de toma</span>
+                    <div className="text-right">
+                      <span className="font-bold text-[13px] text-gray-900 block">
+                        ${valorTomaArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[10px] font-semibold text-cyan-500">
+                        U$D {valorTomaUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Lista de gastos */}
+              {expenses.map((exp, i) => {
+                const expArs = convertValue(exp.value, exp.currency, exp.exchange_rate, 'ARS');
+                const expUsd = exp.currency === 'USD' ? exp.value : (exp.exchange_rate ? exp.value / exp.exchange_rate : exp.value / currentBlueRate);
+                return (
+                  <div key={i} className="flex justify-between items-center p-2 bg-gray-50 rounded group hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-700 text-[11px]">{exp.type}</span>
+                      {exp.description && <span className="text-gray-400 text-[10px]">{exp.description}</span>}
+                    </div>
+                    <div className="flex items-center">
+                      <div className="text-right">
+                        <span className="font-semibold text-[12px] block">
+                          ${expArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                        </span>
+                        <span className="text-[10px] font-semibold text-cyan-500">
+                          U$D {expUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div className="flex gap-0.5 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditExpense(i)}>
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDeleteExpense(i)}>
+                          <Trash2 className="w-3 h-3 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Total de gastos */}
+              {expenses.length > 0 && (() => {
+                const totalGastosArs = expenses.reduce((sum, exp) => sum + convertValue(exp.value, exp.currency, exp.exchange_rate, 'ARS'), 0);
+                const totalGastosUsd = expenses.reduce((sum, exp) => {
+                  const expArs = convertValue(exp.value, exp.currency, exp.exchange_rate, 'ARS');
+                  return sum + (expArs / currentBlueRate);
+                }, 0);
+                return (
+                  <div className="flex justify-between items-center font-bold pt-3 mt-2 border-t">
+                    <span className="text-gray-800 text-[13px]">Total gastos</span>
+                    <div className="text-right">
+                      <span className="text-[14px] block">${totalGastosArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</span>
+                      <span className="text-[10px] font-semibold text-cyan-500">U$D {totalGastosUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
@@ -353,6 +343,17 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
             </Button>
           </div>
         </form>
+
+        {/* Modal de edición de gastos */}
+        <ExpenseEditDialog
+          open={editingExpense !== null}
+          onOpenChange={(open) => { if (!open) { setEditingExpense(null); setEditingExpenseIndex(-1); } }}
+          expense={editingExpense}
+          index={editingExpenseIndex}
+          onSave={handleSaveExpense}
+          onDelete={handleDeleteExpense}
+          currentBlueRate={currentBlueRate}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Trash2 } from "lucide-react";
 
-export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete }) {
+export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete, currentBlueRate }) {
   const [formData, setFormData] = useState({
     type: 'GESTORIA',
     value: '',
     currency: 'ARS',
-    exchange_rate: '1200',
+    exchange_rate: currentBlueRate?.toString() || '1200',
     date: new Date().toISOString().split('T')[0],
     description: ''
   });
@@ -22,12 +22,22 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
         type: expense.type || 'GESTORIA',
         value: expense.value?.toString() || '',
         currency: expense.currency || 'ARS',
-        exchange_rate: expense.exchange_rate?.toString() || '1200',
+        exchange_rate: expense.exchange_rate?.toString() || currentBlueRate?.toString() || '1200',
         date: expense.date || new Date().toISOString().split('T')[0],
         description: expense.description || ''
       });
+    } else {
+      // Para nuevo gasto, usar cotización actual
+      setFormData({
+        type: 'GESTORIA',
+        value: '',
+        currency: 'ARS',
+        exchange_rate: currentBlueRate?.toString() || '1200',
+        date: new Date().toISOString().split('T')[0],
+        description: ''
+      });
     }
-  }, [expense]);
+  }, [expense, currentBlueRate]);
 
   const handleSave = () => {
     onSave(index, {
@@ -70,7 +80,16 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label className={lbl}>Moneda</Label>
-              <Select value={formData.currency} onValueChange={(v) => setFormData({...formData, currency: v})}>
+              <Select value={formData.currency} onValueChange={(v) => {
+                const newCurrency = v;
+                setFormData({
+                  ...formData,
+                  currency: newCurrency,
+                  exchange_rate: newCurrency === 'ARS' && (!formData.exchange_rate || formData.exchange_rate === '1200')
+                    ? (currentBlueRate?.toString() || '1200')
+                    : formData.exchange_rate
+                });
+              }}>
                 <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ARS" className="text-[11px]">ARS</SelectItem>
@@ -84,7 +103,20 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
             </div>
             <div>
               <Label className={lbl}>Cotización USD</Label>
-              <Input className={inp} type="number" value={formData.exchange_rate} onChange={(e) => setFormData({...formData, exchange_rate: e.target.value})} />
+              <div className="relative">
+                <Input
+                  className={inp}
+                  type="number"
+                  value={formData.exchange_rate}
+                  onChange={(e) => setFormData({...formData, exchange_rate: e.target.value})}
+                  placeholder={currentBlueRate?.toString() || '1200'}
+                />
+                {currentBlueRate && (
+                  <span className="absolute -bottom-4 left-0 text-[8px] text-gray-400">
+                    Actual: ${currentBlueRate.toLocaleString('es-AR')}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
