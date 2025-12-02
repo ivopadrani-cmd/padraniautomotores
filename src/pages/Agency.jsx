@@ -136,8 +136,6 @@ export default function Agency() {
 
   const resetUserForm = () => { setShowUserForm(false); setEditingUser(null); setUserFormData({ full_name: '', phone: '', email: '', role: 'Vendedor', is_active: true }); };
   const resetBranchForm = () => { setShowBranchForm(false); setEditingBranch(null); setBranchFormData({ name: '', address: '', city: '', province: '', phone: '', is_main: false }); };
-  const resetUserForm = () => { setShowUserForm(false); setEditingUser(null); setUserFormData({ full_name: '', phone: '', email: '', role: 'Vendedor', is_active: true }); };
-  const resetBranchForm = () => { setShowBranchForm(false); setEditingBranch(null); setBranchFormData({ name: '', address: '', city: '', province: '', phone: '', is_main: false }); };
 
   const handleEditUser = (user) => { setEditingUser(user); setUserFormData({ full_name: user.full_name, phone: user.phone || '', email: user.email || '', role: user.role || 'Vendedor', is_active: user.is_active !== false }); setShowUserForm(true); };
   const handleEditBranch = (branch) => { setEditingBranch(branch); setBranchFormData({ name: branch.name, address: branch.address || '', city: branch.city || '', province: branch.province || '', phone: branch.phone || '', is_main: branch.is_main || false }); setShowBranchForm(true); };
