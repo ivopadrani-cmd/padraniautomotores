@@ -48,6 +48,12 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
   useEffect(() => {
     if (open && vehicle) {
+      console.log('📋 Inicializando CostPriceDialog con datos:', {
+        cost_value: vehicle.cost_value,
+        cost_currency: vehicle.cost_currency,
+        cost_exchange_rate: vehicle.cost_exchange_rate,
+        cost_date: vehicle.cost_date
+      });
       setFormData({
         cost_value: vehicle.cost_value || '',
         cost_currency: vehicle.cost_currency || 'ARS',
@@ -63,9 +69,13 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   useEffect(() => {
     const updateHistoricalRate = async () => {
       if (formData.cost_date && open) {
+        console.log('🔍 Buscando cotización histórica para fecha:', formData.cost_date);
         const historicalRate = await getHistoricalRate(formData.cost_date);
+        console.log('📊 Cotización histórica encontrada:', historicalRate, 'vs actual:', formData.cost_exchange_rate);
         if (historicalRate && historicalRate !== parseFloat(formData.cost_exchange_rate)) {
+          console.log('🔄 Actualizando cotización de', formData.cost_exchange_rate, 'a', historicalRate);
           setFormData(prev => ({ ...prev, cost_exchange_rate: historicalRate.toString() }));
+          setHasChanges(true);
         }
       }
     };
@@ -188,7 +198,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className={`space-y-6 ${editingExpense !== null ? 'blur-sm pointer-events-none' : ''}`}>
           {/* Costo Principal */}
           <div className="p-4 bg-gray-100 rounded">
             <div className="mb-3">

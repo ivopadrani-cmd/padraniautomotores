@@ -250,19 +250,19 @@ export default function CRM() {
   const handleEditLead = (lead) => {
     setEditingLead(lead);
     setLeadFormData({
-      consultation_date: lead.consultation_date, 
+      consultation_date: lead.consultation_date,
       consultation_time: lead.consultation_time || '',
       source: lead.source || '',
       client_name: lead.client_name, client_phone: lead.client_phone || '',
-      client_email: lead.client_email || '', 
+      client_email: lead.client_email || '',
       interested_vehicles: lead.interested_vehicles || [],
       other_interests: lead.other_interests || '', budget: lead.budget?.toString() || '',
-      preferred_contact: lead.preferred_contact || 'WhatsApp', 
+      preferred_contact: lead.preferred_contact || 'WhatsApp',
       trade_in: lead.trade_in || { brand: '', model: '', year: '', kilometers: '' },
       status: lead.status, interest_level: lead.interest_level || 'Medio',
       observations: lead.observations || '', follow_up_date: lead.follow_up_date || '', follow_up_time: lead.follow_up_time || ''
     });
-    setShowLeadForm(true);
+    // El modal ahora se maneja en LeadDetail
   };
 
   const handleEditClient = (client) => {
@@ -352,7 +352,7 @@ export default function CRM() {
   }
 
   // Cliente ahora se maneja con navegación a /clients/:clientId
-  if (selectedLead && !showLeadForm) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} />;
+  if (selectedLead) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); setShowLeadForm(true); }} showEditModal={showLeadForm} />;
 
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
@@ -390,12 +390,93 @@ export default function CRM() {
               ) : (
                 <Button variant="outline" onClick={() => setSelectionMode(true)} className="h-8 text-[11px]">Selección múltiple</Button>
               )}
-              <Button onClick={() => setShowLeadForm(true)} className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
+              <Button onClick={() => { setEditingLead(null); setShowLeadForm(true); }} className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
                 <Plus className="w-3.5 h-3.5 mr-1.5" /> Nueva Consulta
               </Button>
             </div>
 
             <ConfirmDialog open={showConfirmLead} onOpenChange={setShowConfirmLead} onConfirm={resetLeadForm} />
+
+            {/* Modal de nueva consulta */}
+            <Dialog open={showLeadForm} onOpenChange={(open) => { if (!open) setShowConfirmLead(true); else setShowLeadForm(true); }}>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+                <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
+                  <DialogTitle className="text-sm font-semibold">Nueva Consulta</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmitLead} className="p-4 space-y-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div><Label className={lbl}>Fecha *</Label><Input className={inp} type="date" value={leadFormData.consultation_date} onChange={(e) => setLeadFormData({ ...leadFormData, consultation_date: e.target.value })} required /></div>
+                    <div><Label className={lbl}>Hora</Label>
+                      <Input
+                        className={inp}
+                        type="time"
+                        value={leadFormData.consultation_time}
+                        onChange={(e) => setLeadFormData({ ...leadFormData, consultation_time: e.target.value })}
+                      />
+                    </div>
+                    <div><Label className={lbl}>Fuente</Label>
+                      <Select value={leadFormData.source} onValueChange={(v) => setLeadFormData({ ...leadFormData, source: v })}>
+                        <SelectTrigger className={inp}><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                        <SelectContent>{SOURCE_OPTIONS.map(s => <SelectItem key={s} value={s} className="text-[11px]">{s}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label className={lbl}>Nombre *</Label><Input className={inp} value={leadFormData.client_name} onChange={(e) => setLeadFormData({ ...leadFormData, client_name: e.target.value })} required /></div>
+                    <div><Label className={lbl}>Teléfono</Label><Input className={inp} value={leadFormData.client_phone} onChange={(e) => setLeadFormData({ ...leadFormData, client_phone: e.target.value })} /></div>
+                  </div>
+                  <div><Label className={lbl}>Email</Label><Input className={inp} type="email" value={leadFormData.client_email} onChange={(e) => setLeadFormData({ ...leadFormData, client_email: e.target.value })} /></div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label className={lbl}>Presupuesto</Label><Input className={inp} value={leadFormData.budget} onChange={(e) => setLeadFormData({ ...leadFormData, budget: e.target.value })} placeholder="Ej: 15.000.000 - 18.000.000" /></div>
+                    <div><Label className={lbl}>Contacto preferido</Label>
+                      <Select value={leadFormData.preferred_contact} onValueChange={(v) => setLeadFormData({ ...leadFormData, preferred_contact: v })}>
+                        <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                          <SelectItem value="Llamada">Llamada</SelectItem>
+                          <SelectItem value="Email">Email</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label className={lbl}>Estado</Label>
+                      <Select value={leadFormData.status} onValueChange={(v) => setLeadFormData({ ...leadFormData, status: v })}>
+                        <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Nuevo">Nuevo</SelectItem>
+                          <SelectItem value="Contactado">Contactado</SelectItem>
+                          <SelectItem value="En negociación">En negociación</SelectItem>
+                          <SelectItem value="Concretado">Concretado</SelectItem>
+                          <SelectItem value="Perdido">Perdido</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div><Label className={lbl}>Interés</Label>
+                      <Select value={leadFormData.interest_level} onValueChange={(v) => setLeadFormData({ ...leadFormData, interest_level: v })}>
+                        <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Bajo">Bajo</SelectItem>
+                          <SelectItem value="Medio">Medio</SelectItem>
+                          <SelectItem value="Alto">Alto</SelectItem>
+                          <SelectItem value="Muy alto">Muy alto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div><Label className={lbl}>Observaciones</Label><Textarea className="h-16 text-[11px]" value={leadFormData.observations} onChange={(e) => setLeadFormData({ ...leadFormData, observations: e.target.value })} placeholder="Observaciones adicionales..." /></div>
+
+                  <div className="flex justify-end gap-2 pt-2 border-t">
+                    <Button type="button" variant="outline" onClick={() => setShowConfirmLead(true)} className="h-8 text-[11px]">Cancelar</Button>
+                    <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">Crear</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
             <ScheduleFollowUpDialog 
               open={showScheduleDialog} 
               onOpenChange={setShowScheduleDialog} 
@@ -403,7 +484,6 @@ export default function CRM() {
               leadId={editingLead?.id}
               clients={clients}
             />
-            <Dialog open={showLeadForm} onOpenChange={(open) => { if (!open) setShowConfirmLead(true); else setShowLeadForm(true); }}>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
                 <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg"><DialogTitle className="text-sm font-semibold">{editingLead ? 'Editar' : 'Nueva'} Consulta</DialogTitle></DialogHeader>
                 <form onSubmit={handleSubmitLead} className="p-4 space-y-3">
