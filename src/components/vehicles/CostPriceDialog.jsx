@@ -8,6 +8,15 @@ import { Save, Plus, Trash2, RefreshCw, Edit } from "lucide-react";
 import { toast } from "sonner";
 import ExpenseEditDialog from "./ExpenseEditDialog";
 
+// Función para convertir valores entre monedas
+const convertValue = (value, currency, exchangeRate, targetCurrency) => {
+  if (!value || !exchangeRate) return 0;
+  if (currency === targetCurrency) return value;
+  if (currency === 'ARS' && targetCurrency === 'USD') return value / exchangeRate;
+  if (currency === 'USD' && targetCurrency === 'ARS') return value * exchangeRate;
+  return value;
+};
+
 export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit, isLoading }) {
   const [formData, setFormData] = useState({
     cost_value: '',
