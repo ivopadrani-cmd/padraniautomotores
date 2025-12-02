@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, Plus, Trash2, RefreshCw, Edit } from "lucide-react";
+import { Save, Plus, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import ExpenseEditDialog from "./ExpenseEditDialog";
 
@@ -26,27 +26,9 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [expenses, setExpenses] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
-  const [isLoadingRate, setIsLoadingRate] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
   const [editingExpenseIndex, setEditingExpenseIndex] = useState(-1);
 
-  // Función para obtener cotización BLUE actual
-  const fetchCurrentBlueRate = async () => {
-    setIsLoadingRate(true);
-    try {
-      const response = await fetch('https://dolarapi.com/v1/dolares/blue');
-      const data = await response.json();
-      const rate = data.venta;
-      setCurrentBlueRate(rate);
-      return rate;
-    } catch (error) {
-      console.error('Error fetching blue rate:', error);
-      toast.error('Error al obtener cotización actual');
-      return currentBlueRate;
-    } finally {
-      setIsLoadingRate(false);
-    }
-  };
 
   // Calcular conversión automática
   const calculateConversion = (value, currency, exchangeRate) => {
@@ -96,8 +78,11 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   };
 
   const handleEditExpense = (index) => {
-    setEditingExpense(expenses[index]);
-    setEditingExpenseIndex(index);
+    const expenseToEdit = expenses[index];
+    if (expenseToEdit) {
+      setEditingExpense({ ...expenseToEdit }); // Crear una copia para evitar referencias
+      setEditingExpenseIndex(index);
+    }
   };
 
   const handleSaveExpense = (index, expenseData) => {
@@ -169,19 +154,8 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Costo Principal */}
           <div className="p-4 bg-gray-100 rounded">
-            <div className="flex justify-between items-center mb-3">
+            <div className="mb-3">
               <h3 className="text-sm font-semibold text-gray-700">VALOR DE TOMA</h3>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 text-[10px] text-blue-600 hover:bg-blue-50"
-                onClick={fetchCurrentBlueRate}
-                disabled={isLoadingRate}
-              >
-                <RefreshCw className={`w-3 h-3 mr-1 ${isLoadingRate ? 'animate-spin' : ''}`} />
-                Actualizar Cotización
-              </Button>
             </div>
 
             <div className="space-y-3">
@@ -242,9 +216,9 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
               {/* Información clara */}
               <div className="text-[10px] text-gray-600 bg-blue-50 p-2 rounded">
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-1">
                   <div><strong>Valor pactado:</strong> {formData.cost_currency === 'USD' ? `U$D ${formData.cost_value || '0'}` : `$${formData.cost_value || '0'}`}</div>
-                  <div><strong>En tabla:</strong> {formData.cost_currency === 'USD' ?
+                  <div><strong>Conversión actual:</strong> {formData.cost_currency === 'USD' ?
                     `$${formData.cost_value ? (parseFloat(formData.cost_value) * currentBlueRate).toLocaleString('es-AR', { maximumFractionDigits: 0 }) : '0'} ARS` :
                     `U$D ${formData.cost_value ? (parseFloat(formData.cost_value) / currentBlueRate).toLocaleString('en-US', { maximumFractionDigits: 0 }) : '0'}`
                   }</div>
