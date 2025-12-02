@@ -169,7 +169,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
   return (
     <Dialog open={open} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" style={{ zIndex: 1000 }}>
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -363,15 +363,17 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
         </form>
 
         {/* Modal de edición de gastos */}
-        <ExpenseEditDialog
-          open={editingExpense !== null}
-          onOpenChange={(open) => { if (!open) { setEditingExpense(null); setEditingExpenseIndex(-1); } }}
-          expense={editingExpense}
-          index={editingExpenseIndex}
-          onSave={handleSaveExpense}
-          onDelete={handleDeleteExpense}
-          currentBlueRate={currentBlueRate}
-        />
+        <div style={{ zIndex: 1100, position: 'relative' }}>
+          <ExpenseEditDialog
+            open={editingExpense !== null}
+            onOpenChange={(open) => { if (!open) { setEditingExpense(null); setEditingExpenseIndex(-1); } }}
+            expense={editingExpense}
+            index={editingExpenseIndex}
+            onSave={handleSaveExpense}
+            onDelete={handleDeleteExpense}
+            currentBlueRate={currentBlueRate}
+          />
+        </div>
 
         {/* Modal del manual */}
         <PriceManualDialog
