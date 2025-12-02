@@ -215,6 +215,24 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
           if (vehicleToUpdate) {
             await base44.entities.Vehicle.update(vehicleToUpdate.id, { status: 'RESERVADO' });
           }
+
+          // Crear vehículo de permuta si existe
+          if (data.trade_in && data.trade_in.brand && data.trade_in.model) {
+            await base44.entities.Vehicle.create({
+              brand: data.trade_in.brand,
+              model: data.trade_in.model,
+              year: parseInt(data.trade_in.year) || new Date().getFullYear(),
+              plate: data.trade_in.plate || '',
+              kilometers: parseFloat(data.trade_in.kilometers) || 0,
+              color: data.trade_in.color || '',
+              status: 'A PERITAR',
+              supplier_client_id: data.client_id,
+              supplier_client_name: data.client_name,
+              photos: data.trade_in.photos || []
+            });
+            toast.success(`Vehículo ${data.trade_in.brand} ${data.trade_in.model} agregado como A PERITAR`);
+          }
+
           queryClient.invalidateQueries({ queryKey: ['vehicles'] });
           setShowReservationForm(false);
           toast.success("Reserva creada");
@@ -367,6 +385,62 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
             )}
           </CardContent>
         </Card>
+
+        {/* Trade-in Vehicle */}
+        {lead.trade_in && (lead.trade_in.brand || lead.trade_in.model) && (
+          <Card className="shadow-sm">
+            <CardHeader className="border-b p-3">
+              <CardTitle className="text-[11px] font-semibold flex items-center gap-1.5">
+                <Car className="w-3.5 h-3.5 text-orange-600" /> Vehículo en Permuta
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3">
+              <div className="grid grid-cols-2 gap-3 text-[11px]">
+                <div>
+                  <p className="text-gray-400 text-[9px]">Vehículo</p>
+                  <p className="font-medium">{lead.trade_in.brand} {lead.trade_in.model} {lead.trade_in.year}</p>
+                </div>
+                {lead.trade_in.plate && (
+                  <div>
+                    <p className="text-gray-400 text-[9px]">Dominio</p>
+                    <p className="font-medium">{lead.trade_in.plate}</p>
+                  </div>
+                )}
+                {lead.trade_in.kilometers && (
+                  <div>
+                    <p className="text-gray-400 text-[9px]">Kilómetros</p>
+                    <p className="font-medium">{lead.trade_in.kilometers?.toLocaleString('es-AR')} km</p>
+                  </div>
+                )}
+                {lead.trade_in.color && (
+                  <div>
+                    <p className="text-gray-400 text-[9px]">Color</p>
+                    <p className="font-medium">{lead.trade_in.color}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Fotos del vehículo */}
+              {lead.trade_in.photos && lead.trade_in.photos.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-gray-400 text-[9px] mb-2">Fotos del vehículo</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {lead.trade_in.photos.map((photo, index) => (
+                      <div key={index} className="aspect-square bg-gray-100 rounded overflow-hidden">
+                        <img
+                          src={photo}
+                          alt={`Foto ${index + 1}`}
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => window.open(photo, '_blank')}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Interested Vehicles */}
         {interestedVehicles.length > 0 && (

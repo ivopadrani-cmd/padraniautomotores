@@ -83,7 +83,7 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
         agreed_price: quote?.quoted_price_ars || publicPriceArs,
         agreed_price_currency: 'ARS',
         agreed_price_exchange_rate: rate,
-        trade_in: quote?.trade_in ? { ...quote.trade_in, value_exchange_rate: rate } : { brand: '', model: '', year: '', plate: '', kilometers: '', value: '', value_currency: 'ARS', value_exchange_rate: rate },
+        trade_in: quote?.trade_in ? { ...quote.trade_in, value_exchange_rate: rate } : lead?.trade_in ? { ...lead.trade_in, value: lead.trade_in.value_ars || '', value_currency: 'ARS', value_exchange_rate: rate, photos: lead.trade_in.photos || [] } : { brand: '', model: '', year: '', plate: '', kilometers: '', value: '', value_currency: 'ARS', value_exchange_rate: rate },
         financing_amount: quote?.financing_amount || '',
         financing_bank: quote?.financing_bank || '',
         financing_installments: quote?.financing_installments || '',

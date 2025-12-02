@@ -121,7 +121,9 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       const clientIdFromPrefill = prefillData.client_id || '';
       setSelectedClientId(clientIdFromPrefill);
       setShowNewClientForm(false); // NO mostrar form de nuevo cliente si viene con client_id
-      setIncludeTradeIn(!!prefillData.trade_in?.brand);
+      // Revisar trade_in tanto en prefillData como en el lead
+      const tradeInData = prefillData.trade_in || prefillData.lead?.trade_in;
+      setIncludeTradeIn(!!tradeInData?.brand);
       setIncludeFinancing(!!prefillData.financing_amount_ars);
       setFormData({
         ...getInitialFormData(rate),
@@ -129,7 +131,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
         client_name: prefillData.client_name || '',
         client_phone: prefillData.client_phone || '',
         sale_price: prefillData.sale_price_ars || getInitialFormData(rate).sale_price,
-        trade_ins: prefillData.trade_in?.brand ? [{ ...prefillData.trade_in, value: prefillData.trade_in.value_ars, currency: 'ARS', exchange_rate: rate }] : [],
+        trade_ins: tradeInData?.brand ? [{ ...tradeInData, value: tradeInData.value_ars || '', currency: 'ARS', exchange_rate: rate, photos: tradeInData.photos || [] }] : [],
         financing: { amount: prefillData.financing_amount_ars || '', currency: 'ARS', exchange_rate: rate, bank: prefillData.financing_bank || '', installments: prefillData.financing_installments || '', installment_value: prefillData.financing_installment_value || '' }
       });
       console.log('📋 SaleForm prefillData - client_id:', clientIdFromPrefill, 'client_name:', prefillData.client_name);
@@ -205,7 +207,28 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       queryClient.invalidateQueries({ queryKey: ['vehicle-sales'] });
       queryClient.invalidateQueries({ queryKey: ['vehicle', vehicle?.id] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
-      
+
+      // Crear vehículo de permuta si existe
+      if (includeTradeIn && formData.trade_ins.length > 0) {
+        for (const ti of formData.trade_ins) {
+          if (ti.brand && ti.model) {
+            await base44.entities.Vehicle.create({
+              brand: ti.brand,
+              model: ti.model,
+              year: parseInt(ti.year) || new Date().getFullYear(),
+              plate: ti.plate || '',
+              kilometers: parseFloat(ti.kilometers) || 0,
+              color: ti.color || '',
+              status: ti.is_peritado ? 'A INGRESAR' : 'A PERITAR',
+              supplier_client_id: selectedClientId || clientId,
+              supplier_client_name: formData.client_name,
+              photos: ti.photos || []
+            });
+            toast.success(`Vehículo ${ti.brand} ${ti.model} agregado como ${ti.is_peritado ? 'A INGRESAR' : 'A PERITAR'}`);
+          }
+        }
+      }
+
       const saleWithId = { ...sale, id: sale.id || existingSale?.id };
       setCreatedSale(saleWithId);
       
