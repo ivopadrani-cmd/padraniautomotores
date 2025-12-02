@@ -107,7 +107,7 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
 
   return (
     <Dialog open={open} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Editar Precio Objetivo</DialogTitle>
           <p className="text-sm text-gray-500">{vehicle?.brand} {vehicle?.model} {vehicle?.year}</p>
