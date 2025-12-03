@@ -16,13 +16,22 @@ Este módulo implementa una integración completa con la API de InfoAuto para co
 
 ## 🔧 Configuración Inicial
 
-### 1. Obtener API Key
-- Solicitar credenciales de acceso a InfoAuto
-- La API utiliza autenticación Bearer Token
+### ⚠️ **Importante: Servicio Comercial**
+
+**InfoAuto es un servicio pago** que requiere suscripción activa. El módulo está preparado para integrar con su API, pero necesitas:
+
+1. **Contactar a InfoAuto** para adquirir una suscripción
+2. **Solicitar acceso a la API** de integración
+3. **Obtener las credenciales** (API Key) proporcionadas por InfoAuto
+
+### 💰 **Costos y Suscripción**
+- InfoAuto cobra por el acceso a su API
+- Los precios varían según el plan y volumen de consultas
+- Contacta directamente a InfoAuto para cotización
 
 ### 2. Configurar en la Aplicación
 1. Ir al módulo **"InfoAuto API"** (disponible para Gerentes/Administradores)
-2. Ingresar la API Key en el campo correspondiente
+2. Ingresar la API Key obtenida de InfoAuto
 3. Hacer click en **"Configurar API Key"**
 4. El sistema iniciará automáticamente la integración
 
@@ -163,6 +172,29 @@ src/pages/InfoAutoTester.jsx             # Interfaz de pruebas
 - API Key se almacena localmente (localStorage)
 - No se transmite en logs o console
 - Considerar encriptación para entornos de producción
+
+## ❓ ¿No tienes API Key de InfoAuto?
+
+Si aún no tienes credenciales de InfoAuto:
+
+### ✅ **¿Qué puedes hacer mientras tanto?**
+- **Explorar el módulo**: Navega por todas las pestañas para entender la funcionalidad
+- **Ver la estructura**: Comprende cómo funcionaría la integración
+- **Planificar la implementación**: Decide qué funcionalidades usarás
+- **Preparar los CODIA**: Asigna códigos CODIA a tus vehículos existentes
+
+### 📋 **Próximos pasos para obtener API Key:**
+1. **Visitar**: [www.infoauto.com.ar](https://www.infoauto.com.ar) (sitio aproximado)
+2. **Buscar**: "Integración API" o "Desarrolladores"
+3. **Contactar**: Solicitar información sobre API de precios
+4. **Cotizar**: Pedir presupuesto según tu volumen de consultas
+5. **Implementar**: Una vez tengas las credenciales, configurar en el módulo
+
+### 💡 **Beneficios de la inversión:**
+- Automatización completa de precios InfoAuto
+- Ahorro de tiempo significativo
+- Precios siempre actualizados
+- Mejor precisión en valuaciones
 
 ## 📞 Soporte
 

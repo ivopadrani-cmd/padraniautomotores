@@ -107,6 +107,9 @@ export default function InfoAutoTester() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">API InfoAuto Tester</h1>
           <p className="text-gray-600 mt-2">Prueba completa de la API de InfoAuto para integración con tu concesionario</p>
+          <p className="text-sm text-amber-600 mt-1 font-medium">
+            ⚠️ Requiere suscripción activa a InfoAuto para funcionar completamente
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Key className="w-5 h-5 text-blue-600" />
@@ -122,22 +125,40 @@ export default function InfoAutoTester() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="w-5 h-5" />
-            Configuración de API
+            Configuración de API InfoAuto
           </CardTitle>
           <CardDescription>
-            Ingresa tu API Key de InfoAuto para comenzar a usar la integración
+            Servicio comercial de InfoAuto para integración automática de precios
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <Alert>
+            <AlertDescription>
+              <strong>¿Qué es InfoAuto?</strong><br />
+              InfoAuto es un servicio comercial que proporciona datos actualizados de precios de vehículos
+              en Argentina. Requiere una suscripción paga para acceder a su API.
+            </AlertDescription>
+          </Alert>
+
+          <Alert>
+            <AlertDescription>
+              <strong>¿Cómo obtener una API Key?</strong><br />
+              1. Visitar el sitio web oficial de InfoAuto<br />
+              2. Solicitar información sobre integración API<br />
+              3. Realizar la suscripción correspondiente<br />
+              4. Recibirás las credenciales de acceso (API Key)
+            </AlertDescription>
+          </Alert>
+
           <form onSubmit={handleApiKeySubmit} className="flex gap-4">
             <div className="flex-1">
-              <Label htmlFor="apiKey">API Key</Label>
+              <Label htmlFor="apiKey">API Key de InfoAuto</Label>
               <Input
                 id="apiKey"
                 type="password"
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="Ingresa tu API Key de InfoAuto"
+                placeholder="Pega aquí tu API Key cuando la tengas"
                 className="font-mono"
               />
             </div>
@@ -147,6 +168,14 @@ export default function InfoAutoTester() {
               </Button>
             </div>
           </form>
+
+          {!hasApiKey && (
+            <Alert>
+              <AlertDescription>
+                <strong>Sin API Key:</strong> El módulo está preparado pero no funcionará hasta que configures tus credenciales de InfoAuto.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 
@@ -471,7 +500,7 @@ export default function InfoAutoTester() {
                   Integración Automática
                 </CardTitle>
                 <CardDescription>
-                  Sistema de actualización automática de precios InfoAuto para optimizar procesos
+                  Sistema de actualización automática de precios InfoAuto (requiere suscripción activa)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -587,9 +616,19 @@ export default function InfoAutoTester() {
                     1. El sistema verifica cada 10 minutos si hay actualizaciones en la API de InfoAuto<br />
                     2. Si detecta cambios, actualiza automáticamente los precios InfoAuto de todos los vehículos con CODIA<br />
                     3. Solo actualiza precios que cambiaron significativamente (&gt;1%)<br />
-                    4. Los precios históricos se mantienen para referencia de costos
+                    4. Los precios históricos se mantienen para referencia de costos<br />
+                    <br />
+                    <strong>⚠️ Importante:</strong> Esta funcionalidad requiere una suscripción activa a InfoAuto.
                   </AlertDescription>
                 </Alert>
+
+                {!hasApiKey && (
+                  <Alert>
+                    <AlertDescription>
+                      <strong>Estado:</strong> El módulo de integración automática está preparado pero no puede funcionar sin credenciales válidas de InfoAuto.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
