@@ -8,6 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Upload } from "lucide-react";
 import { ArrowLeft, Edit, Phone, DollarSign, Car, CheckCircle, FileText, Receipt, ShoppingCart, Trash2, MessageCircle, User, Eye, X } from "lucide-react";
 import WhatsAppButton, { QuickContactButton } from "../common/WhatsAppButton";
 import SaleFormDialog from "../sales/SaleFormDialog";
@@ -30,12 +33,13 @@ const STATUS_CONFIG = {
   'Perdido': 'bg-red-100 text-gray-900'
 };
 
-export default function LeadDetail({ lead, onClose, onEdit }) {
+export default function LeadDetail({ lead, onClose, onEdit, showEditModal = false, onCloseEditModal }) {
   const navigate = useNavigate();
   
   const [showConvertDialog, setShowConvertDialog] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [editingFormData, setEditingFormData] = useState(null);
 
   const [selectedVehicleForQuote, setSelectedVehicleForQuote] = useState(null);
   const [showQuotePrint, setShowQuotePrint] = useState(null);
@@ -45,6 +49,48 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
   const [clientFormData, setClientFormData] = useState({ dni: '', cuit_cuil: '', address: '', city: '', province: '' });
   const [lastCreatedQuotes, setLastCreatedQuotes] = useState([]);
   const [lastTradeIn, setLastTradeIn] = useState(null);
+
+  // Inicializar datos del formulario cuando se abre el modal
+  React.useEffect(() => {
+    if (showEditModal && lead && !editingFormData) {
+      setEditingFormData({
+        consultation_date: lead.consultation_date,
+        consultation_time: lead.consultation_time || '',
+        source: lead.source || '',
+        client_name: lead.client_name,
+        client_phone: lead.client_phone || '',
+        client_email: lead.client_email || '',
+        interested_vehicles: lead.interested_vehicles || [],
+        other_interests: lead.other_interests || '',
+        budget: lead.budget?.toString() || '',
+        preferred_contact: lead.preferred_contact || 'WhatsApp',
+        trade_in: lead.trade_in || { brand: '', model: '', year: '', kilometers: '', plate: '', color: '', photos: [] },
+        status: lead.status,
+        interest_level: lead.interest_level || 'Medio',
+        observations: lead.observations || '',
+        follow_up_date: lead.follow_up_date || '',
+        follow_up_time: lead.follow_up_time || ''
+      });
+    }
+  }, [showEditModal, lead, editingFormData]);
+
+  // Función para manejar el submit del formulario de edición
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingFormData) return;
+
+    try {
+      await base44.entities.Lead.update(lead.id, editingFormData);
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['lead', lead.id] });
+      toast.success('Consulta actualizada correctamente');
+      onCloseEditModal && onCloseEditModal();
+      setEditingFormData(null);
+    } catch (error) {
+      console.error('Error updating lead:', error);
+      toast.error('Error al actualizar la consulta');
+    }
+  };
 
 
   const queryClient = useQueryClient();
@@ -192,7 +238,7 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
   const lbl = "text-[10px] font-medium text-gray-500 mb-0.5";
 
   return (
-    <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
+    <div className={`p-2 md:p-4 bg-gray-100 min-h-screen ${showEditModal ? 'blur-sm pointer-events-none' : ''}`}>
       {renderQuotePrint}
       {renderMultiQuotePrint}
       <SaleFormDialog 
@@ -615,6 +661,86 @@ export default function LeadDetail({ lead, onClose, onEdit }) {
           }} 
         />
       )}
+
+      {/* Modal de edición */}
+      <Dialog open={showEditModal} onOpenChange={(open) => { if (!open && onCloseEditModal) onCloseEditModal(); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+          <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
+            <DialogTitle className="text-sm font-semibold">Editar Consulta</DialogTitle>
+          </DialogHeader>
+          {editingFormData && (
+            <form onSubmit={handleEditSubmit} className="p-4 space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Fecha *</Label><Input className="h-8 text-[11px] bg-white" type="date" value={editingFormData.consultation_date} onChange={(e) => setEditingFormData({ ...editingFormData, consultation_date: e.target.value })} required /></div>
+                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Hora</Label><Input className="h-8 text-[11px] bg-white" type="time" value={editingFormData.consultation_time} onChange={(e) => setEditingFormData({ ...editingFormData, consultation_time: e.target.value })} /></div>
+                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Fuente</Label>
+                  <select className="h-8 text-[11px] bg-white border rounded px-2 w-full" value={editingFormData.source} onChange={(e) => setEditingFormData({ ...editingFormData, source: e.target.value })}>
+                    <option value="">Seleccionar</option>
+                    <option value="Salón">Salón</option>
+                    <option value="Llamada">Llamada</option>
+                    <option value="Redes sociales">Redes sociales</option>
+                    <option value="Recomendado">Recomendado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Nombre *</Label><Input className="h-8 text-[11px] bg-white" value={editingFormData.client_name} onChange={(e) => setEditingFormData({ ...editingFormData, client_name: e.target.value })} required /></div>
+                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Teléfono</Label><Input className="h-8 text-[11px] bg-white" value={editingFormData.client_phone} onChange={(e) => setEditingFormData({ ...editingFormData, client_phone: e.target.value })} /></div>
+              </div>
+              <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Email</Label><Input className="h-8 text-[11px] bg-white" type="email" value={editingFormData.client_email} onChange={(e) => setEditingFormData({ ...editingFormData, client_email: e.target.value })} /></div>
+
+              <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Presupuesto</Label><Input className="h-8 text-[11px] bg-white" value={editingFormData.budget} onChange={(e) => setEditingFormData({ ...editingFormData, budget: e.target.value })} placeholder="Ej: 15.000.000 - 18.000.000" /></div>
+
+              <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Otros intereses</Label><Input className="h-8 text-[11px] bg-white" value={editingFormData.other_interests} onChange={(e) => setEditingFormData({ ...editingFormData, other_interests: e.target.value })} placeholder="Vehículos que no están en stock..." /></div>
+
+              {/* Trade-in */}
+              <div className="border-t pt-3">
+                <Label className="text-[10px] font-medium text-gray-700 mb-2 block">Vehículo usado para entrega (Trade-in)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input className="h-7 text-[10px] bg-white" placeholder="Marca" value={editingFormData.trade_in?.brand || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, brand: e.target.value } })} />
+                  <Input className="h-7 text-[10px] bg-white" placeholder="Modelo" value={editingFormData.trade_in?.model || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, model: e.target.value } })} />
+                </div>
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  <Input className="h-7 text-[10px] bg-white" placeholder="Año" value={editingFormData.trade_in?.year || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, year: e.target.value } })} />
+                  <Input className="h-7 text-[10px] bg-white" placeholder="Km" value={editingFormData.trade_in?.kilometers || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, kilometers: e.target.value } })} />
+                  <Input className="h-7 text-[10px] bg-white" placeholder="Dominio" value={editingFormData.trade_in?.plate || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, plate: e.target.value } })} />
+                </div>
+                <div className="mt-2">
+                  <Input className="h-7 text-[10px] bg-white" placeholder="Color" value={editingFormData.trade_in?.color || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, color: e.target.value } })} />
+                </div>
+              </div>
+
+              <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Observaciones</Label><Textarea className="text-[11px] min-h-[60px] bg-white" value={editingFormData.observations} onChange={(e) => setEditingFormData({ ...editingFormData, observations: e.target.value })} /></div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Estado</Label>
+                  <select className="h-8 text-[11px] bg-white border rounded px-2 w-full" value={editingFormData.status} onChange={(e) => setEditingFormData({ ...editingFormData, status: e.target.value })}>
+                    <option value="Nuevo">Nuevo</option>
+                    <option value="Contactado">Contactado</option>
+                    <option value="En negociación">En negociación</option>
+                    <option value="Concretado">Concretado</option>
+                    <option value="Perdido">Perdido</option>
+                  </select>
+                </div>
+                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Interés</Label>
+                  <select className="h-8 text-[11px] bg-white border rounded px-2 w-full" value={editingFormData.interest_level} onChange={(e) => setEditingFormData({ ...editingFormData, interest_level: e.target.value })}>
+                    <option value="Bajo">Bajo</option>
+                    <option value="Medio">Medio</option>
+                    <option value="Alto">Alto</option>
+                    <option value="Muy alto">Muy alto</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button type="button" variant="outline" onClick={() => { onCloseEditModal && onCloseEditModal(); setEditingFormData(null); }} className="h-8 text-[11px]">Cancelar</Button>
+                <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">Guardar</Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
