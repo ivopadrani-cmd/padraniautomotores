@@ -216,7 +216,7 @@ src/pages/InfoAutoTester.jsx             # Interfaz de pruebas
 #### **Gestión de Tokens:**
 - **Access Token:** 1 hora de validez
 - **Refresh Token:** 24 horas de validez
-- **Renovación Automática:** Cada 10 minutos
+- **Renovación Automática:** Cada 50 minutos (10 min antes de expirar)
 - **Fallback:** Re-autenticación si refresh falla
 
 #### **Medidas de Seguridad:**

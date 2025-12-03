@@ -13,7 +13,7 @@ class InfoAutoAPI {
     this.refreshToken = localStorage.getItem('infoauto_refresh_token') || null;
     this.tokenExpiry = localStorage.getItem('infoauto_token_expiry') || null;
 
-    // Iniciar renovación automática de tokens
+    // Iniciar renovación automática de tokens (cada 50 minutos)
     this.startTokenRefresh();
   }
 
@@ -147,7 +147,8 @@ class InfoAutoAPI {
 
   // Iniciar renovación automática de tokens
   startTokenRefresh() {
-    // Verificar cada 10 minutos si el token necesita renovación
+    // Verificar cada 50 minutos si el token necesita renovación
+    // (tokens válidos 1 hora, renovamos con 10 minutos de margen)
     setInterval(async () => {
       try {
         if (this.username && this.password) {
@@ -162,7 +163,7 @@ class InfoAutoAPI {
       } catch (error) {
         console.error('InfoAuto: Error en renovación automática:', error);
       }
-    }, 10 * 60 * 1000); // Cada 10 minutos
+    }, 50 * 60 * 1000); // Cada 50 minutos (10 minutos antes de expirar)
   }
 
   // Headers para las peticiones

@@ -204,15 +204,15 @@ export default function InfoAutoTester() {
         </CardContent>
       </Card>
 
-      {!hasApiKey && (
+      {!hasCredentials() && (
         <Alert>
           <AlertDescription>
-            Configura tu API Key para acceder a todas las funcionalidades de InfoAuto.
+            Configura tus credenciales para acceder a todas las funcionalidades de InfoAuto.
           </AlertDescription>
         </Alert>
       )}
 
-      {hasApiKey && (
+      {hasCredentials() && (
         <Tabs defaultValue="connection" className="space-y-6">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="connection">Conexión</TabsTrigger>
