@@ -1,18 +1,55 @@
-# Módulo InfoAuto - Integración con API de Precios
+# Módulo InfoAuto - Integración con API JWT de Precios
 
 ## 📋 Descripción
 
-Este módulo implementa una integración completa con la API de InfoAuto para consultar precios de vehículos y actualizar automáticamente los precios InfoAuto en el concesionario.
+Este módulo implementa una integración completa con la API de InfoAuto usando autenticación JWT para consultar precios de vehículos y actualizar automáticamente los precios InfoAuto en el concesionario.
 
 ## 🚀 Características Principales
 
-- ✅ **API Key Management**: Configuración segura de credenciales
-- ✅ **Prueba de Conexión**: Verificación de conectividad con la API
+- ✅ **Autenticación JWT**: Sistema completo de tokens (access + refresh)
+- ✅ **Gestión Automática de Tokens**: Renovación automática cada 10 minutos
+- ✅ **Prueba de Conexión**: Verificación de conectividad y autenticación
 - ✅ **Consulta de Marcas**: Lista completa de marcas disponibles
 - ✅ **Búsqueda por CODIA**: Obtención de información detallada de modelos
 - ✅ **Precios 0km**: Consulta de precios de lista
 - ✅ **Actualización Automática**: Sistema background para mantener precios actualizados
 - ✅ **Estadísticas de Cobertura**: Métricas de integración
+
+## ⚠️ **NORMAS CRÍTICAS DE USO - NO INFRINGIR**
+
+### 🚨 **Reglas Obligatorias para Evitar Bloqueos**
+
+**InfoAuto tiene normas estrictas que SIEMPRE debes respetar:**
+
+#### **🔐 Autenticación JWT:**
+- **NO generes access tokens nuevos por cada consulta** (considerado mal uso = BLOQUEO)
+- **Reutiliza access tokens** mientras sean válidos (1 hora)
+- **Usa refresh tokens** para renovación automática (válidos 24 horas)
+- **Implementa persistencia** de tokens (localStorage/cron jobs/Redis recomendado)
+
+#### **📊 Rate Limiting:**
+- **Respeta límites de consultas** para evitar bloqueos
+- **Implementa renovación automática** cada 10 minutos (no más frecuente)
+- **Monitorea respuestas de error** (401 = token expirado, renovar automáticamente)
+
+#### **🔄 Renovación de Tokens:**
+- **Access Token:** válido 1 hora (renovar con refresh token)
+- **Refresh Token:** válido 24 horas (volver a login si expira)
+- **Basic Auth solo para login inicial** (usuario/contraseña → tokens)
+
+#### **💾 Persistencia Recomendada:**
+- **Redis/cron jobs** para mantener tokens válidos entre reinicios
+- **LocalStorage** como alternativa simple (válido para sesiones)
+- **Nunca almacenes** credenciales en texto plano
+
+### 🚫 **MALAS PRÁCTICAS QUE CAUSAN BLOQUEOS:**
+- ❌ Generar tokens en cada request
+- ❌ No manejar expiración de tokens
+- ❌ Exceder límites de rate limiting
+- ❌ Compartir credenciales entre aplicaciones
+- ❌ No implementar renovación automática
+
+---
 
 ## 🔧 Configuración Inicial
 
@@ -31,9 +68,9 @@ Este módulo implementa una integración completa con la API de InfoAuto para co
 
 ### 2. Configurar en la Aplicación
 1. Ir al módulo **"InfoAuto API"** (disponible para Gerentes/Administradores)
-2. Ingresar la API Key obtenida de InfoAuto
-3. Hacer click en **"Configurar API Key"**
-4. El sistema iniciará automáticamente la integración
+2. Ingresar **usuario (email)** y **contraseña** proporcionados por InfoAuto
+3. Hacer click en **"Configurar Credenciales y Autenticar"**
+4. El sistema obtendrá automáticamente tokens JWT y comenzará la integración
 
 ## 📊 Funcionalidades Disponibles
 
@@ -167,11 +204,27 @@ src/pages/InfoAutoTester.jsx             # Interfaz de pruebas
 - Considerar cache local para mejorar performance
 - Implementar logging detallado para debugging
 
-### Seguridad
+### Seguridad y Autenticación JWT
 
-- API Key se almacena localmente (localStorage)
-- No se transmite en logs o console
-- Considerar encriptación para entornos de producción
+#### **Flujo de Autenticación:**
+1. **Login Inicial:** `POST /auth/login` con Basic Auth (usuario:contraseña)
+2. **Respuesta:** access_token + refresh_token
+3. **Requests API:** Header `Authorization: Bearer {access_token}`
+4. **Renovación:** `POST /auth/refresh` con Bearer refresh_token
+5. **Persistencia:** Tokens guardados en localStorage
+
+#### **Gestión de Tokens:**
+- **Access Token:** 1 hora de validez
+- **Refresh Token:** 24 horas de validez
+- **Renovación Automática:** Cada 10 minutos
+- **Fallback:** Re-autenticación si refresh falla
+
+#### **Medidas de Seguridad:**
+- **Credenciales:** Almacenadas localmente (localStorage)
+- **Tokens:** Persistidos de forma segura
+- **Rate Limiting:** Control automático de frecuencia
+- **Validación:** Verificación continua de tokens
+- **No en logs:** Credenciales nunca en console/logs
 
 ## ❓ ¿No tienes API Key de InfoAuto?
 

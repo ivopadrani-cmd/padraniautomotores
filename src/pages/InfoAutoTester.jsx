@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 
 // Hooks personalizados
 import {
-  useInfoAutoApiKey,
+  useInfoAutoCredentials,
   useTestConnection,
   useLastUpdate,
   useCurrentYear,
@@ -40,10 +40,11 @@ export default function InfoAutoTester() {
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [codiaSearch, setCodiaSearch] = useState('');
-  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
 
-  // API Key management
-  const { setApiKey, getApiKey } = useInfoAutoApiKey();
+  // Credentials management
+  const { setCredentials, getCredentials, hasCredentials } = useInfoAutoCredentials();
 
   // Connection test
   const { data: connectionTest, isLoading: testingConnection } = useTestConnection();
@@ -64,16 +65,19 @@ export default function InfoAutoTester() {
   // Update mutation
   const updatePriceMutation = useUpdateVehicleInfoAutoPrice();
 
-  // Initialize API key input
+  // Initialize credentials inputs
   useEffect(() => {
-    setApiKeyInput(getApiKey());
+    const credentials = getCredentials();
+    setUsernameInput(credentials.username);
+    setPasswordInput(credentials.password);
   }, []);
 
-  const handleApiKeySubmit = (e) => {
+  const handleCredentialsSubmit = async (e) => {
     e.preventDefault();
-    if (apiKeyInput.trim()) {
-      setApiKey(apiKeyInput.trim());
-      toast.success('API Key configurada');
+    if (usernameInput.trim() && passwordInput.trim()) {
+      await setCredentials(usernameInput.trim(), passwordInput.trim());
+    } else {
+      toast.error('Usuario y contraseña son requeridos');
     }
   };
 
@@ -106,73 +110,94 @@ export default function InfoAutoTester() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">API InfoAuto Tester</h1>
-          <p className="text-gray-600 mt-2">Prueba completa de la API de InfoAuto para integración con tu concesionario</p>
+          <p className="text-gray-600 mt-2">Prueba completa de la API JWT de InfoAuto para integración con tu concesionario</p>
           <p className="text-sm text-amber-600 mt-1 font-medium">
-            ⚠️ Requiere suscripción activa a InfoAuto para funcionar completamente
+            ⚠️ Requiere credenciales válidas de InfoAuto (usuario/contraseña)
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Key className="w-5 h-5 text-blue-600" />
           <span className="text-sm font-medium">
-            {hasApiKey ? 'API Configurada' : 'API No Configurada'}
+            {hasCredentials() ? 'Credenciales Configuradas' : 'Credenciales No Configuradas'}
           </span>
-          {hasApiKey && <CheckCircle className="w-5 h-5 text-green-600" />}
+          {hasCredentials() && <CheckCircle className="w-5 h-5 text-green-600" />}
         </div>
       </div>
 
-      {/* API Key Configuration */}
+      {/* Credentials Configuration */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="w-5 h-5" />
-            Configuración de API InfoAuto
+            Configuración de InfoAuto Demo
           </CardTitle>
           <CardDescription>
-            Servicio comercial de InfoAuto para integración automática de precios
+            Credenciales de acceso para la API demo de InfoAuto (JWT Authentication)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
             <AlertDescription>
-              <strong>¿Qué es InfoAuto?</strong><br />
-              InfoAuto es un servicio comercial que proporciona datos actualizados de precios de vehículos
-              en Argentina. Requiere una suscripción paga para acceder a su API.
+              <strong>⚠️ NORMAS CRÍTICAS DE USO (NO INFRINGIR):</strong><br />
+              • <strong>NO generes access tokens nuevos por cada consulta</strong> (mal uso = bloqueo)<br />
+              • <strong>Reutiliza access tokens</strong> mientras sean válidos (1 hora)<br />
+              • <strong>Usa refresh tokens para renovación automática</strong> (válidos 24 horas)<br />
+              • <strong>Implementa persistencia de tokens</strong> (localStorage/cron jobs/Redis)<br />
+              • <strong>Respeta límites de rate limiting</strong> para evitar bloqueos<br />
+              • <strong>Access tokens por Basic Auth inicial</strong>, luego Bearer tokens
             </AlertDescription>
           </Alert>
 
           <Alert>
             <AlertDescription>
-              <strong>¿Cómo obtener una API Key?</strong><br />
-              1. Visitar el sitio web oficial de InfoAuto<br />
-              2. Solicitar información sobre integración API<br />
-              3. Realizar la suscripción correspondiente<br />
-              4. Recibirás las credenciales de acceso (API Key)
+              <strong>Autenticación JWT InfoAuto:</strong><br />
+              • <strong>POST /auth/login</strong> con Basic Auth → access_token + refresh_token<br />
+              • <strong>POST /auth/refresh</strong> con Bearer refresh_token → nuevo access_token<br />
+              • <strong>Access token:</strong> 1 hora de validez<br />
+              • <strong>Refresh token:</strong> 24 horas de validez<br />
+              • <strong>Recomendación:</strong> Renovación automática cada 10 minutos
             </AlertDescription>
           </Alert>
 
-          <form onSubmit={handleApiKeySubmit} className="flex gap-4">
-            <div className="flex-1">
-              <Label htmlFor="apiKey">API Key de InfoAuto</Label>
-              <Input
-                id="apiKey"
-                type="password"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="Pega aquí tu API Key cuando la tengas"
-                className="font-mono"
-              />
+          <form onSubmit={handleCredentialsSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="username">Usuario (Email)</Label>
+                <Input
+                  id="username"
+                  type="email"
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  placeholder="tu-email@ejemplo.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="Tu contraseña de InfoAuto"
+                />
+              </div>
             </div>
-            <div className="flex items-end">
-              <Button type="submit" disabled={!apiKeyInput.trim()}>
-                Configurar API Key
-              </Button>
+
+            <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-200">
+              <strong>📧 Credenciales de DEMO proporcionadas por email:</strong><br />
+              <strong>Usuario:</strong> ivopadrani@gmail.com<br />
+              <strong>Contraseña:</strong> padrani.API2025
             </div>
+
+            <Button type="submit" disabled={!usernameInput.trim() || !passwordInput.trim()}>
+              Configurar Credenciales y Autenticar
+            </Button>
           </form>
 
-          {!hasApiKey && (
+          {!hasCredentials() && (
             <Alert>
               <AlertDescription>
-                <strong>Sin API Key:</strong> El módulo está preparado pero no funcionará hasta que configures tus credenciales de InfoAuto.
+                <strong>Sin credenciales:</strong> Configura usuario y contraseña para acceder a la API JWT de InfoAuto.
               </AlertDescription>
             </Alert>
           )}
@@ -622,10 +647,10 @@ export default function InfoAutoTester() {
                   </AlertDescription>
                 </Alert>
 
-                {!hasApiKey && (
+                {!hasCredentials() && (
                   <Alert>
                     <AlertDescription>
-                      <strong>Estado:</strong> El módulo de integración automática está preparado pero no puede funcionar sin credenciales válidas de InfoAuto.
+                      <strong>Estado:</strong> El módulo de integración automática está preparado pero requiere credenciales válidas de InfoAuto con autenticación JWT.
                     </AlertDescription>
                   </Alert>
                 )}

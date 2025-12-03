@@ -3,34 +3,40 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { infoautoAPI } from '../services/infoautoApi';
 import { toast } from 'sonner';
 
-// Hook para gestionar la API Key
-export function useInfoAutoApiKey() {
+// Hook para gestionar las credenciales de InfoAuto
+export function useInfoAutoCredentials() {
   const queryClient = useQueryClient();
 
-  const setApiKey = async (apiKey) => {
-    infoautoAPI.setApiKey(apiKey);
+  const setCredentials = async (username, password) => {
+    infoautoAPI.setCredentials(username, password);
     queryClient.invalidateQueries({ queryKey: ['infoauto'] });
 
-    // Inicializar integración automática si hay API key
-    if (apiKey) {
-      try {
+    // Probar conexión inmediatamente
+    try {
+      const testResult = await infoautoAPI.testConnection();
+      if (testResult.success) {
+        // Inicializar integración automática si las credenciales funcionan
         const { initializeInfoAutoIntegration } = await import('../services/infoAutoIntegration');
         initializeInfoAutoIntegration();
-        toast.success('API Key configurada correctamente - Integración automática iniciada');
-      } catch (error) {
-        console.error('Error initializing integration:', error);
-        toast.success('API Key configurada correctamente');
+        toast.success('Credenciales configuradas correctamente - Integración automática iniciada');
+      } else {
+        toast.error('Credenciales inválidas: ' + testResult.message);
       }
-    } else {
-      toast.success('API Key configurada correctamente');
+    } catch (error) {
+      console.error('Error testing credentials:', error);
+      toast.error('Error al verificar credenciales: ' + error.message);
     }
   };
 
-  const getApiKey = () => {
-    return infoautoAPI.getApiKey();
+  const getCredentials = () => {
+    return infoautoAPI.getCredentials();
   };
 
-  return { setApiKey, getApiKey };
+  const hasCredentials = () => {
+    return infoautoAPI.hasCredentials();
+  };
+
+  return { setCredentials, getCredentials, hasCredentials };
 }
 
 // Hook para probar conexión
@@ -38,7 +44,7 @@ export function useTestConnection() {
   return useQuery({
     queryKey: ['infoauto', 'connection'],
     queryFn: () => infoautoAPI.testConnection(),
-    enabled: !!infoautoAPI.getApiKey(),
+    enabled: infoautoAPI.hasCredentials(),
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
@@ -49,7 +55,7 @@ export function useLastUpdate() {
   return useQuery({
     queryKey: ['infoauto', 'lastUpdate'],
     queryFn: () => infoautoAPI.getLastUpdate(),
-    enabled: !!infoautoAPI.getApiKey(),
+    enabled: infoautoAPI.hasCredentials(),
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }
@@ -59,7 +65,7 @@ export function useCurrentYear() {
   return useQuery({
     queryKey: ['infoauto', 'currentYear'],
     queryFn: () => infoautoAPI.getCurrentYear(),
-    enabled: !!infoautoAPI.getApiKey(),
+    enabled: infoautoAPI.hasCredentials(),
     staleTime: 60 * 60 * 1000, // 1 hora
   });
 }
@@ -69,7 +75,7 @@ export function useBrands(params = {}) {
   return useQuery({
     queryKey: ['infoauto', 'brands', params],
     queryFn: () => infoautoAPI.getBrands(params),
-    enabled: !!infoautoAPI.getApiKey(),
+    enabled: infoautoAPI.hasCredentials(),
     staleTime: 30 * 60 * 1000, // 30 minutos
   });
 }
@@ -79,7 +85,7 @@ export function useAllBrandsWithGroups() {
   return useQuery({
     queryKey: ['infoauto', 'brandsWithGroups'],
     queryFn: () => infoautoAPI.getAllBrandsWithGroups(),
-    enabled: !!infoautoAPI.getApiKey(),
+    enabled: infoautoAPI.hasCredentials(),
     staleTime: 60 * 60 * 1000, // 1 hora
   });
 }
@@ -89,7 +95,7 @@ export function useModelsByBrand(brandId, params = {}) {
   return useQuery({
     queryKey: ['infoauto', 'models', brandId, params],
     queryFn: () => infoautoAPI.getModelsByBrand(brandId, params),
-    enabled: !!infoautoAPI.getApiKey() && !!brandId,
+    enabled: infoautoAPI.hasCredentials() && !!brandId,
     staleTime: 30 * 60 * 1000, // 30 minutos
   });
 }
@@ -99,7 +105,7 @@ export function useGroupsByBrand(brandId) {
   return useQuery({
     queryKey: ['infoauto', 'groups', brandId],
     queryFn: () => infoautoAPI.getGroupsByBrand(brandId),
-    enabled: !!infoautoAPI.getApiKey() && !!brandId,
+    enabled: infoautoAPI.hasCredentials() && !!brandId,
     staleTime: 60 * 60 * 1000, // 1 hora
   });
 }
@@ -109,7 +115,7 @@ export function usePriceYearsByBrand(brandId) {
   return useQuery({
     queryKey: ['infoauto', 'priceYears', brandId],
     queryFn: () => infoautoAPI.getPriceYearsByBrand(brandId),
-    enabled: !!infoautoAPI.getApiKey() && !!brandId,
+    enabled: infoautoAPI.hasCredentials() && !!brandId,
     staleTime: 60 * 60 * 1000, // 1 hora
   });
 }
@@ -119,7 +125,7 @@ export function useModelByCodia(codia) {
   return useQuery({
     queryKey: ['infoauto', 'model', codia],
     queryFn: () => infoautoAPI.getModelByCodia(codia),
-    enabled: !!infoautoAPI.getApiKey() && !!codia,
+    enabled: infoautoAPI.hasCredentials() && !!codia,
     staleTime: 30 * 60 * 1000, // 30 minutos
   });
 }
@@ -129,7 +135,7 @@ export function useListPriceByCodia(codia) {
   return useQuery({
     queryKey: ['infoauto', 'listPrice', codia],
     queryFn: () => infoautoAPI.getListPriceByCodia(codia),
-    enabled: !!infoautoAPI.getApiKey() && !!codia,
+    enabled: infoautoAPI.hasCredentials() && !!codia,
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }
@@ -139,7 +145,7 @@ export function useUsedPricesByCodiaAndYear(codia, year) {
   return useQuery({
     queryKey: ['infoauto', 'usedPrices', codia, year],
     queryFn: () => infoautoAPI.getUsedPricesByCodiaAndYear(codia, year),
-    enabled: !!infoautoAPI.getApiKey() && !!codia && !!year,
+    enabled: infoautoAPI.hasCredentials() && !!codia && !!year,
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }
@@ -149,7 +155,7 @@ export function useSearchBrands(searchTerm) {
   return useQuery({
     queryKey: ['infoauto', 'searchBrands', searchTerm],
     queryFn: () => infoautoAPI.searchBrands(searchTerm),
-    enabled: !!infoautoAPI.getApiKey() && !!searchTerm && searchTerm.length > 2,
+    enabled: infoautoAPI.hasCredentials() && !!searchTerm && searchTerm.length > 2,
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 }
@@ -159,7 +165,7 @@ export function useCompleteModelInfo(codia) {
   return useQuery({
     queryKey: ['infoauto', 'completeModel', codia],
     queryFn: () => infoautoAPI.getCompleteModelInfo(codia),
-    enabled: !!infoautoAPI.getApiKey() && !!codia,
+    enabled: infoautoAPI.hasCredentials() && !!codia,
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }
@@ -194,7 +200,7 @@ export function useIntegrationStats() {
   return useQuery({
     queryKey: ['infoauto', 'integrationStats'],
     queryFn: () => import('../services/infoAutoIntegration').then(m => m.infoAutoIntegration.getIntegrationStats()),
-    enabled: !!infoautoAPI.getApiKey(),
+    enabled: infoautoAPI.hasCredentials(),
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 }
@@ -214,7 +220,7 @@ export function useCheckForUpdates() {
         message: 'No hay actualizaciones disponibles'
       };
     },
-    enabled: !!lastUpdate,
+    enabled: !!lastUpdate && infoautoAPI.hasCredentials(),
     staleTime: 60 * 60 * 1000, // 1 hora
   });
 }
