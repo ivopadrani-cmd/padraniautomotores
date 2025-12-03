@@ -52,8 +52,14 @@ export function useTestConnection() {
   return useQuery({
     queryKey: ['infoauto', 'connection'],
     queryFn: () => infoautoAPI.testConnection(),
-    enabled: infoautoAPI.hasCredentials(),
-    retry: false,
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid(),
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 }
@@ -63,7 +69,14 @@ export function useLastUpdate() {
   return useQuery({
     queryKey: ['infoauto', 'lastUpdate'],
     queryFn: () => infoautoAPI.getLastUpdate(),
-    enabled: infoautoAPI.hasCredentials(),
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid(),
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }
@@ -73,7 +86,14 @@ export function useCurrentYear() {
   return useQuery({
     queryKey: ['infoauto', 'currentYear'],
     queryFn: () => infoautoAPI.getCurrentYear(),
-    enabled: infoautoAPI.hasCredentials(),
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid(),
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 60 * 60 * 1000, // 1 hora
   });
 }
@@ -83,7 +103,14 @@ export function useBrands(params = {}) {
   return useQuery({
     queryKey: ['infoauto', 'brands', params],
     queryFn: () => infoautoAPI.getBrands(params),
-    enabled: infoautoAPI.hasCredentials(),
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid(),
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 30 * 60 * 1000, // 30 minutos
   });
 }
@@ -93,7 +120,14 @@ export function useAllBrandsWithGroups() {
   return useQuery({
     queryKey: ['infoauto', 'brandsWithGroups'],
     queryFn: () => infoautoAPI.getAllBrandsWithGroups(),
-    enabled: infoautoAPI.hasCredentials(),
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid(),
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 60 * 60 * 1000, // 1 hora
   });
 }
@@ -103,7 +137,14 @@ export function useModelsByBrand(brandId, params = {}) {
   return useQuery({
     queryKey: ['infoauto', 'models', brandId, params],
     queryFn: () => infoautoAPI.getModelsByBrand(brandId, params),
-    enabled: infoautoAPI.hasCredentials() && !!brandId,
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid() && !!brandId,
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 30 * 60 * 1000, // 30 minutos
   });
 }
@@ -113,7 +154,14 @@ export function useGroupsByBrand(brandId) {
   return useQuery({
     queryKey: ['infoauto', 'groups', brandId],
     queryFn: () => infoautoAPI.getGroupsByBrand(brandId),
-    enabled: infoautoAPI.hasCredentials() && !!brandId,
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid() && !!brandId,
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 60 * 60 * 1000, // 1 hora
   });
 }
@@ -123,7 +171,14 @@ export function usePriceYearsByBrand(brandId) {
   return useQuery({
     queryKey: ['infoauto', 'priceYears', brandId],
     queryFn: () => infoautoAPI.getPriceYearsByBrand(brandId),
-    enabled: infoautoAPI.hasCredentials() && !!brandId,
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid() && !!brandId,
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 60 * 60 * 1000, // 1 hora
   });
 }
@@ -133,7 +188,14 @@ export function useModelByCodia(codia) {
   return useQuery({
     queryKey: ['infoauto', 'model', codia],
     queryFn: () => infoautoAPI.getModelByCodia(codia),
-    enabled: infoautoAPI.hasCredentials() && !!codia,
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid() && !!codia,
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 30 * 60 * 1000, // 30 minutos
   });
 }
@@ -143,7 +205,14 @@ export function useListPriceByCodia(codia) {
   return useQuery({
     queryKey: ['infoauto', 'listPrice', codia],
     queryFn: () => infoautoAPI.getListPriceByCodia(codia),
-    enabled: infoautoAPI.hasCredentials() && !!codia,
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid() && !!codia,
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }
@@ -153,7 +222,14 @@ export function useUsedPricesByCodiaAndYear(codia, year) {
   return useQuery({
     queryKey: ['infoauto', 'usedPrices', codia, year],
     queryFn: () => infoautoAPI.getUsedPricesByCodiaAndYear(codia, year),
-    enabled: infoautoAPI.hasCredentials() && !!codia && !!year,
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid() && !!codia && !!year,
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }
@@ -163,7 +239,14 @@ export function useSearchBrands(searchTerm) {
   return useQuery({
     queryKey: ['infoauto', 'searchBrands', searchTerm],
     queryFn: () => infoautoAPI.searchBrands(searchTerm),
-    enabled: infoautoAPI.hasCredentials() && !!searchTerm && searchTerm.length > 2,
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid() && !!searchTerm && searchTerm.length > 2,
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 }
@@ -173,7 +256,14 @@ export function useCompleteModelInfo(codia) {
   return useQuery({
     queryKey: ['infoauto', 'completeModel', codia],
     queryFn: () => infoautoAPI.getCompleteModelInfo(codia),
-    enabled: infoautoAPI.hasCredentials() && !!codia,
+    enabled: infoautoAPI.hasCredentials() && infoautoAPI.isTokenValid() && !!codia,
+    retry: (failureCount, error) => {
+      // No reintentar si es error de CORS (desarrollo local)
+      if (error.message?.includes('CORS') || error.message?.includes('Failed to fetch')) {
+        return false;
+      }
+      return failureCount < 1;
+    },
     staleTime: 10 * 60 * 1000, // 10 minutos
   });
 }

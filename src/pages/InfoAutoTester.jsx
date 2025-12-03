@@ -331,11 +331,11 @@ export default function InfoAutoTester() {
                             // Mostrar mensaje más específico según el error
                             let errorMessage = error.message;
                             if (error.message.includes('CORS')) {
-                              errorMessage = 'Error de CORS - Normal en desarrollo local. En producción funcionará.';
+                              errorMessage = '🚫 CORS: Requests bloqueados en desarrollo local. Los tokens funcionarán correctamente en producción.';
                             } else if (error.message.includes('401')) {
-                              errorMessage = 'Credenciales inválidas. Verifica usuario y contraseña.';
+                              errorMessage = '❌ Credenciales inválidas. Verifica usuario y contraseña.';
                             } else if (error.message.includes('Failed to fetch')) {
-                              errorMessage = 'No se pudo conectar al servidor de InfoAuto.';
+                              errorMessage = '🔌 No se pudo conectar al servidor de InfoAuto.';
                             }
 
                             toast.error('Error al generar tokens: ' + errorMessage);
@@ -360,6 +360,16 @@ export default function InfoAutoTester() {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Alerta CORS en desarrollo */}
+                  {!getTokenInfo().isTokenValid && hasCredentials() && (
+                    <Alert>
+                      <AlertDescription>
+                        <strong>Nota sobre desarrollo:</strong> Los tokens no se pueden generar desde localhost debido a restricciones de CORS del navegador.
+                        Esta funcionalidad funcionará correctamente cuando la aplicación esté desplegada en producción.
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   {/* Detalles de Tokens */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
