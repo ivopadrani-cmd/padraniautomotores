@@ -119,6 +119,8 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
     enabled: !!lead.client_id
   });
 
+  const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list() });
+
   const { data: vehicles = [] } = useQuery({ queryKey: ['vehicles'], queryFn: () => base44.entities.Vehicle.list() });
 
   // Funciones para el modal de edición
@@ -160,8 +162,6 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
     queryFn: () => base44.entities.Quote.filter({ lead_id: lead.id }, '-quote_date'),
     enabled: !!lead.id
   });
-
-  const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list() });
 
   const { data: rates = [] } = useQuery({
     queryKey: ['exchange-rates'],

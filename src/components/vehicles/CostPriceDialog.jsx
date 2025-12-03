@@ -68,7 +68,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   // Efecto para buscar cotización histórica cuando cambia la fecha
   useEffect(() => {
     const updateHistoricalRate = async () => {
-      if (formData.cost_date && open) {
+      if (formData.cost_date && editingExpense === null) { // Solo buscar cuando no hay modal de gastos abierto
         console.log('🔍 Buscando cotización histórica para fecha:', formData.cost_date);
         const historicalRate = await getHistoricalRate(formData.cost_date);
         console.log('📊 Cotización histórica encontrada:', historicalRate, 'vs actual:', formData.cost_exchange_rate);
@@ -80,10 +80,12 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       }
     };
 
-    // Pequeño delay para evitar llamadas excesivas mientras el usuario escribe
-    const timeoutId = setTimeout(updateHistoricalRate, 500);
-    return () => clearTimeout(timeoutId);
-  }, [formData.cost_date, getHistoricalRate, open]);
+    // Solo buscar cuando hay una fecha válida y no hay modal de gastos abierto
+    if (formData.cost_date && editingExpense === null) {
+      const timeoutId = setTimeout(updateHistoricalRate, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData.cost_date, getHistoricalRate, editingExpense]); // Agregué dependencia de editingExpense
 
   const handleChange = (field, value) => {
     setFormData(prev => {
