@@ -334,9 +334,10 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
 
   const btnClass = "h-8 text-[11px] px-3";
 
-  return (
-    <div className="p-3 md:p-4 bg-gray-100 min-h-screen">
-      <div className="max-w-4xl mx-auto space-y-3">
+  try {
+    return (
+      <div className="p-3 md:p-4 bg-gray-100 min-h-screen">
+        <div className="max-w-4xl mx-auto space-y-3">
         <div className="flex justify-between items-center">
           <Button variant="ghost" onClick={onClose} className={btnClass}><ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Volver</Button>
           <div className="flex gap-2">
@@ -1409,4 +1410,18 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
         </div>
         </div>
         );
-        }
+  } catch (error) {
+    console.error('Error rendering VehicleView:', error);
+    return (
+      <div className="p-3 md:p-4 bg-gray-100 min-h-screen">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded p-4">
+            <h3 className="text-red-700 font-semibold">Error al cargar el vehículo</h3>
+            <p className="text-red-600 text-sm mt-1">{error.message}</p>
+            <Button onClick={onClose} className="mt-3">Volver</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}

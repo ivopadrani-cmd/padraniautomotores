@@ -32,7 +32,7 @@ const STATUS_CONFIG = {
   'Perdido': 'bg-red-100 text-gray-900'
 };
 
-export default function LeadDetail({ lead, onClose, onEdit, showEditModal = false }) {
+export default function LeadDetail({ lead, onClose, onEdit }) {
   const navigate = useNavigate();
   
   const [showConvertDialog, setShowConvertDialog] = useState(false);
@@ -278,7 +278,7 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
   const lbl = "text-[10px] font-medium text-gray-500 mb-0.5";
 
   return (
-    <div className={`p-2 md:p-4 bg-gray-100 min-h-screen ${showEditModal ? 'blur-sm pointer-events-none' : ''}`}>
+    <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
       {renderQuotePrint}
       {renderMultiQuotePrint}
       <SaleFormDialog 

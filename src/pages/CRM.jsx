@@ -352,7 +352,15 @@ export default function CRM() {
   }
 
   // Cliente ahora se maneja con navegación a /clients/:clientId
-  if (selectedLead) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} showEditModal={showLeadForm} />;
+  if (selectedLead) {
+    return (
+      <>
+        <div className={showLeadForm ? 'blur-sm pointer-events-none' : ''}>
+          <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} />
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
@@ -403,7 +411,7 @@ export default function CRM() {
               leadId={editingLead?.id}
               clients={clients}
             />
-            <Dialog open={showLeadForm} onOpenChange={(open) => { if (!open) setShowConfirmLead(true); else setShowLeadForm(true); }}>
+            <Dialog open={showLeadForm} onOpenChange={setShowLeadForm}>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
                 <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg"><DialogTitle className="text-sm font-semibold">{editingLead ? 'Editar' : 'Nueva'} Consulta</DialogTitle></DialogHeader>
                 <form onSubmit={handleSubmitLead} className="p-4 space-y-3">
@@ -654,7 +662,7 @@ export default function CRM() {
                   </div>
 
                   <div className="flex justify-end gap-2 pt-2 border-t">
-                    <Button type="button" variant="outline" onClick={() => setShowConfirmLead(true)} className="h-8 text-[11px]">Cancelar</Button>
+                    <Button type="button" variant="outline" onClick={() => setShowLeadForm(false)} className="h-8 text-[11px]">Cancelar</Button>
                     <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">{editingLead ? 'Guardar' : 'Crear'}</Button>
                   </div>
                 </form>
