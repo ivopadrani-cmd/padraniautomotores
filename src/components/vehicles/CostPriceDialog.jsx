@@ -33,6 +33,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [editingExpenseIndex, setEditingExpenseIndex] = useState(-1);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const [exchangeRateManuallyChanged, setExchangeRateManuallyChanged] = useState(false);
 
   const { getHistoricalRate } = useDollarHistory();
 
@@ -63,13 +64,14 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       });
       setExpenses(vehicle.expenses || []);
       setHasChanges(false);
+      setExchangeRateManuallyChanged(false); // Reset flag when opening modal
     }
   }, [open, vehicle, currentBlueRate]);
 
   // Efecto para buscar cotización histórica cuando cambia la fecha
   useEffect(() => {
     const updateHistoricalRate = async () => {
-      if (formData.cost_date) {
+      if (formData.cost_date && !exchangeRateManuallyChanged) {
         console.log('🔍 Buscando cotización histórica para fecha:', formData.cost_date);
         const historicalRate = await getHistoricalRate(formData.cost_date);
         console.log('📊 Cotización histórica encontrada:', historicalRate, 'vs actual:', formData.cost_exchange_rate);
@@ -81,16 +83,26 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       }
     };
 
-    // Solo buscar cuando hay una fecha válida
-    if (formData.cost_date) {
+    // Solo buscar cuando hay una fecha válida y no se cambió manualmente
+    if (formData.cost_date && !exchangeRateManuallyChanged) {
       const timeoutId = setTimeout(updateHistoricalRate, 500);
       return () => clearTimeout(timeoutId);
     }
-  }, [formData.cost_date, getHistoricalRate]);
+  }, [formData.cost_date, getHistoricalRate, exchangeRateManuallyChanged]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
+
+      // Marcar si la cotización se cambió manualmente
+      if (field === 'cost_exchange_rate') {
+        setExchangeRateManuallyChanged(true);
+      }
+
+      // Reset flag si se cambia la fecha (permitir actualización automática)
+      if (field === 'cost_date') {
+        setExchangeRateManuallyChanged(false);
+      }
 
       // Autocompletar cotización si está vacía y se cambia la moneda
       if (field === 'cost_currency' && (!prev.cost_exchange_rate || prev.cost_exchange_rate === '')) {
