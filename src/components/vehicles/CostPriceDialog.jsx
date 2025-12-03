@@ -29,6 +29,9 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [expenses, setExpenses] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editingExpenseIndex, setEditingExpenseIndex] = useState(-1);
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showManual, setShowManual] = useState(false);
 
   const { getHistoricalRate } = useDollarHistory();
@@ -103,15 +106,17 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
 
   const handleAddExpense = () => {
-    if (onEditExpense) {
-      onEditExpense({}, -1); // Pasar objeto vacío para nuevo gasto
-    }
+    setEditingExpense({});
+    setEditingExpenseIndex(-1);
+    setShowExpenseModal(true);
   };
 
   const handleEditExpense = (index) => {
     const expenseToEdit = expenses[index];
-    if (expenseToEdit && onEditExpense) {
-      onEditExpense({ ...expenseToEdit }, index); // Llamar a la función del padre
+    if (expenseToEdit) {
+      setEditingExpense({ ...expenseToEdit });
+      setEditingExpenseIndex(index);
+      setShowExpenseModal(true);
     }
   };
 
@@ -378,6 +383,23 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
         <PriceManualDialog
           open={showManual}
           onOpenChange={setShowManual}
+        />
+
+        {/* Modal de edición de gastos */}
+        <ExpenseEditDialog
+          open={showExpenseModal}
+          onOpenChange={(open) => {
+            setShowExpenseModal(open);
+            if (!open) {
+              setEditingExpense(null);
+              setEditingExpenseIndex(-1);
+            }
+          }}
+          expense={editingExpense}
+          index={editingExpenseIndex}
+          onSave={handleSaveExpense}
+          onDelete={handleDeleteExpense}
+          currentBlueRate={currentBlueRate}
         />
       </DialogContent>
     </Dialog>

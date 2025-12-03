@@ -935,6 +935,28 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
 
               <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Observaciones</Label><Textarea className="text-[11px] min-h-[60px] bg-white" value={editingFormData.observations} onChange={(e) => setEditingFormData({ ...editingFormData, observations: e.target.value })} /></div>
 
+              <div>
+                <Label className="text-[10px] font-medium text-gray-500 mb-1">Archivos adjuntos</Label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setEditingFormData({
+                      ...editingFormData,
+                      attachments: files
+                    });
+                  }}
+                  className="text-[10px] w-full"
+                />
+                {editingFormData.attachments && editingFormData.attachments.length > 0 && (
+                  <div className="text-[9px] text-gray-500 mt-1">
+                    {editingFormData.attachments.length} archivo(s) seleccionado(s)
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Estado</Label>
                   <Select value={editingFormData.status} onValueChange={(value) => setEditingFormData({ ...editingFormData, status: value })}>

@@ -42,7 +42,8 @@ export default function CRM() {
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('leads');
-  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [showNewLeadForm, setShowNewLeadForm] = useState(false);
+  const [showEditLeadModal, setShowEditLeadModal] = useState(false);
   const [showClientForm, setShowClientForm] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
   const [editingClient, setEditingClient] = useState(null);
@@ -216,7 +217,8 @@ export default function CRM() {
   };
 
   const resetLeadForm = () => {
-    setShowLeadForm(false);
+    setShowNewLeadForm(false);
+    setShowEditLeadModal(false);
     setEditingLead(null);
     setLeadFormData({ consultation_date: new Date().toISOString().split('T')[0], consultation_time: new Date().toTimeString().slice(0, 5), source: '', client_id: '', client_name: '', client_phone: '', client_email: '', interested_vehicles: [], other_interests: '', budget: '', preferred_contact: 'WhatsApp', trade_in: { brand: '', model: '', year: '', kilometers: '', plate: '', color: '', photos: [] }, status: 'Nuevo', interest_level: 'Medio', observations: '', follow_up_date: '', follow_up_time: '' });
     setVehicleSearch('');
@@ -250,19 +252,19 @@ export default function CRM() {
   const handleEditLead = (lead) => {
     setEditingLead(lead);
     setLeadFormData({
-      consultation_date: lead.consultation_date, 
+      consultation_date: lead.consultation_date,
       consultation_time: lead.consultation_time || '',
       source: lead.source || '',
       client_name: lead.client_name, client_phone: lead.client_phone || '',
-      client_email: lead.client_email || '', 
+      client_email: lead.client_email || '',
       interested_vehicles: lead.interested_vehicles || [],
       other_interests: lead.other_interests || '', budget: lead.budget?.toString() || '',
-      preferred_contact: lead.preferred_contact || 'WhatsApp', 
+      preferred_contact: lead.preferred_contact || 'WhatsApp',
       trade_in: lead.trade_in || { brand: '', model: '', year: '', kilometers: '', plate: '', color: '', photos: [] },
       status: lead.status, interest_level: lead.interest_level || 'Medio',
       observations: lead.observations || '', follow_up_date: lead.follow_up_date || '', follow_up_time: lead.follow_up_time || ''
     });
-    setShowLeadForm(true);
+    setShowEditLeadModal(true);
   };
 
   const handleEditClient = (client) => {
@@ -358,8 +360,8 @@ export default function CRM() {
         lead={selectedLead}
         onClose={handleCloseLead}
         onEdit={(l) => { handleEditLead(l); }}
-        showEditModal={showLeadForm}
-        onCloseEditModal={() => setShowLeadForm(false)}
+        showEditModal={showEditLeadModal}
+        onCloseEditModal={() => setShowEditLeadModal(false)}
       />
     );
   }
@@ -400,19 +402,269 @@ export default function CRM() {
               ) : (
                 <Button variant="outline" onClick={() => setSelectionMode(true)} className="h-8 text-[11px]">Selección múltiple</Button>
               )}
-              <Button onClick={() => setShowLeadForm(true)} className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
+              <Button onClick={() => setShowNewLeadForm(true)} className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
                 <Plus className="w-3.5 h-3.5 mr-1.5" /> Nueva Consulta
               </Button>
             </div>
 
             <ConfirmDialog open={showConfirmLead} onOpenChange={setShowConfirmLead} onConfirm={resetLeadForm} />
-            <ScheduleFollowUpDialog 
-              open={showScheduleDialog} 
-              onOpenChange={setShowScheduleDialog} 
+            <ScheduleFollowUpDialog
+              open={showScheduleDialog}
+              onOpenChange={setShowScheduleDialog}
               leadData={leadFormData}
               leadId={editingLead?.id}
               clients={clients}
             />
+
+            {/* Modal de Nueva Consulta */}
+            <Dialog open={showNewLeadForm} onOpenChange={setShowNewLeadForm}>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
+                <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
+                  <DialogTitle className="text-sm font-semibold">Nueva Consulta</DialogTitle>
+                  <DialogDescription className="sr-only">Crear una nueva consulta con todos los detalles del cliente y vehículo.</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmitLead} className="p-4 space-y-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div><Label className={lbl}>Fecha *</Label><Input className={inp} type="date" value={leadFormData.consultation_date} onChange={(e) => setLeadFormData({ ...leadFormData, consultation_date: e.target.value })} required /></div>
+                    <div><Label className={lbl}>Hora</Label>
+                      <Input
+                        className={inp}
+                        type="time"
+                        value={leadFormData.consultation_time}
+                        onChange={(e) => setLeadFormData({ ...leadFormData, consultation_time: e.target.value })}
+                      />
+                    </div>
+                    <div><Label className={lbl}>Fuente</Label>
+                      <Select value={leadFormData.source} onValueChange={(v) => setLeadFormData({ ...leadFormData, source: v })}>
+                        <SelectTrigger className={inp}><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                        <SelectContent>{SOURCE_OPTIONS.map(s => <SelectItem key={s} value={s} className="text-[11px]">{s}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Sección Cliente/Prospecto */}
+                  <div className="space-y-2 p-3 bg-gray-50 rounded">
+                    {/* Toggle Nuevo/Existente */}
+                    <div className="flex rounded overflow-hidden">
+                      <button
+                        type="button"
+                        className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
+                          isNewProspect
+                            ? 'bg-gray-900 text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-100'
+                        }`}
+                        onClick={() => {
+                          setIsNewProspect(true);
+                          setLeadFormData({ ...leadFormData, client_id: '', client_name: '', client_phone: '', client_email: '' });
+                          setClientSearch('');
+                          setShowClientDropdown(false);
+                        }}
+                      >
+                        Nuevo Prospecto
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
+                          !isNewProspect
+                            ? 'bg-gray-900 text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-100'
+                        }`}
+                        onClick={() => {
+                          setIsNewProspect(false);
+                          // NO abrir dropdown automáticamente, solo cambiar modo
+                        }}
+                      >
+                        Cliente Existente
+                      </button>
+                    </div>
+
+                    {/* Búsqueda de Cliente (solo visible en modo existente) */}
+                    {!isNewProspect && (
+                      <div className="relative">
+                        <Input
+                          className={inp}
+                          placeholder="Buscar por nombre, DNI o teléfono..."
+                          value={clientSearch}
+                          onChange={(e) => {
+                            setClientSearch(e.target.value);
+                            if (!showClientDropdown) setShowClientDropdown(true);
+                          }}
+                          onClick={() => {
+                            // Toggle al hacer click
+                            setShowClientDropdown(!showClientDropdown);
+                          }}
+                          onBlur={() => {
+                            // Delay para permitir click en items
+                            setTimeout(() => setShowClientDropdown(false), 200);
+                          }}
+                        />
+                        {showClientDropdown && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-48 overflow-auto">
+                            {filteredClientsForLead.length > 0 ? (
+                              filteredClientsForLead.slice(0, 10).map(c => (
+                                <div
+                                  key={c.id}
+                                  className="p-2 hover:bg-gray-50 cursor-pointer text-[11px] border-b last:border-0"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault(); // Prevenir onBlur del input
+                                    setLeadFormData({
+                                      ...leadFormData,
+                                      client_id: c.id,
+                                      client_name: c.full_name,
+                                      client_phone: c.phone || '',
+                                      client_email: c.email || ''
+                                    });
+                                    setClientSearch('');
+                                    setShowClientDropdown(false);
+                                  }}
+                                >
+                                  <p className="font-medium">{c.full_name}</p>
+                                  <p className="text-gray-400 text-[9px]">{c.phone} {c.client_status && `• ${c.client_status}`}</p>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="p-3 text-[10px] text-gray-500 text-center">
+                                {clientSearch ? 'No se encontraron clientes' : 'Todos los clientes'}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Formulario de Datos (siempre visible) */}
+                    <div>
+                      <Label className={lbl}>
+                        {leadFormData.client_id ? 'Datos del Cliente Seleccionado' : isNewProspect ? 'Datos del Prospecto' : 'Datos del Cliente'}
+                      </Label>
+                      <div className="space-y-2">
+                        <Input
+                          className={inp}
+                          placeholder="Nombre completo *"
+                          value={leadFormData.client_name}
+                          onChange={(e) => setLeadFormData({ ...leadFormData, client_name: e.target.value })}
+                          disabled={!isNewProspect && leadFormData.client_id}
+                          required
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            className={inp}
+                            placeholder="Teléfono *"
+                            value={leadFormData.client_phone}
+                            onChange={(e) => setLeadFormData({ ...leadFormData, client_phone: e.target.value })}
+                            disabled={!isNewProspect && leadFormData.client_id}
+                            required
+                          />
+                          <Input
+                            className={inp}
+                            type="email"
+                            placeholder="Email"
+                            value={leadFormData.client_email}
+                            onChange={(e) => setLeadFormData({ ...leadFormData, client_email: e.target.value })}
+                            disabled={!isNewProspect && leadFormData.client_id}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div><Label className={lbl}>Presupuesto</Label><Input className={inp} placeholder="Ej: 10000000" value={leadFormData.budget} onChange={(e) => setLeadFormData({ ...leadFormData, budget: e.target.value })} /></div>
+
+                  {/* Vehículos de interés */}
+                  <div>
+                    <Label className={lbl}>Vehículos de interés</Label>
+                    <div className="relative">
+                      <div className="flex gap-1">
+                        <Input className={`${inp} flex-1`} placeholder="Buscar por marca, modelo, año o dominio..." value={vehicleSearch} onChange={(e) => setVehicleSearch(e.target.value)} onFocus={() => setShowVehicleDropdown(true)} />
+                        <Button type="button" variant="outline" className="h-8 px-2" onClick={() => setShowVehicleDropdown(!showVehicleDropdown)}><ChevronDown className="w-3.5 h-3.5" /></Button>
+                      </div>
+                      {showVehicleDropdown && filteredAvailableVehicles.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-32 overflow-auto">
+                          {filteredAvailableVehicles.slice(0, 8).map(v => (
+                            <div key={v.id} className="p-2 hover:bg-gray-50 cursor-pointer text-[11px] border-b last:border-0" onClick={() => { addVehicleToLead(v); setShowVehicleDropdown(false); }}>
+                              <span className="font-medium uppercase">{v.brand} {v.model}</span> <span className="text-gray-500">{v.year} • {v.plate}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {leadFormData.interested_vehicles.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {leadFormData.interested_vehicles.map(iv => (
+                          <Badge key={iv.vehicle_id} variant="secondary" className="text-[10px] pr-1 flex items-center gap-1">
+                            {iv.vehicle_description}
+                            <button type="button" onClick={() => removeVehicleFromLead(iv.vehicle_id)} className="ml-1 hover:text-red-500"><X className="w-3 h-3" /></button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div><Label className={lbl}>Otros intereses</Label><Input className={inp} value={leadFormData.other_interests} onChange={(e) => setLeadFormData({ ...leadFormData, other_interests: e.target.value })} placeholder="Vehículos que no están en stock, características buscadas..." /></div>
+
+                  {/* Trade-in */}
+                  <div className="p-3 bg-gray-50 rounded border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Car className="w-3.5 h-3.5 text-gray-500" />
+                      <Label className="text-[10px] font-medium text-gray-600">Permuta (opcional)</Label>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <Input className={inp} placeholder="Marca" value={leadFormData.trade_in?.brand || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, brand: e.target.value } })} />
+                      <Input className={inp} placeholder="Modelo" value={leadFormData.trade_in?.model || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, model: e.target.value } })} />
+                      <Input className={inp} placeholder="Año" value={leadFormData.trade_in?.year || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, year: e.target.value } })} />
+                      <Input className={inp} placeholder="Km" value={leadFormData.trade_in?.kilometers || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, kilometers: e.target.value } })} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <Input className={inp} placeholder="Dominio" value={leadFormData.trade_in?.plate || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, plate: e.target.value } })} />
+                      <Input className={inp} placeholder="Color" value={leadFormData.trade_in?.color || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, color: e.target.value } })} />
+                    </div>
+                    <div className="mt-2">
+                      <Label className={lbl}>Fotos del vehículo</Label>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+                          setLeadFormData(prev => ({
+                            ...prev,
+                            trade_in: {
+                              ...prev.trade_in,
+                              photos: files
+                            }
+                          }));
+                        }}
+                        className="text-[10px] w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div><Label className={lbl}>Observaciones</Label><Textarea className="text-[11px] min-h-[60px] bg-white" value={leadFormData.observations} onChange={(e) => setLeadFormData({ ...leadFormData, observations: e.target.value })} /></div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className={lbl}>Estado</Label>
+                      <Select value={leadFormData.status} onValueChange={(v) => setLeadFormData({ ...leadFormData, status: v })}>
+                        <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
+                        <SelectContent>{Object.keys(STATUS_CONFIG).map(s => <SelectItem key={s} value={s} className="text-[11px]">{STATUS_CONFIG[s].icon} {s}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className={lbl}>Interés</Label>
+                      <Select value={leadFormData.interest_level} onValueChange={(v) => setLeadFormData({ ...leadFormData, interest_level: v })}>
+                        <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
+                        <SelectContent>{Object.keys(INTEREST_CONFIG).map(i => <SelectItem key={i} value={i} className="text-[11px]">{INTEREST_CONFIG[i].icon} {i}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2 border-t">
+                    <Button type="button" variant="outline" onClick={() => setShowNewLeadForm(false)} className="h-8 text-[11px]">Cancelar</Button>
+                    <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">Crear</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
 
             <Card className="shadow-sm">
               <CardContent className="p-0">
