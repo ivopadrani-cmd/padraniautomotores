@@ -185,7 +185,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
   return (
     <Dialog open={open} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" style={{ zIndex: 1000 }}>
+      <DialogContent className={`max-w-4xl max-h-[90vh] overflow-y-auto ${showExpenseModal ? 'pointer-events-none' : ''}`} style={{ zIndex: 1000 }}>
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
