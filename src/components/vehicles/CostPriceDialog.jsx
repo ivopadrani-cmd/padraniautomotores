@@ -34,6 +34,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [exchangeRateManuallyChanged, setExchangeRateManuallyChanged] = useState(false);
+  const [dateManuallyChanged, setDateManuallyChanged] = useState(false);
 
   const { getHistoricalRate } = useDollarHistory();
 
@@ -65,13 +66,14 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       setExpenses(vehicle.expenses || []);
       setHasChanges(false);
       setExchangeRateManuallyChanged(false); // Reset flag when opening modal
+      setDateManuallyChanged(false); // Reset flag when opening modal
     }
   }, [open, vehicle, currentBlueRate]);
 
-  // Efecto para buscar cotización histórica cuando cambia la fecha
+  // Efecto para buscar cotización histórica cuando el usuario cambia la fecha
   useEffect(() => {
     const updateHistoricalRate = async () => {
-      if (formData.cost_date && !exchangeRateManuallyChanged) {
+      if (formData.cost_date && dateManuallyChanged && !exchangeRateManuallyChanged) {
         console.log('🔍 Buscando cotización histórica para fecha:', formData.cost_date);
         const historicalRate = await getHistoricalRate(formData.cost_date);
         console.log('📊 Cotización histórica encontrada:', historicalRate, 'vs actual:', formData.cost_exchange_rate);
@@ -83,12 +85,12 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       }
     };
 
-    // Solo buscar cuando hay una fecha válida y no se cambió manualmente
-    if (formData.cost_date && !exchangeRateManuallyChanged) {
+    // Solo buscar cuando el usuario cambió la fecha manualmente
+    if (formData.cost_date && dateManuallyChanged && !exchangeRateManuallyChanged) {
       const timeoutId = setTimeout(updateHistoricalRate, 500);
       return () => clearTimeout(timeoutId);
     }
-  }, [formData.cost_date, getHistoricalRate, exchangeRateManuallyChanged]);
+  }, [formData.cost_date, getHistoricalRate, dateManuallyChanged, exchangeRateManuallyChanged]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
@@ -99,9 +101,10 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
         setExchangeRateManuallyChanged(true);
       }
 
-      // Reset flag si se cambia la fecha (permitir actualización automática)
+      // Marcar que la fecha fue cambiada manualmente
       if (field === 'cost_date') {
-        setExchangeRateManuallyChanged(false);
+        setDateManuallyChanged(true);
+        setExchangeRateManuallyChanged(false); // Permitir actualización automática cuando cambia fecha
       }
 
       // Autocompletar cotización si está vacía y se cambia la moneda
@@ -398,21 +401,23 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
         />
 
         {/* Modal de edición de gastos */}
-        <ExpenseEditDialog
-          open={showExpenseModal}
-          onOpenChange={(open) => {
-            setShowExpenseModal(open);
-            if (!open) {
-              setEditingExpense(null);
-              setEditingExpenseIndex(-1);
-            }
-          }}
-          expense={editingExpense}
-          index={editingExpenseIndex}
-          onSave={handleSaveExpense}
-          onDelete={handleDeleteExpense}
-          currentBlueRate={currentBlueRate}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <ExpenseEditDialog
+            open={showExpenseModal}
+            onOpenChange={(open) => {
+              setShowExpenseModal(open);
+              if (!open) {
+                setEditingExpense(null);
+                setEditingExpenseIndex(-1);
+              }
+            }}
+            expense={editingExpense}
+            index={editingExpenseIndex}
+            onSave={handleSaveExpense}
+            onDelete={handleDeleteExpense}
+            currentBlueRate={currentBlueRate}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

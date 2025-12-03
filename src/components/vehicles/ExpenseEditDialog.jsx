@@ -62,7 +62,7 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0" style={{ zIndex: 1400 }}>
+      <DialogContent className="max-w-md p-0" style={{ zIndex: 1500 }}>
         <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
           <DialogTitle className="text-sm font-semibold">{expense ? 'Editar' : 'Nuevo'} Gasto</DialogTitle>
         </DialogHeader>
