@@ -266,7 +266,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                     />
                   </div>
                 </div>
-                <div>
+                <div className="col-span-1">
                   <Label className="text-[11px] text-gray-600">
                     Valor de toma ({formData.cost_currency})
                   </Label>
@@ -280,23 +280,23 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Conversión actual */}
-            <div>
-              <Label className="text-[11px] text-gray-600">
-                Conversión actual
-              </Label>
-              <div className="h-9 bg-blue-50 rounded px-3 flex items-center justify-between">
-                <span className="text-[11px] font-medium text-blue-700">
-                  {formData.cost_value ?
-                    `${formData.cost_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.cost_value), formData.cost_currency, parseFloat(formData.cost_exchange_rate) || currentBlueRate)?.toLocaleString(formData.cost_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
-                    : '-'
-                  }
-                </span>
-                <span className="text-[9px] text-blue-600">
-                  {formData.cost_date ? `Cotización ${formData.cost_date}` : 'BLUE actual'}
-                </span>
+              {/* Conversión actual en fila separada */}
+              <div>
+                <Label className="text-[11px] text-gray-600">
+                  Conversión actual
+                </Label>
+                <div className="h-9 bg-blue-50 rounded px-3 flex items-center justify-between">
+                  <span className="text-[11px] font-medium text-blue-700">
+                    {formData.cost_value ?
+                      `${formData.cost_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.cost_value), formData.cost_currency, parseFloat(formData.cost_exchange_rate) || currentBlueRate)?.toLocaleString(formData.cost_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
+                      : '-'
+                    }
+                  </span>
+                  <span className="text-[9px] text-blue-600">
+                    {formData.cost_date ? `Cotización ${formData.cost_date}` : 'BLUE actual'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -400,7 +400,6 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
             </Button>
           </div>
         </form>
-
 
         {/* Modal del manual */}
         <PriceManualDialog
