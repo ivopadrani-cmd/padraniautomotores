@@ -10,12 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, CheckCircle, XCircle, Key, Search, Car, DollarSign, Calendar, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { infoautoAPI } from '../services/infoautoApi';
 
 // Hooks personalizados
 import {
@@ -42,6 +42,7 @@ export default function InfoAutoTester() {
   const [codiaSearch, setCodiaSearch] = useState('');
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
+  const [showTokenSection, setShowTokenSection] = useState(false);
 
   // Credentials management
   const { setCredentials, getCredentials, hasCredentials } = useInfoAutoCredentials();
@@ -76,9 +77,22 @@ export default function InfoAutoTester() {
     e.preventDefault();
     if (usernameInput.trim() && passwordInput.trim()) {
       await setCredentials(usernameInput.trim(), passwordInput.trim());
+      setShowTokenSection(true);
     } else {
       toast.error('Usuario y contraseña son requeridos');
     }
+  };
+
+  // Función para obtener información de tokens
+  const getTokenInfo = () => {
+    const api = infoautoAPI;
+    return {
+      hasCredentials: api.hasCredentials(),
+      accessToken: api.accessToken ? `${api.accessToken.substring(0, 20)}...` : null,
+      refreshToken: api.refreshToken ? `${api.refreshToken.substring(0, 20)}...` : null,
+      tokenExpiry: api.tokenExpiry ? new Date(api.tokenExpiry).toLocaleString() : null,
+      isTokenValid: api.isTokenValid()
+    };
   };
 
   const handleBrandChange = (brandId) => {
@@ -109,8 +123,8 @@ export default function InfoAutoTester() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">API InfoAuto Tester</h1>
-          <p className="text-gray-600 mt-2">Prueba completa de la API JWT de InfoAuto para integración con tu concesionario</p>
+          <h1 className="text-3xl font-bold text-gray-900">InfoAuto - Buscador de Precios</h1>
+          <p className="text-gray-600 mt-2">Sistema de consulta de precios de vehículos con autenticación JWT</p>
           <p className="text-sm text-amber-600 mt-1 font-medium">
             ⚠️ Requiere credenciales válidas de InfoAuto (usuario/contraseña)
           </p>
@@ -213,451 +227,289 @@ export default function InfoAutoTester() {
       )}
 
       {hasCredentials() && (
-        <Tabs defaultValue="connection" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="connection">Conexión</TabsTrigger>
-            <TabsTrigger value="brands">Marcas</TabsTrigger>
-            <TabsTrigger value="models">Modelos</TabsTrigger>
-            <TabsTrigger value="codia">CODIA</TabsTrigger>
-            <TabsTrigger value="prices">Precios</TabsTrigger>
-            <TabsTrigger value="updates">Actualizaciones</TabsTrigger>
-          </TabsList>
-
-          {/* Connection Test Tab */}
-          <TabsContent value="connection" className="space-y-4">
+        <div className="space-y-6">
+          {/* Token Verification Section */}
+          {showTokenSection && (
             <Card>
               <CardHeader>
-                <CardTitle>Prueba de Conexión</CardTitle>
-                <CardDescription>Verifica que la API esté funcionando correctamente</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <Button
-                    onClick={() => window.location.reload()}
-                    disabled={testingConnection}
-                  >
-                    {testingConnection && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Probar Conexión
-                  </Button>
-                  {connectionTest && (
-                    <div className="flex items-center gap-2">
-                      {connectionTest.success ? (
-                        <>
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                          <span className="text-green-600 font-medium">Conexión exitosa</span>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="w-5 h-5 text-red-600" />
-                          <span className="text-red-600 font-medium">Error de conexión</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Última actualización</Label>
-                    <div className="mt-1">
-                      {loadingLastUpdate ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Cargando...</span>
-                        </div>
-                      ) : lastUpdate ? (
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-blue-600" />
-                          <span>{formatDate(lastUpdate.datetime)}</span>
-                        </div>
-                      ) : (
-                        <span className="text-gray-500">No disponible</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Año en curso</Label>
-                    <div className="mt-1">
-                      {loadingCurrentYear ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Cargando...</span>
-                        </div>
-                      ) : currentYear ? (
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary">{currentYear.year}</Badge>
-                        </div>
-                      ) : (
-                        <span className="text-gray-500">No disponible</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Brands Tab */}
-          <TabsContent value="brands" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Marcas Disponibles</CardTitle>
-                <CardDescription>Lista de todas las marcas en la base de InfoAuto</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <Key className="w-5 h-5" />
+                  Verificación de Tokens JWT
+                </CardTitle>
+                <CardDescription>
+                  Estado de autenticación y tokens generados
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                {loadingBrands ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                    <span className="ml-2">Cargando marcas...</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium">Estado de Autenticación</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        {getTokenInfo().isTokenValid ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span className="text-green-600 font-medium">Tokens Válidos</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-4 h-4 text-red-600" />
+                            <span className="text-red-600 font-medium">Sin Tokens Válidos</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium">Access Token</Label>
+                      <div className="mt-1 p-2 bg-gray-100 rounded font-mono text-xs break-all">
+                        {getTokenInfo().accessToken || 'No generado'}
+                      </div>
+                    </div>
                   </div>
-                ) : brands?.results ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {brands.results.map((brand) => (
-                      <Card key={brand.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="font-semibold">{brand.name}</h3>
-                              <p className="text-sm text-gray-600">{brand.group_name}</p>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleBrandChange(brand.id)}
-                            >
-                              Ver Modelos
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium">Refresh Token</Label>
+                      <div className="mt-1 p-2 bg-gray-100 rounded font-mono text-xs break-all">
+                        {getTokenInfo().refreshToken || 'No generado'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium">Expira el</Label>
+                      <div className="mt-1 p-2 bg-gray-100 rounded text-sm">
+                        {getTokenInfo().tokenExpiry || 'No disponible'}
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-8">No se pudieron cargar las marcas</p>
-                )}
+                </div>
+
+                <div className="flex gap-2 mt-4">
+                  <Button
+                    onClick={() => {
+                      // Forzar renovación manual
+                      infoautoAPI.clearTokens();
+                      window.location.reload();
+                    }}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Forzar Renovación
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
 
-          {/* Models Tab */}
-          <TabsContent value="models" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Modelos por Marca</CardTitle>
-                <CardDescription>Selecciona una marca para ver sus modelos disponibles</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* Main Interface */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Car className="w-5 h-5" />
+                Buscador de Vehículos InfoAuto
+              </CardTitle>
+              <CardDescription>
+                Selecciona marca y modelo para consultar precios
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* CORS Warning */}
+              <Alert>
+                <AlertDescription>
+                  <strong>⚠️ Nota sobre CORS:</strong> La API demo de InfoAuto no permite requests desde localhost por seguridad.
+                  En producción con credenciales reales, funcionará correctamente desde tu dominio.
+                </AlertDescription>
+              </Alert>
+
+              {/* Vehicle Search Interface */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Brand Selection */}
                 <div>
-                  <Label>Seleccionar Marca</Label>
+                  <Label className="text-sm font-medium">Marca</Label>
                   <Select value={selectedBrand} onValueChange={handleBrandChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona una marca" />
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Seleccionar marca" />
                     </SelectTrigger>
                     <SelectContent>
-                      {brands?.results?.map((brand) => (
-                        <SelectItem key={brand.id} value={brand.id.toString()}>
-                          {brand.name}
-                        </SelectItem>
-                      ))}
+                      {loadingBrands ? (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          <span>Cargando...</span>
+                        </div>
+                      ) : (
+                        brands?.results?.map((brand) => (
+                          <SelectItem key={brand.id} value={brand.id.toString()}>
+                            {brand.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {selectedBrand && (
-                  <div>
-                    {loadingModels ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-8 h-8 animate-spin" />
-                        <span className="ml-2">Cargando modelos...</span>
-                      </div>
-                    ) : models?.results ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {models.results.map((model) => (
-                          <Card key={model.codia}>
-                            <CardContent className="p-4">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h3 className="font-semibold">{model.name}</h3>
-                                  <p className="text-sm text-gray-600">CODIA: {model.codia}</p>
-                                  <p className="text-sm text-gray-600">Año: {model.year}</p>
-                                </div>
-                                <Button
-                                  size="sm"
-                                  onClick={() => setCodiaSearch(model.codia)}
-                                >
-                                  Ver Detalles
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-center py-8">No se encontraron modelos para esta marca</p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* CODIA Search Tab */}
-          <TabsContent value="codia" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Búsqueda por CODIA</CardTitle>
-                <CardDescription>Ingresa un CODIA para obtener información completa del modelo</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                {/* Model Selection */}
                 <div>
-                  <Label htmlFor="codia">CODIA</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="codia"
-                      value={codiaSearch}
-                      onChange={(e) => setCodiaSearch(e.target.value)}
-                      placeholder="Ej: VW001AA"
-                      className="font-mono"
-                    />
-                    <Button
-                      onClick={() => setCodiaSearch(codiaSearch)}
-                      disabled={!codiaSearch.trim() || loadingCompleteModel}
-                    >
-                      {loadingCompleteModel && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Buscar
-                    </Button>
-                  </div>
+                  <Label className="text-sm font-medium">Modelo</Label>
+                  <Select
+                    value={selectedModel}
+                    onValueChange={setSelectedModel}
+                    disabled={!selectedBrand}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={selectedBrand ? "Seleccionar modelo" : "Primero selecciona marca"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {loadingModels ? (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          <span>Cargando...</span>
+                        </div>
+                      ) : (
+                        models?.results?.map((model) => (
+                          <SelectItem key={model.codia} value={model.codia}>
+                            {model.name} ({model.year})
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {completeModel && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Car className="w-5 h-5" />
-                        {completeModel.name}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label className="text-sm font-medium">CODIA</Label>
-                          <p className="font-mono text-lg">{completeModel.codia}</p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium">Año</Label>
-                          <p className="text-lg">{completeModel.year}</p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium">Marca</Label>
-                          <p className="text-lg">{completeModel.brand_name}</p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium">Grupo</Label>
-                          <p className="text-lg">{completeModel.group_name}</p>
-                        </div>
-                      </div>
+                {/* Price Check Button */}
+                <div className="flex items-end">
+                  <Button
+                    onClick={() => {
+                      if (selectedModel) {
+                        setCodiaSearch(selectedModel);
+                        toast.success('Consultando precios...');
+                      } else {
+                        toast.error('Selecciona un modelo primero');
+                      }
+                    }}
+                    disabled={!selectedModel}
+                    className="w-full"
+                  >
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Ver Precios
+                  </Button>
+                </div>
+              </div>
 
-                      {completeModel.list_price && (
-                        <div className="border-t pt-4">
-                          <Label className="text-sm font-medium">Precio 0km</Label>
-                          <p className="text-2xl font-bold text-green-600">
-                            {formatPrice(completeModel.list_price.price)}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Actualizado: {formatDate(completeModel.list_price.updated_at)}
-                          </p>
-                        </div>
-                      )}
+              {/* Search by CODIA */}
+              <Separator />
+              <div>
+                <Label className="text-sm font-medium">O buscar directamente por CODIA</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    value={codiaSearch}
+                    onChange={(e) => setCodiaSearch(e.target.value)}
+                    placeholder="Ej: VW001AA"
+                    className="font-mono"
+                  />
+                  <Button
+                    onClick={() => setCodiaSearch(codiaSearch)}
+                    disabled={!codiaSearch.trim() || loadingCompleteModel}
+                  >
+                    {loadingCompleteModel && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Buscar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                      <div className="flex gap-2 pt-4">
-                        <Button
-                          onClick={async () => {
-                            if (completeModel?.codia) {
-                              try {
-                                await manualUpdate(completeModel.codia); // Esto debería ser el ID del vehículo, no el CODIA
-                                toast.success('Precio InfoAuto actualizado');
-                              } catch (error) {
-                                toast.error('Error al actualizar precio');
-                              }
-                            }
-                          }}
-                          disabled={!completeModel?.codia}
-                          className="flex-1"
-                        >
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Actualizar Precio InfoAuto
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Prices Tab */}
-          <TabsContent value="prices" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Precios y Valores</CardTitle>
-                <CardDescription>Información de precios de la API de InfoAuto</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Alert>
-                  <AlertDescription>
-                    Esta sección mostrará información de precios 0km y usados.
-                    La funcionalidad completa estará disponible próximamente.
-                  </AlertDescription>
-                </Alert>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Integration Tab */}
-          <TabsContent value="updates" className="space-y-4">
+          {/* Results */}
+          {completeModel && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <RefreshCw className="w-5 h-5" />
-                  Integración Automática
+                  <Car className="w-5 h-5" />
+                  Resultado: {completeModel.name}
                 </CardTitle>
-                <CardDescription>
-                  Sistema de actualización automática de precios InfoAuto (requiere suscripción activa)
-                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Control del servicio */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Control del Servicio</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">
-                          Servicio de actualización automática:
-                          <span className={`ml-2 px-2 py-1 rounded text-sm ${integrationRunning ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                            {integrationRunning ? 'ACTIVO' : 'INACTIVO'}
-                          </span>
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {integrationRunning
-                            ? 'El sistema verifica actualizaciones cada 10 minutos'
-                            : 'El servicio está detenido'
-                          }
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        {!integrationRunning ? (
-                          <Button onClick={startIntegration} className="flex items-center gap-2">
-                            <RefreshCw className="w-4 h-4" />
-                            Iniciar Servicio
-                          </Button>
-                        ) : (
-                          <Button onClick={stopIntegration} variant="outline" className="flex items-center gap-2">
-                            <XCircle className="w-4 h-4" />
-                            Detener Servicio
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Estadísticas */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Estadísticas de Integración</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {loadingStats ? (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="w-8 h-8 animate-spin" />
-                        <span className="ml-2">Cargando estadísticas...</span>
-                      </div>
-                    ) : integrationStats ? (
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="text-center p-4 bg-blue-50 rounded">
-                          <div className="text-2xl font-bold text-blue-600">{integrationStats.totalVehicles}</div>
-                          <div className="text-sm text-gray-600">Total Vehículos</div>
-                        </div>
-                        <div className="text-center p-4 bg-green-50 rounded">
-                          <div className="text-2xl font-bold text-green-600">{integrationStats.vehiclesWithCodia}</div>
-                          <div className="text-sm text-gray-600">Con CODIA</div>
-                        </div>
-                        <div className="text-center p-4 bg-yellow-50 rounded">
-                          <div className="text-2xl font-bold text-yellow-600">{integrationStats.coveragePercentage}%</div>
-                          <div className="text-sm text-gray-600">Cobertura</div>
-                        </div>
-                        <div className="text-center p-4 bg-purple-50 rounded">
-                          <div className="text-2xl font-bold text-purple-600">
-                            {integrationStats.lastUpdateCheck ? formatDate(integrationStats.lastUpdateCheck) : 'Nunca'}
-                          </div>
-                          <div className="text-sm text-gray-600">Última Verificación</div>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-center py-8">No se pudieron cargar las estadísticas</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Información del sistema */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <Calendar className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                      <h3 className="font-semibold">Última Actualización API</h3>
-                      <p className="text-sm text-gray-600">
-                        {lastUpdate ? formatDate(lastUpdate.datetime) : 'No disponible'}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <RefreshCw className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                      <h3 className="font-semibold">Frecuencia de Verificación</h3>
-                      <p className="text-sm text-gray-600">Cada 10 minutos</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <DollarSign className="w-8 h-8 mx-auto mb-2 text-orange-600" />
-                      <h3 className="font-semibold">Actualizaciones Automáticas</h3>
-                      <p className="text-sm text-gray-600">Precios InfoAuto</p>
-                    </CardContent>
-                  </Card>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">CODIA</Label>
+                    <p className="font-mono text-lg">{completeModel.codia}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Año</Label>
+                    <p className="text-lg">{completeModel.year}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Marca</Label>
+                    <p className="text-lg">{completeModel.brand_name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Grupo</Label>
+                    <p className="text-lg">{completeModel.group_name}</p>
+                  </div>
                 </div>
 
-                {/* Información adicional */}
+                {completeModel.list_price && (
+                  <div className="border-t pt-4">
+                    <Label className="text-sm font-medium">Precio 0km Actual</Label>
+                    <p className="text-2xl font-bold text-green-600">
+                      {formatPrice(completeModel.list_price.price)}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Actualizado: {formatDate(completeModel.list_price.updated_at)}
+                    </p>
+                  </div>
+                )}
+
                 <Alert>
                   <AlertDescription>
-                    <strong>¿Cómo funciona?</strong><br />
-                    1. El sistema verifica cada 10 minutos si hay actualizaciones en la API de InfoAuto<br />
-                    2. Si detecta cambios, actualiza automáticamente los precios InfoAuto de todos los vehículos con CODIA<br />
-                    3. Solo actualiza precios que cambiaron significativamente (&gt;1%)<br />
-                    4. Los precios históricos se mantienen para referencia de costos<br />
-                    <br />
-                    <strong>⚠️ Importante:</strong> Esta funcionalidad requiere una suscripción activa a InfoAuto.
+                    <strong>Nota:</strong> Los precios usados por año estarían disponibles aquí.
+                    Esta funcionalidad se implementará cuando tengamos acceso completo a la API.
                   </AlertDescription>
                 </Alert>
-
-                {!hasCredentials() && (
-                  <Alert>
-                    <AlertDescription>
-                      <strong>Estado:</strong> El módulo de integración automática está preparado pero requiere credenciales válidas de InfoAuto con autenticación JWT.
-                    </AlertDescription>
-                  </Alert>
-                )}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          )}
+
+          {/* Integration Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Integración Automática</CardTitle>
+              <CardDescription>Estado del sistema de actualización automática</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Calendar className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <h3 className="font-semibold">Última Actualización API</h3>
+                    <p className="text-sm text-gray-600">
+                      {lastUpdate ? formatDate(lastUpdate.datetime) : 'No disponible'}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4 text-center">
+                  <RefreshCw className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                    <h3 className="font-semibold">Próxima Renovación</h3>
+                    <p className="text-sm text-gray-600">Cada 50 minutos</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <CheckCircle className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+                    <h3 className="font-semibold">Estado</h3>
+                    <p className="text-sm text-gray-600">
+                      {hasCredentials() ? 'Configurado' : 'Sin configurar'}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

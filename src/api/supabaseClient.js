@@ -25,9 +25,9 @@ const supabase = useSupabase ? createClient(supabaseUrl, supabaseAnonKey, {
 
 // Helper to convert Supabase sort format to our format
 function parseSort(sort) {
-  if (!sort) return null;
-  const [field, direction] = sort.startsWith('-') 
-    ? [sort.slice(1), false] 
+  if (!sort || typeof sort !== 'string') return null;
+  const [field, direction] = sort.startsWith('-')
+    ? [sort.slice(1), false]
     : [sort, true];
   return { field, ascending: direction };
 }
