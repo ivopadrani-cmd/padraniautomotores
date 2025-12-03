@@ -13,8 +13,7 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
   const [formData, setFormData] = useState({
     infoauto_value: '',
     infoauto_currency: 'ARS',
-    infoauto_exchange_rate: '',
-    infoauto_date: ''
+    infoauto_exchange_rate: ''
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
@@ -54,31 +53,13 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
         setFormData({
           infoauto_value: vehicle.infoauto_value || '',
           infoauto_currency: vehicle.infoauto_currency || 'ARS', // Siempre ARS
-          infoauto_exchange_rate: vehicle.infoauto_exchange_rate || currentRate?.toString() || '',
-          infoauto_date: vehicle.infoauto_date || new Date().toISOString().split('T')[0] // Fecha actual si no tiene guardada
+          infoauto_exchange_rate: vehicle.infoauto_exchange_rate || currentRate?.toString() || ''
         });
         setHasChanges(false);
       });
     }
   }, [open, vehicle]);
 
-  // Efecto para buscar cotización histórica cuando cambia la fecha
-  useEffect(() => {
-    const updateHistoricalRate = async () => {
-      if (formData.infoauto_date && open) {
-        const historicalRate = await getHistoricalRate(formData.infoauto_date);
-        if (historicalRate && historicalRate !== parseFloat(formData.infoauto_exchange_rate)) {
-          setFormData(prev => ({ ...prev, infoauto_exchange_rate: historicalRate.toString() }));
-          // Marcar que hay cambios cuando se actualiza la cotización automáticamente
-          setHasChanges(true);
-        }
-      }
-    };
-
-    // Pequeño delay para evitar llamadas excesivas mientras el usuario escribe
-    const timeoutId = setTimeout(updateHistoricalRate, 500);
-    return () => clearTimeout(timeoutId);
-  }, [formData.infoauto_date, getHistoricalRate, open]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
@@ -101,18 +82,17 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
 
     console.log('💾 Intentando guardar InfoAuto:', formData);
 
-    const processedData = { ...formData };
+    const processedData = {};
 
-    // Procesar campos numéricos
-    if (processedData.infoauto_value !== '' && processedData.infoauto_value !== undefined) {
-      processedData.infoauto_value = parseFloat(processedData.infoauto_value) || 0;
+    // Solo incluir campos que existen en la base de datos
+    if (formData.infoauto_value !== '' && formData.infoauto_value !== undefined) {
+      processedData.infoauto_value = parseFloat(formData.infoauto_value) || 0;
     }
-    if (processedData.infoauto_exchange_rate !== '' && processedData.infoauto_exchange_rate !== undefined) {
-      processedData.infoauto_exchange_rate = parseFloat(processedData.infoauto_exchange_rate) || 1200;
+    if (formData.infoauto_exchange_rate !== '' && formData.infoauto_exchange_rate !== undefined) {
+      processedData.infoauto_exchange_rate = parseFloat(formData.infoauto_exchange_rate) || 1200;
     }
-    // Procesar fecha
-    if (processedData.infoauto_date !== '' && processedData.infoauto_date !== undefined) {
-      processedData.infoauto_date = processedData.infoauto_date;
+    if (formData.infoauto_currency !== '' && formData.infoauto_currency !== undefined) {
+      processedData.infoauto_currency = formData.infoauto_currency;
     }
 
     console.log('📤 Datos procesados para guardar:', processedData);
@@ -169,22 +149,13 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
 
             <div className="space-y-3">
               {/* Fila principal */}
-              <div className="grid grid-cols-5 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <div>
                   <Label className="text-[11px] text-gray-600">Moneda</Label>
                   <div className="h-9 bg-gray-200 rounded px-3 flex items-center text-[12px] font-semibold text-gray-700">
                     ARS
                   </div>
                   <p className="text-[9px] text-gray-500 mt-1">Siempre en pesos</p>
-                </div>
-                <div>
-                  <Label className="text-[11px] text-gray-600">Fecha de referencia</Label>
-                  <Input
-                    className="h-9 text-[12px] bg-white"
-                    type="date"
-                    value={formData.infoauto_date}
-                    onChange={(e) => handleChange('infoauto_date', e.target.value)}
-                  />
                 </div>
                 <div>
                   <Label className="text-[11px] text-gray-600">Cotización al momento</Label>
