@@ -29,8 +29,6 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [expenses, setExpenses] = useState([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
-  const [editingExpense, setEditingExpense] = useState(null);
-  const [editingExpenseIndex, setEditingExpenseIndex] = useState(-1);
   const [showManual, setShowManual] = useState(false);
 
   const { getHistoricalRate } = useDollarHistory();
@@ -68,7 +66,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   // Efecto para buscar cotización histórica cuando cambia la fecha
   useEffect(() => {
     const updateHistoricalRate = async () => {
-      if (formData.cost_date && editingExpense === null) { // Solo buscar cuando no hay modal de gastos abierto
+      if (formData.cost_date) {
         console.log('🔍 Buscando cotización histórica para fecha:', formData.cost_date);
         const historicalRate = await getHistoricalRate(formData.cost_date);
         console.log('📊 Cotización histórica encontrada:', historicalRate, 'vs actual:', formData.cost_exchange_rate);
@@ -80,12 +78,12 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       }
     };
 
-    // Solo buscar cuando hay una fecha válida y no hay modal de gastos abierto
-    if (formData.cost_date && editingExpense === null) {
+    // Solo buscar cuando hay una fecha válida
+    if (formData.cost_date) {
       const timeoutId = setTimeout(updateHistoricalRate, 500);
       return () => clearTimeout(timeoutId);
     }
-  }, [formData.cost_date, getHistoricalRate, editingExpense]); // Agregué dependencia de editingExpense
+  }, [formData.cost_date, getHistoricalRate]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
@@ -111,9 +109,8 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
   const handleEditExpense = (index) => {
     const expenseToEdit = expenses[index];
-    if (expenseToEdit) {
-      setEditingExpense({ ...expenseToEdit }); // Crear una copia para evitar referencias
-      setEditingExpenseIndex(index);
+    if (expenseToEdit && onEditExpense) {
+      onEditExpense({ ...expenseToEdit }, index); // Llamar a la función del padre
     }
   };
 
@@ -375,25 +372,6 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
           </div>
         </form>
 
-        {/* Modal de edición de gastos */}
-        {editingExpense !== null && (
-          <div style={{ zIndex: 1200, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-            <ExpenseEditDialog
-              open={true}
-              onOpenChange={(open) => {
-                if (!open) {
-                  setEditingExpense(null);
-                  setEditingExpenseIndex(-1);
-                }
-              }}
-              expense={editingExpense}
-              index={editingExpenseIndex}
-              onSave={handleSaveExpense}
-              onDelete={handleDeleteExpense}
-              currentBlueRate={currentBlueRate}
-            />
-          </div>
-        )}
 
         {/* Modal del manual */}
         <PriceManualDialog

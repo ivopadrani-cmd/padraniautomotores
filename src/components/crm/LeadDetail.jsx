@@ -35,6 +35,13 @@ const STATUS_CONFIG = {
 
 const SOURCE_OPTIONS = ['Salón', 'Llamada', 'Redes sociales', 'Recomendado'];
 
+const INTEREST_CONFIG = {
+  'Bajo': { bg: 'bg-gray-100 text-gray-600', icon: 'Γû╜' },
+  'Medio': { bg: 'bg-gray-200 text-gray-700', icon: 'Γùç' },
+  'Alto': { bg: 'bg-cyan-100 text-cyan-700', icon: 'Γùå' },
+  'Muy alto': { bg: 'bg-cyan-500 text-white', icon: 'Γÿà' }
+};
+
 export default function LeadDetail({ lead, onClose, onEdit, showEditModal = false, onCloseEditModal }) {
   const navigate = useNavigate();
   
