@@ -107,6 +107,14 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
     setEditingExpenseIndex(-1);
   };
 
+  const handleEditExpense = (index) => {
+    const expenseToEdit = expenses[index];
+    if (expenseToEdit) {
+      setEditingExpense({ ...expenseToEdit }); // Crear una copia para evitar referencias
+      setEditingExpenseIndex(index);
+    }
+  };
+
 
   const handleSaveExpense = (index, expenseData) => {
     if (index === -1) {
