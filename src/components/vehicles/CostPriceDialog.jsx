@@ -103,8 +103,9 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
 
 
   const handleAddExpense = () => {
-    setEditingExpense({});
-    setEditingExpenseIndex(-1);
+    if (onEditExpense) {
+      onEditExpense({}, -1); // Pasar objeto vacío para nuevo gasto
+    }
   };
 
   const handleEditExpense = (index) => {

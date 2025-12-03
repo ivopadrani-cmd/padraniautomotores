@@ -35,7 +35,7 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
   // Efecto para buscar cotización histórica cuando cambia la fecha
   useEffect(() => {
     const updateHistoricalRate = async () => {
-      if (formData.date && open) {
+      if (formData.date) {
         const historicalRate = await getHistoricalRate(formData.date);
         if (historicalRate && historicalRate !== parseFloat(formData.exchange_rate)) {
           setFormData(prev => ({ ...prev, exchange_rate: historicalRate.toString() }));
@@ -46,7 +46,7 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
     // Pequeño delay para evitar llamadas excesivas mientras el usuario escribe
     const timeoutId = setTimeout(updateHistoricalRate, 500);
     return () => clearTimeout(timeoutId);
-  }, [formData.date, getHistoricalRate, open]);
+  }, [formData.date, getHistoricalRate]); // Quité la dependencia de 'open' para evitar ejecución automática al abrir
 
   const handleSave = () => {
     onSave(index, {
@@ -62,7 +62,7 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0" style={{ zIndex: 1200 }}>
+      <DialogContent className="max-w-md p-0" style={{ zIndex: 1300 }}>
         <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
           <DialogTitle className="text-sm font-semibold">{expense ? 'Editar' : 'Nuevo'} Gasto</DialogTitle>
         </DialogHeader>

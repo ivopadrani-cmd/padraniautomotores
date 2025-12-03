@@ -105,7 +105,28 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
     if (!editingFormData) return;
 
     try {
-      await base44.entities.Lead.update(lead.id, editingFormData);
+      // Filtrar solo los campos que existen en la base de datos
+      const dataToSave = {
+        consultation_date: editingFormData.consultation_date,
+        consultation_time: editingFormData.consultation_time,
+        source: editingFormData.source,
+        client_id: editingFormData.client_id,
+        client_name: editingFormData.client_name,
+        client_phone: editingFormData.client_phone,
+        client_email: editingFormData.client_email,
+        interested_vehicles: editingFormData.interested_vehicles,
+        other_interests: editingFormData.other_interests,
+        budget: editingFormData.budget,
+        preferred_contact: editingFormData.preferred_contact,
+        trade_in: editingFormData.trade_in,
+        status: editingFormData.status,
+        interest_level: editingFormData.interest_level,
+        observations: editingFormData.observations,
+        follow_up_date: editingFormData.follow_up_date,
+        follow_up_time: editingFormData.follow_up_time
+      };
+
+      await base44.entities.Lead.update(lead.id, dataToSave);
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['lead', lead.id] });
       toast.success('Consulta actualizada correctamente');
