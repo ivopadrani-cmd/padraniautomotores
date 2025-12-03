@@ -91,7 +91,7 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
 
   return (
     <Dialog open={open} onOpenChange={handleCancel}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" style={{ zIndex: 1000 }}>
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>

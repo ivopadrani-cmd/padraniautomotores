@@ -851,6 +851,10 @@ export default function Vehicles() {
               vehicle={priceEditVehicle}
               onSubmit={handlePublicSubmit}
               isLoading={updateMutation.isPending}
+              onEditExpense={(expense, index) => {
+                setEditingExpense(expense);
+                setEditingExpenseIndex(index);
+              }}
             />
             </div>
             </div>
