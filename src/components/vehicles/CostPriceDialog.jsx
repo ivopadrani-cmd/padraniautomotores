@@ -35,6 +35,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [showManual, setShowManual] = useState(false);
   const [exchangeRateManuallyChanged, setExchangeRateManuallyChanged] = useState(false);
   const [dateManuallyChanged, setDateManuallyChanged] = useState(false);
+  const [dateFieldTouched, setDateFieldTouched] = useState(false);
 
   const { getHistoricalRate } = useDollarHistory();
 
@@ -67,6 +68,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       setHasChanges(false);
       setExchangeRateManuallyChanged(false); // Reset flag when opening modal
       setDateManuallyChanged(false); // Reset flag when opening modal
+      setDateFieldTouched(false); // Reset flag when opening modal
     }
   }, [open, vehicle, currentBlueRate]);
 
@@ -85,12 +87,12 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       }
     };
 
-    // Solo buscar cuando el usuario cambió la fecha manualmente
-    if (formData.cost_date && dateManuallyChanged && !exchangeRateManuallyChanged) {
+    // Solo buscar cuando el usuario cambió o tocó la fecha manualmente
+    if (formData.cost_date && (dateManuallyChanged || dateFieldTouched) && !exchangeRateManuallyChanged) {
       const timeoutId = setTimeout(updateHistoricalRate, 500);
       return () => clearTimeout(timeoutId);
     }
-  }, [formData.cost_date, getHistoricalRate, dateManuallyChanged, exchangeRateManuallyChanged]);
+  }, [formData.cost_date, getHistoricalRate, dateManuallyChanged, exchangeRateManuallyChanged, dateFieldTouched]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
@@ -101,8 +103,9 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
         setExchangeRateManuallyChanged(true);
       }
 
-      // Marcar que la fecha fue cambiada manualmente
+      // Marcar que la fecha fue tocada por el usuario
       if (field === 'cost_date') {
+        setDateFieldTouched(true);
         setDateManuallyChanged(true);
         setExchangeRateManuallyChanged(false); // Permitir actualización automática cuando cambia fecha
       }
@@ -342,7 +345,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                         </span>
                       </div>
                       <div className="flex gap-0.5 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditExpense(i)}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); handleEditExpense(i); }}>
                           <Edit className="w-3 h-3" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDeleteExpense(i)}>
