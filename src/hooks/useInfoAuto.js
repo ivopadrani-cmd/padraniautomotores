@@ -8,23 +8,31 @@ export function useInfoAutoCredentials() {
   const queryClient = useQueryClient();
 
   const setCredentials = async (username, password) => {
+    console.log('🔧 Configurando credenciales:', username ? 'Usuario presente' : 'Usuario ausente');
     infoautoAPI.setCredentials(username, password);
     queryClient.invalidateQueries({ queryKey: ['infoauto'] });
 
-    // Probar conexión inmediatamente
+    // Intentar generar tokens inmediatamente
     try {
-      const testResult = await infoautoAPI.testConnection();
-      if (testResult.success) {
-        // Inicializar integración automática si las credenciales funcionan
-        const { initializeInfoAutoIntegration } = await import('../services/infoAutoIntegration');
-        initializeInfoAutoIntegration();
-        toast.success('Credenciales configuradas correctamente - Integración automática iniciada');
-      } else {
-        toast.error('Credenciales inválidas: ' + testResult.message);
-      }
+      console.log('🚀 Intentando generar tokens automáticamente...');
+      await infoautoAPI.authenticate();
+      console.log('✅ Tokens generados automáticamente');
+
+      // Inicializar integración automática
+      const { initializeInfoAutoIntegration } = await import('../services/infoAutoIntegration');
+      initializeInfoAutoIntegration();
+
+      toast.success('Credenciales configuradas correctamente - Tokens generados automáticamente');
+
     } catch (error) {
-      console.error('Error testing credentials:', error);
-      toast.error('Error al verificar credenciales: ' + error.message);
+      console.error('❌ Error al generar tokens automáticamente:', error);
+
+      // Si falla por CORS (desarrollo), mostrar mensaje informativo
+      if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+        toast.info('Credenciales configuradas. Los tokens se generarán cuando hagas click en "Generar Tokens" (CORS normal en desarrollo)');
+      } else {
+        toast.error('Error al generar tokens: ' + error.message);
+      }
     }
   };
 

@@ -54,12 +54,20 @@ class InfoAutoAPI {
   // Autenticación inicial (Basic Auth)
   async authenticate() {
     if (!this.username || !this.password) {
+      console.error('InfoAuto: Credenciales no configuradas');
       throw new Error('Credenciales no configuradas');
     }
 
+    console.log('InfoAuto: Iniciando autenticación...');
+    console.log('InfoAuto: Usuario presente:', !!this.username);
+    console.log('InfoAuto: Contraseña presente:', !!this.password);
+
     const authString = btoa(`${this.username}:${this.password}`);
+    console.log('InfoAuto: Auth string generado (primeros 20 chars):', authString.substring(0, 20) + '...');
 
     try {
+      console.log('InfoAuto: Enviando request a:', AUTH_URL);
+
       const response = await fetch(AUTH_URL, {
         method: 'POST',
         headers: {
@@ -68,11 +76,17 @@ class InfoAutoAPI {
         }
       });
 
+      console.log('InfoAuto: Response status:', response.status);
+      console.log('InfoAuto: Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('InfoAuto: Error response body:', errorText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('InfoAuto: Response data:', data);
 
       if (data.access_token && data.refresh_token) {
         this.accessToken = data.access_token;
@@ -86,12 +100,18 @@ class InfoAutoAPI {
         localStorage.setItem('infoauto_token_expiry', this.tokenExpiry.toString());
 
         console.log('InfoAuto: Autenticación exitosa');
+        console.log('InfoAuto: Access token guardado:', !!this.accessToken);
+        console.log('InfoAuto: Refresh token guardado:', !!this.refreshToken);
+        console.log('InfoAuto: Token expiry:', new Date(this.tokenExpiry).toLocaleString());
+
         return data;
       } else {
-        throw new Error('Respuesta de autenticación inválida');
+        console.error('InfoAuto: Respuesta sin tokens:', data);
+        throw new Error('Respuesta de autenticación inválida - no contiene tokens');
       }
     } catch (error) {
       console.error('InfoAuto: Error en autenticación:', error);
+      console.error('InfoAuto: Error completo:', error);
       throw error;
     }
   }

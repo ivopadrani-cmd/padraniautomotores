@@ -43,6 +43,7 @@ export default function InfoAutoTester() {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [showTokenSection, setShowTokenSection] = useState(false);
+  const [tokenRefreshTrigger, setTokenRefreshTrigger] = useState(0);
   const [brandSearch, setBrandSearch] = useState('');
   const [modelSearch, setModelSearch] = useState('');
 
@@ -80,13 +81,22 @@ export default function InfoAutoTester() {
     if (usernameInput.trim() && passwordInput.trim()) {
       await setCredentials(usernameInput.trim(), passwordInput.trim());
       setShowTokenSection(true);
+      // Refrescar información de tokens después de configurar credenciales
+      setTimeout(() => refreshTokenInfo(), 1000);
     } else {
       toast.error('Usuario y contraseña son requeridos');
     }
   };
 
+  // Función para refrescar la información de tokens
+  const refreshTokenInfo = () => {
+    setTokenRefreshTrigger(prev => prev + 1);
+  };
+
   // Función para obtener información de tokens
   const getTokenInfo = () => {
+    // tokenRefreshTrigger asegura que se recalcule cuando cambie
+    tokenRefreshTrigger;
     const api = infoautoAPI;
     const now = Date.now();
     const expiryTime = api.tokenExpiry ? parseInt(api.tokenExpiry) : null;
@@ -295,11 +305,40 @@ export default function InfoAutoTester() {
                       <Button
                         onClick={async () => {
                           try {
+                            console.log('🔄 Iniciando generación de tokens...');
+                            console.log('📋 Credenciales configuradas:', infoautoAPI.hasCredentials());
+                            console.log('👤 Usuario:', infoautoAPI.getCredentials().username ? 'Presente' : 'Ausente');
+
                             toast.info('Generando tokens...');
-                            await infoautoAPI.authenticate();
+                            const result = await infoautoAPI.authenticate();
+
+                            console.log('✅ Autenticación exitosa:', result);
+                            console.log('🔑 Tokens generados:', {
+                              access: infoautoAPI.accessToken ? 'Presente' : 'Ausente',
+                              refresh: infoautoAPI.refreshToken ? 'Presente' : 'Ausente',
+                              expiry: infoautoAPI.tokenExpiry
+                            });
+
+                            // Refrescar la información de tokens en la UI
+                            refreshTokenInfo();
+
                             toast.success('Tokens generados exitosamente');
+
                           } catch (error) {
-                            toast.error('Error al generar tokens: ' + error.message);
+                            console.error('❌ Error completo en autenticación:', error);
+                            console.error('Stack trace:', error.stack);
+
+                            // Mostrar mensaje más específico según el error
+                            let errorMessage = error.message;
+                            if (error.message.includes('CORS')) {
+                              errorMessage = 'Error de CORS - Normal en desarrollo local. En producción funcionará.';
+                            } else if (error.message.includes('401')) {
+                              errorMessage = 'Credenciales inválidas. Verifica usuario y contraseña.';
+                            } else if (error.message.includes('Failed to fetch')) {
+                              errorMessage = 'No se pudo conectar al servidor de InfoAuto.';
+                            }
+
+                            toast.error('Error al generar tokens: ' + errorMessage);
                           }
                         }}
                         size="sm"
@@ -311,6 +350,7 @@ export default function InfoAutoTester() {
                       <Button
                         onClick={() => {
                           infoautoAPI.clearTokens();
+                          refreshTokenInfo();
                           toast.info('Tokens limpiados');
                         }}
                         variant="outline"
