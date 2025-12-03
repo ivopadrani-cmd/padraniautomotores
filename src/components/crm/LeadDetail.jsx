@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -155,11 +155,13 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
     v.plate?.toLowerCase().includes(vehicleSearch.toLowerCase())
   );
 
-  const { data: leadQuotes = [] } = useQuery({ 
-    queryKey: ['lead-quotes', lead.id], 
+  const { data: leadQuotes = [] } = useQuery({
+    queryKey: ['lead-quotes', lead.id],
     queryFn: () => base44.entities.Quote.filter({ lead_id: lead.id }, '-quote_date'),
-    enabled: !!lead.id 
+    enabled: !!lead.id
   });
+
+  const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list() });
 
   const { data: rates = [] } = useQuery({
     queryKey: ['exchange-rates'],
@@ -412,7 +414,7 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
         {/* Convert Dialog */}
         <Dialog open={showConvertDialog} onOpenChange={setShowConvertDialog}>
           <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle className="text-sm">Completar datos del cliente</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle className="text-sm">Completar datos del cliente</DialogTitle><DialogDescription className="sr-only">Complete los datos adicionales para convertir el prospecto en cliente registrado.</DialogDescription></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); convertToClientMutation.mutate(clientFormData); }} className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div><Label className={lbl}>DNI</Label><Input className={inp} value={clientFormData.dni} onChange={(e) => setClientFormData({ ...clientFormData, dni: e.target.value })} /></div>
@@ -719,6 +721,7 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
           <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
             <DialogTitle className="text-sm font-semibold">Editar Consulta</DialogTitle>
+            <DialogDescription className="sr-only">Edite los detalles de la consulta incluyendo datos del cliente, vehículos de interés y configuración de seguimiento.</DialogDescription>
           </DialogHeader>
           {editingFormData && (
             <form onSubmit={handleEditSubmit} className="p-4 space-y-3">
