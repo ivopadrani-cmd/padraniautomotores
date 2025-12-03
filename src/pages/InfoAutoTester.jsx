@@ -103,7 +103,7 @@ export default function InfoAutoTester() {
     });
   };
 
-  const hasApiKey = !!getApiKey();
+  const hasApiKey = hasCredentials();
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
