@@ -43,6 +43,8 @@ export default function InfoAutoTester() {
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [showTokenSection, setShowTokenSection] = useState(false);
+  const [brandSearch, setBrandSearch] = useState('');
+  const [modelSearch, setModelSearch] = useState('');
 
   // Credentials management
   const { setCredentials, getCredentials, hasCredentials } = useInfoAutoCredentials();
@@ -86,18 +88,40 @@ export default function InfoAutoTester() {
   // Función para obtener información de tokens
   const getTokenInfo = () => {
     const api = infoautoAPI;
+    const now = Date.now();
+    const expiryTime = api.tokenExpiry ? parseInt(api.tokenExpiry) : null;
+    const timeUntilExpiry = expiryTime ? expiryTime - now : null;
+    const isValid = api.isTokenValid();
+
+    console.log('InfoAuto Token Debug:', {
+      accessToken: api.accessToken ? 'Presente' : 'Ausente',
+      refreshToken: api.refreshToken ? 'Presente' : 'Ausente',
+      tokenExpiry: api.tokenExpiry,
+      now: now,
+      timeUntilExpiry: timeUntilExpiry,
+      isValid: isValid,
+      hasCredentials: api.hasCredentials()
+    });
+
     return {
       hasCredentials: api.hasCredentials(),
       accessToken: api.accessToken ? `${api.accessToken.substring(0, 20)}...` : null,
       refreshToken: api.refreshToken ? `${api.refreshToken.substring(0, 20)}...` : null,
-      tokenExpiry: api.tokenExpiry ? new Date(api.tokenExpiry).toLocaleString() : null,
-      isTokenValid: api.isTokenValid()
+      tokenExpiry: expiryTime ? new Date(expiryTime).toLocaleString() : null,
+      timeUntilExpiry: timeUntilExpiry ? Math.floor(timeUntilExpiry / 1000 / 60) + ' minutos' : null,
+      isTokenValid: isValid,
+      debug: {
+        expiryTime,
+        now,
+        timeUntilExpiry
+      }
     };
   };
 
   const handleBrandChange = (brandId) => {
     setSelectedBrand(brandId);
     setSelectedModel('');
+    setModelSearch('');
   };
 
   const formatPrice = (price) => {
@@ -237,67 +261,126 @@ export default function InfoAutoTester() {
                   Verificación de Tokens JWT
                 </CardTitle>
                 <CardDescription>
-                  Estado de autenticación y tokens generados
+                  Estado de autenticación y tokens generados por InfoAuto
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
+                <div className="space-y-4">
+                  {/* Estado General */}
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
                     <div>
                       <Label className="text-sm font-medium">Estado de Autenticación</Label>
                       <div className="flex items-center gap-2 mt-1">
                         {getTokenInfo().isTokenValid ? (
                           <>
                             <CheckCircle className="w-4 h-4 text-green-600" />
-                            <span className="text-green-600 font-medium">Tokens Válidos</span>
+                            <span className="text-green-600 font-medium">Tokens Válidos y Funcionando</span>
                           </>
                         ) : (
                           <>
                             <XCircle className="w-4 h-4 text-red-600" />
-                            <span className="text-red-600 font-medium">Sin Tokens Válidos</span>
+                            <span className="text-red-600 font-medium">
+                              {getTokenInfo().accessToken ? 'Tokens Expirados - Necesitan Renovación' : 'Sin Tokens Generados'}
+                            </span>
                           </>
                         )}
                       </div>
+                      {getTokenInfo().timeUntilExpiry && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          Tiempo restante: {getTokenInfo().timeUntilExpiry}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={async () => {
+                          try {
+                            toast.info('Generando tokens...');
+                            await infoautoAPI.authenticate();
+                            toast.success('Tokens generados exitosamente');
+                          } catch (error) {
+                            toast.error('Error al generar tokens: ' + error.message);
+                          }
+                        }}
+                        size="sm"
+                        disabled={!hasCredentials()}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Generar Tokens
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          infoautoAPI.clearTokens();
+                          toast.info('Tokens limpiados');
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Limpiar Tokens
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Detalles de Tokens */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium">Access Token (para API)</Label>
+                        <div className="mt-1 p-2 bg-gray-100 rounded font-mono text-xs break-all min-h-[40px] flex items-center">
+                          {getTokenInfo().accessToken || (
+                            <span className="text-gray-500 italic">No generado - Click "Generar Tokens"</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Se usa en cada request a la API
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium">Expira el</Label>
+                        <div className="mt-1 p-2 bg-gray-100 rounded text-sm">
+                          {getTokenInfo().tokenExpiry || 'No disponible'}
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <Label className="text-sm font-medium">Access Token</Label>
-                      <div className="mt-1 p-2 bg-gray-100 rounded font-mono text-xs break-all">
-                        {getTokenInfo().accessToken || 'No generado'}
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium">Refresh Token (renovación)</Label>
+                        <div className="mt-1 p-2 bg-gray-100 rounded font-mono text-xs break-all min-h-[40px] flex items-center">
+                          {getTokenInfo().refreshToken || (
+                            <span className="text-gray-500 italic">No generado - Click "Generar Tokens"</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Se usa para renovar el access token automáticamente
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium">Credenciales</Label>
+                        <div className="mt-1 p-2 bg-gray-100 rounded text-sm">
+                          {hasCredentials() ? (
+                            <span className="text-green-600">✓ Configuradas</span>
+                          ) : (
+                            <span className="text-red-600">✗ No configuradas</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-sm font-medium">Refresh Token</Label>
-                      <div className="mt-1 p-2 bg-gray-100 rounded font-mono text-xs break-all">
-                        {getTokenInfo().refreshToken || 'No generado'}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium">Expira el</Label>
-                      <div className="mt-1 p-2 bg-gray-100 rounded text-sm">
-                        {getTokenInfo().tokenExpiry || 'No disponible'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    onClick={() => {
-                      // Forzar renovación manual
-                      infoautoAPI.clearTokens();
-                      window.location.reload();
-                    }}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Forzar Renovación
-                  </Button>
+                  {/* Información adicional */}
+                  <Alert>
+                    <AlertDescription>
+                      <strong>¿Qué hacer con los tokens?</strong><br />
+                      • Los tokens se generan automáticamente cuando configuras credenciales<br />
+                      • Se renuevan automáticamente cada 50 minutos<br />
+                      • Si expiran, el sistema los renueva automáticamente<br />
+                      • Solo necesitas verificar que aparezcan como "Válidos"<br />
+                      • Los tokens permiten hacer consultas a la API de InfoAuto
+                    </AlertDescription>
+                  </Alert>
                 </div>
               </CardContent>
             </Card>
@@ -324,61 +407,92 @@ export default function InfoAutoTester() {
               </Alert>
 
               {/* Vehicle Search Interface */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Brand Selection */}
+              <div className="space-y-4">
+                {/* Brand Selection with Search */}
                 <div>
-                  <Label className="text-sm font-medium">Marca</Label>
-                  <Select value={selectedBrand} onValueChange={handleBrandChange}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Seleccionar marca" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <Label className="text-sm font-medium">Buscar Marca</Label>
+                  <div className="mt-1 space-y-2">
+                    <Input
+                      placeholder="Escribe para filtrar marcas..."
+                      value={brandSearch}
+                      onChange={(e) => setBrandSearch(e.target.value)}
+                      className="w-full"
+                    />
+                    <div className="max-h-40 overflow-y-auto border rounded p-2 space-y-1">
                       {loadingBrands ? (
-                        <div className="flex items-center justify-center py-2">
+                        <div className="flex items-center justify-center py-4">
                           <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          <span>Cargando...</span>
+                          <span>Cargando marcas...</span>
                         </div>
                       ) : (
-                        brands?.results?.map((brand) => (
-                          <SelectItem key={brand.id} value={brand.id.toString()}>
-                            {brand.name}
-                          </SelectItem>
-                        ))
+                        brands?.results
+                          ?.filter(brand =>
+                            brand.name.toLowerCase().includes(brandSearch.toLowerCase())
+                          )
+                          .map((brand) => (
+                            <button
+                              key={brand.id}
+                              onClick={() => {
+                                handleBrandChange(brand.id.toString());
+                                setBrandSearch(brand.name);
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded hover:bg-blue-50 hover:text-blue-700 transition-colors ${
+                                selectedBrand === brand.id.toString() ? 'bg-blue-100 text-blue-800 font-medium' : ''
+                              }`}
+                            >
+                              {brand.name}
+                            </button>
+                          ))
                       )}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Model Selection */}
-                <div>
-                  <Label className="text-sm font-medium">Modelo</Label>
-                  <Select
-                    value={selectedModel}
-                    onValueChange={setSelectedModel}
-                    disabled={!selectedBrand}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder={selectedBrand ? "Seleccionar modelo" : "Primero selecciona marca"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingModels ? (
-                        <div className="flex items-center justify-center py-2">
-                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                          <span>Cargando...</span>
-                        </div>
-                      ) : (
-                        models?.results?.map((model) => (
-                          <SelectItem key={model.codia} value={model.codia}>
-                            {model.name} ({model.year})
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Model Selection with Search */}
+                {selectedBrand && (
+                  <div>
+                    <Label className="text-sm font-medium">Buscar Modelo</Label>
+                    <div className="mt-1 space-y-2">
+                      <Input
+                        placeholder="Escribe para filtrar modelos..."
+                        value={modelSearch}
+                        onChange={(e) => setModelSearch(e.target.value)}
+                        className="w-full"
+                      />
+                      <div className="max-h-40 overflow-y-auto border rounded p-2 space-y-1">
+                        {loadingModels ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            <span>Cargando modelos...</span>
+                          </div>
+                        ) : (
+                          models?.results
+                            ?.filter(model =>
+                              model.name.toLowerCase().includes(modelSearch.toLowerCase()) ||
+                              model.year.toString().includes(modelSearch)
+                            )
+                            .map((model) => (
+                              <button
+                                key={model.codia}
+                                onClick={() => {
+                                  setSelectedModel(model.codia);
+                                  setModelSearch(`${model.name} (${model.year})`);
+                                }}
+                                className={`w-full text-left px-3 py-2 rounded hover:bg-green-50 hover:text-green-700 transition-colors ${
+                                  selectedModel === model.codia ? 'bg-green-100 text-green-800 font-medium' : ''
+                                }`}
+                              >
+                                {model.name} ({model.year})
+                              </button>
+                            ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Price Check Button */}
-                <div className="flex items-end">
+                <div className="flex justify-center pt-2">
                   <Button
                     onClick={() => {
                       if (selectedModel) {
@@ -389,9 +503,10 @@ export default function InfoAutoTester() {
                       }
                     }}
                     disabled={!selectedModel}
-                    className="w-full"
+                    size="lg"
+                    className="px-8"
                   >
-                    <DollarSign className="w-4 h-4 mr-2" />
+                    <DollarSign className="w-5 h-5 mr-2" />
                     Ver Precios
                   </Button>
                 </div>
