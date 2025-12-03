@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Trash2 } from "lucide-react";
+import { useDollarHistory } from "@/hooks/useDollarHistory";
 
-export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete }) {
+export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete, currentBlueRate }) {
   const [formData, setFormData] = useState({
     type: 'GESTORIA',
     value: '',
@@ -16,18 +17,36 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
     description: ''
   });
 
+  const { getHistoricalRate } = useDollarHistory();
+
   useEffect(() => {
     if (expense) {
       setFormData({
         type: expense.type || 'GESTORIA',
         value: expense.value?.toString() || '',
         currency: expense.currency || 'ARS',
-        exchange_rate: expense.exchange_rate?.toString() || '1200',
+        exchange_rate: expense.exchange_rate?.toString() || (currentBlueRate?.toString() || '1200'),
         date: expense.date || new Date().toISOString().split('T')[0],
         description: expense.description || ''
       });
     }
-  }, [expense]);
+  }, [expense, currentBlueRate]);
+
+  // Efecto para buscar cotización histórica cuando cambia la fecha
+  useEffect(() => {
+    const updateHistoricalRate = async () => {
+      if (formData.date && open) {
+        const historicalRate = await getHistoricalRate(formData.date);
+        if (historicalRate && historicalRate !== parseFloat(formData.exchange_rate)) {
+          setFormData(prev => ({ ...prev, exchange_rate: historicalRate.toString() }));
+        }
+      }
+    };
+
+    // Pequeño delay para evitar llamadas excesivas mientras el usuario escribe
+    const timeoutId = setTimeout(updateHistoricalRate, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.date, getHistoricalRate, open]);
 
   const handleSave = () => {
     onSave(index, {

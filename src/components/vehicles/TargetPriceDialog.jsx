@@ -13,7 +13,8 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
   const [formData, setFormData] = useState({
     target_price_value: '',
     target_price_currency: 'USD', // Siempre USD
-    target_price_exchange_rate: ''
+    target_price_exchange_rate: '',
+    target_price_date: ''
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
@@ -35,7 +36,8 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
       setFormData({
         target_price_value: vehicle.target_price_value || '',
         target_price_currency: 'USD', // Siempre USD
-        target_price_exchange_rate: vehicle.target_price_exchange_rate || ''
+        target_price_exchange_rate: vehicle.target_price_exchange_rate || '',
+        target_price_date: vehicle.target_price_date || ''
       });
       setHasChanges(false);
     }
@@ -107,13 +109,25 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
 
             <div className="space-y-3">
               {/* Fila principal simplificada */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] text-cyan-700">Fecha</Label>
+                  <Input
+                    className="h-9 text-[12px] bg-white"
+                    type="date"
+                    value={formData.target_price_date}
+                    onChange={(e) => handleChange('target_price_date', e.target.value)}
+                  />
+                </div>
                 <div>
                   <Label className="text-[11px] text-cyan-700">Moneda</Label>
                   <div className="h-9 bg-cyan-100 rounded px-3 flex items-center text-[12px] font-semibold text-cyan-700">
                     USD - Dólares
                   </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label className="text-[11px] text-cyan-700">
                     Precio objetivo (USD)
@@ -129,16 +143,31 @@ export default function TargetPriceDialog({ open, onOpenChange, vehicle, onSubmi
                 </div>
                 <div>
                   <Label className="text-[11px] text-cyan-700">
+                    Cotización USD
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      className="h-9 text-[12px] bg-white flex-1"
+                      type="text"
+                      inputMode="decimal"
+                      value={formData.target_price_exchange_rate}
+                      onChange={(e) => handleChange('target_price_exchange_rate', e.target.value)}
+                      placeholder={currentBlueRate.toString()}
+                    />
+                    <span className="text-[9px] text-gray-500 self-center">ACTUAL: ${currentBlueRate.toLocaleString('es-AR')}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[11px] text-cyan-700">
                     Equivalente en pesos
                   </Label>
                   <div className="h-9 bg-cyan-100 rounded px-3 flex items-center justify-between">
                     <span className="text-[11px] font-medium text-cyan-700">
-                      {formData.target_price_value ?
-                        `$${calculateConversion(parseFloat(formData.target_price_value), 'USD', currentBlueRate)?.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+                      {formData.target_price_value && formData.target_price_exchange_rate ?
+                        `$${calculateConversion(parseFloat(formData.target_price_value), 'USD', parseFloat(formData.target_price_exchange_rate))?.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
                         : '-'
                       }
                     </span>
-                    <span className="text-[9px] text-cyan-600">BLUE actual</span>
                   </div>
                 </div>
               </div>

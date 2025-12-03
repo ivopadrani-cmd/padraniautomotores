@@ -130,7 +130,13 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
   const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list() });
   const { data: reservations = [] } = useQuery({ queryKey: ['vehicle-reservations', updatedVehicle.id], queryFn: () => base44.entities.Reservation.filter({ vehicle_id: updatedVehicle.id }, '-reservation_date') });
   const { data: quotes = [] } = useQuery({ queryKey: ['vehicle-quotes', updatedVehicle.id], queryFn: () => base44.entities.Quote.filter({ vehicle_id: updatedVehicle.id }, '-quote_date') });
-  const { data: rates = [] } = useQuery({ queryKey: ['exchange-rates'], queryFn: () => base44.entities.ExchangeRate.list('-rate_date') });
+
+  // Get current blue rate
+  const { data: rates = [] } = useQuery({
+    queryKey: ['exchange-rates'],
+    queryFn: () => base44.entities.ExchangeRate.list('-rate_date'),
+  });
+  const currentBlueRate = rates.find(r => r.rate_type === 'Diaria')?.usd_rate || 1200;
   
   // Fetch existing inspection
   const { data: existingInspection } = useQuery({
@@ -438,13 +444,14 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
           />
         )}
         {showSaleDetail && <SaleDetail sale={showSaleDetail} onClose={() => setShowSaleDetail(null)} />}
-        <ExpenseEditDialog 
-          open={editingExpense !== null} 
+        <ExpenseEditDialog
+          open={editingExpense !== null}
           onOpenChange={(open) => { if (!open) { setEditingExpense(null); setEditingExpenseIndex(null); } }}
           expense={editingExpense}
           index={editingExpenseIndex}
           onSave={handleSaveExpense}
           onDelete={handleDeleteExpense}
+          currentBlueRate={currentBlueRate}
         />
         <ConsignmentContractView
           open={showConsignmentContract}
@@ -574,12 +581,22 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
           vehicle={updatedVehicle}
           onSubmit={updateCostMutation.mutate}
           isLoading={updateCostMutation.isPending}
+          onEditExpense={(expense, index) => {
+            setEditingExpense(expense);
+            setEditingExpenseIndex(index);
+          }}
         />
         <InfoAutoPriceDialog
           open={showInfoAutoDialog}
           onOpenChange={setShowInfoAutoDialog}
           vehicle={updatedVehicle}
-          onSubmit={updateInfoAutoMutation.mutate}
+          onSubmit={async (data) => {
+            try {
+              await updateInfoAutoMutation.mutateAsync(data);
+            } catch (error) {
+              console.error('Error saving InfoAuto:', error);
+            }
+          }}
           isLoading={updateInfoAutoMutation.isPending}
         />
         <TargetPriceDialog

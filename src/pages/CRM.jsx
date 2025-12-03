@@ -352,7 +352,7 @@ export default function CRM() {
   }
 
   // Cliente ahora se maneja con navegación a /clients/:clientId
-  if (selectedLead && !showLeadForm) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} />;
+  if (selectedLead) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} showEditModal={showLeadForm} />;
 
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">

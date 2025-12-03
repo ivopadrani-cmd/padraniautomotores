@@ -13,7 +13,8 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
   const [formData, setFormData] = useState({
     public_price_value: '',
     public_price_currency: 'ARS',
-    public_price_exchange_rate: ''
+    public_price_exchange_rate: '',
+    public_price_date: ''
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
@@ -35,7 +36,8 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
       setFormData({
         public_price_value: vehicle.public_price_value || '',
         public_price_currency: vehicle.public_price_currency || 'ARS',
-        public_price_exchange_rate: vehicle.public_price_exchange_rate || ''
+        public_price_exchange_rate: vehicle.public_price_exchange_rate || '',
+        public_price_date: vehicle.public_price_date || ''
       });
       setHasChanges(false);
     }
@@ -116,7 +118,16 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
 
             <div className="space-y-3">
               {/* Fila principal simplificada */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] text-green-700">Fecha</Label>
+                  <Input
+                    className="h-9 text-[12px] bg-white"
+                    type="date"
+                    value={formData.public_price_date}
+                    onChange={(e) => handleChange('public_price_date', e.target.value)}
+                  />
+                </div>
                 <div>
                   <Label className="text-[11px] text-green-700">Moneda</Label>
                   <Select value={formData.public_price_currency} onValueChange={(v) => handleChange('public_price_currency', v)}>
@@ -127,6 +138,9 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <Label className="text-[11px] text-green-700">
                     Precio público ({formData.public_price_currency})
@@ -142,16 +156,31 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
                 </div>
                 <div>
                   <Label className="text-[11px] text-green-700">
+                    Cotización USD
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      className="h-9 text-[12px] bg-white flex-1"
+                      type="text"
+                      inputMode="decimal"
+                      value={formData.public_price_exchange_rate}
+                      onChange={(e) => handleChange('public_price_exchange_rate', e.target.value)}
+                      placeholder={currentBlueRate.toString()}
+                    />
+                    <span className="text-[9px] text-gray-500 self-center">ACTUAL: ${currentBlueRate.toLocaleString('es-AR')}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[11px] text-green-700">
                     Conversión actual
                   </Label>
                   <div className="h-9 bg-green-100 rounded px-3 flex items-center justify-between">
                     <span className="text-[11px] font-medium text-green-700">
-                      {formData.public_price_value ?
-                        `${formData.public_price_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.public_price_value), formData.public_price_currency, currentBlueRate)?.toLocaleString(formData.public_price_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
+                      {formData.public_price_value && formData.public_price_exchange_rate ?
+                        `${formData.public_price_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.public_price_value), formData.public_price_currency, parseFloat(formData.public_price_exchange_rate))?.toLocaleString(formData.public_price_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
                         : '-'
                       }
                     </span>
-                    <span className="text-[9px] text-green-600">BLUE actual</span>
                   </div>
                 </div>
               </div>
