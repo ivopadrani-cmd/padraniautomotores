@@ -35,6 +35,7 @@ const getNavigationItems = (userRole) => {
       { title: "CRM", pageName: "CRM", icon: Users },
       { title: "Clientes", pageName: "Clients", icon: Users, hidden: true }, // No visible en sidebar, pero permitido
       { title: "Tareas", pageName: "Tasks", icon: ClipboardList },
+      { title: "InfoAuto API", pageName: "InfoAutoTester", icon: Car },
       { title: "Agencia", pageName: "Agency", icon: Building2 }
     ];
   }

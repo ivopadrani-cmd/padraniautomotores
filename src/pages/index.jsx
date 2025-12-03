@@ -22,6 +22,8 @@ import Tasks from "./Tasks";
 
 import Inspections from "./Inspections";
 
+import InfoAutoTester from "./InfoAutoTester";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -47,7 +49,9 @@ const PAGES = {
     Tasks: Tasks,
     
     Inspections: Inspections,
-    
+
+    InfoAutoTester: InfoAutoTester,
+
 }
 
 function _getCurrentPage(url) {
@@ -101,7 +105,9 @@ function PagesContent() {
                 
                 <Route path="/Inspections" element={<Inspections />} />
                 <Route path="/inspections/:inspectionId" element={<Inspections />} />
-                
+
+                <Route path="/InfoAutoTester" element={<InfoAutoTester />} />
+
             </Routes>
         </Layout>
     );
