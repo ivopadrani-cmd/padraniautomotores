@@ -311,23 +311,13 @@ export default function Vehicles() {
       const targetRate = v.target_price_exchange_rate || currentBlueRate;
       const publicRate = v.public_price_exchange_rate || currentBlueRate;
 
-      // Calcular costo total: convertir todo a la moneda del costo principal, luego convertir a USD usando la cotización guardada
-      const costoEnMonedaOriginal = parseFloat(v.cost_value) || 0;
-      const gastosEnMonedaOriginal = (v.expenses || []).reduce((sum, e) => {
-        const gastoValor = parseFloat(e.value) || 0;
-        // Si el gasto está en la misma moneda que el costo, sumar directamente
-        if (e.currency === v.cost_currency) {
-          return sum + gastoValor;
-        }
-        // Si el gasto está en moneda diferente, convertirlo a la moneda del costo
-        return sum + convertValue(gastoValor, e.currency, e.exchange_rate || costRate, v.cost_currency);
-      }, 0);
-      const costoTotalEnMonedaOriginal = costoEnMonedaOriginal + gastosEnMonedaOriginal;
+      // Calcular costo total igual que en VehicleView: convertir todo a ARS usando cotizaciones respectivas
+      const valorTomaArs = convertValue(v.cost_value, v.cost_currency, v.cost_exchange_rate, 'ARS');
+      const expensesArs = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate || v.cost_exchange_rate, 'ARS'), 0);
+      const costoTotal = valorTomaArs + expensesArs;
 
-      // Convertir el total a USD usando la cotización guardada del costo
-      const costoUsd = v.cost_currency === 'USD'
-        ? costoTotalEnMonedaOriginal
-        : costoTotalEnMonedaOriginal / costRate;
+      // Convertir a USD usando la cotización del costo
+      const costoUsd = costoTotal ? costoTotal / v.cost_exchange_rate : null;
       const infoautoArs = convertValue(v.infoauto_value, v.infoauto_currency, infoautoRate, 'ARS');
       const targetArs = convertValue(v.target_price_value, v.target_price_currency, targetRate, 'ARS');
       const publicArs = convertValue(v.public_price_value, v.public_price_currency, publicRate, 'ARS');
@@ -346,7 +336,7 @@ export default function Vehicles() {
         '<td class="uppercase">' + (v.plate || '-') + '</td>' +
         '<td>' + (v.kilometers ? v.kilometers.toLocaleString('es-AR') : '-') + '</td>' +
         '<td class="uppercase">' + (v.color || '-') + '</td>' +
-        '<td class="text-right">' + (costoTotalEnMonedaOriginal ? '$' + (v.cost_currency === 'ARS' ? costoTotalEnMonedaOriginal : convertValue(costoTotalEnMonedaOriginal, v.cost_currency, costRate, 'ARS')).toLocaleString('es-AR', {maximumFractionDigits: 0}) + '<br/><span class="text-xs text-gray-600">U$D ' + costoUsd.toLocaleString('en-US', {maximumFractionDigits: 0}) + '</span>' : '-') + '</td>' +
+        '<td class="text-right">' + (costoTotal ? '$' + costoTotal.toLocaleString('es-AR', {maximumFractionDigits: 0}) + '<br/><span class="text-xs text-gray-600">U$D ' + (costoUsd ? costoUsd.toLocaleString('en-US', {maximumFractionDigits: 0}) : '0') + '</span>' : '-') + '</td>' +
         '<td class="text-right">' + (infoautoArs ? '$' + infoautoArs.toLocaleString('es-AR', {maximumFractionDigits: 0}) + '<br/><span class="text-xs text-gray-600">U$D ' + infoautoUsd.toLocaleString('en-US', {maximumFractionDigits: 0}) + '</span>' : '-') + '</td>' +
         '<td class="text-right">' + (targetArs ? '$' + targetArs.toLocaleString('es-AR', {maximumFractionDigits: 0}) + '<br/><span class="text-xs text-gray-600">U$D ' + targetUsd.toLocaleString('en-US', {maximumFractionDigits: 0}) + '</span>' : '-') + '</td>' +
         '<td class="text-right">' + (publicArs ? '$' + publicArs.toLocaleString('es-AR', {maximumFractionDigits: 0}) + '<br/><span class="text-xs text-gray-600">U$D ' + publicUsd.toLocaleString('en-US', {maximumFractionDigits: 0}) + '</span>' : '-') + '</td>' +

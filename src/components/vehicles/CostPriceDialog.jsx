@@ -232,8 +232,8 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
             </div>
 
             <div className="space-y-3">
-              {/* Fila principal */}
-              <div className="grid grid-cols-6 gap-3">
+              {/* Primera fila */}
+              <div className="grid grid-cols-4 gap-3">
                 <div>
                   <Label className="text-[11px] text-gray-600">Moneda</Label>
                   <Select value={formData.cost_currency} onValueChange={(v) => handleChange('cost_currency', v)}>
@@ -253,19 +253,21 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                     onChange={(e) => handleChange('cost_date', e.target.value)}
                   />
                 </div>
-                <div>
+                <div className="col-span-2">
                   <Label className="text-[11px] text-gray-600">Cotización USD al momento</Label>
-                  <div className="flex gap-1">
-                    <Input
-                      className="h-9 text-[12px] bg-white flex-1"
-                      type="text"
-                      inputMode="decimal"
-                      value={formData.cost_exchange_rate}
-                      onChange={(e) => handleChange('cost_exchange_rate', e.target.value)}
-                      placeholder={currentBlueRate.toString()}
-                    />
-                  </div>
+                  <Input
+                    className="h-9 text-[12px] bg-white"
+                    type="text"
+                    inputMode="decimal"
+                    value={formData.cost_exchange_rate}
+                    onChange={(e) => handleChange('cost_exchange_rate', e.target.value)}
+                    placeholder={currentBlueRate.toString()}
+                  />
                 </div>
+              </div>
+
+              {/* Segunda fila */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-[11px] text-gray-600">
                     Valor de toma ({formData.cost_currency})
