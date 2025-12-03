@@ -34,8 +34,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [exchangeRateManuallyChanged, setExchangeRateManuallyChanged] = useState(false);
-  const [dateManuallyChanged, setDateManuallyChanged] = useState(false);
-  const [dateFieldTouched, setDateFieldTouched] = useState(false);
+  const [dateNeedsHistoricalUpdate, setDateNeedsHistoricalUpdate] = useState(false);
 
   const { getHistoricalRate } = useDollarHistory();
 
@@ -67,15 +66,14 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       setExpenses(vehicle.expenses || []);
       setHasChanges(false);
       setExchangeRateManuallyChanged(false); // Reset flag when opening modal
-      setDateManuallyChanged(false); // Reset flag when opening modal
-      setDateFieldTouched(false); // Reset flag when opening modal
+      setDateNeedsHistoricalUpdate(false); // Reset flag when opening modal
     }
   }, [open, vehicle, currentBlueRate]);
 
-  // Efecto para buscar cotización histórica cuando el usuario cambia la fecha
+  // Efecto para buscar cotización histórica cuando se solicita
   useEffect(() => {
     const updateHistoricalRate = async () => {
-      if (formData.cost_date && dateManuallyChanged && !exchangeRateManuallyChanged) {
+      if (formData.cost_date && dateNeedsHistoricalUpdate && !exchangeRateManuallyChanged) {
         console.log('🔍 Buscando cotización histórica para fecha:', formData.cost_date);
         const historicalRate = await getHistoricalRate(formData.cost_date);
         console.log('📊 Cotización histórica encontrada:', historicalRate, 'vs actual:', formData.cost_exchange_rate);
@@ -84,30 +82,29 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
           setFormData(prev => ({ ...prev, cost_exchange_rate: historicalRate.toString() }));
           setHasChanges(true);
         }
+        setDateNeedsHistoricalUpdate(false); // Reset flag after update
       }
     };
 
-    // Solo buscar cuando el usuario cambió o tocó la fecha manualmente
-    if (formData.cost_date && (dateManuallyChanged || dateFieldTouched) && !exchangeRateManuallyChanged) {
+    if (dateNeedsHistoricalUpdate) {
       const timeoutId = setTimeout(updateHistoricalRate, 500);
       return () => clearTimeout(timeoutId);
     }
-  }, [formData.cost_date, getHistoricalRate, dateManuallyChanged, exchangeRateManuallyChanged, dateFieldTouched]);
+  }, [formData.cost_date, getHistoricalRate, dateNeedsHistoricalUpdate, exchangeRateManuallyChanged]);
 
   const handleChange = (field, value) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
 
-      // Marcar si la cotización se cambió manualmente
-      if (field === 'cost_exchange_rate') {
-        setExchangeRateManuallyChanged(true);
+      // Cuando se cambia la fecha, buscar cotización histórica
+      if (field === 'cost_date' && value) {
+        setDateNeedsHistoricalUpdate(true);
+        setExchangeRateManuallyChanged(false); // Permitir actualización automática
       }
 
-      // Marcar que la fecha fue tocada por el usuario
-      if (field === 'cost_date') {
-        setDateFieldTouched(true);
-        setDateManuallyChanged(true);
-        setExchangeRateManuallyChanged(false); // Permitir actualización automática cuando cambia fecha
+      // Cuando se cambia manualmente la cotización, marcar como cambiada manualmente
+      if (field === 'cost_exchange_rate') {
+        setExchangeRateManuallyChanged(true);
       }
 
       // Autocompletar cotización si está vacía y se cambia la moneda
@@ -122,6 +119,13 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
     setHasChanges(true);
   };
 
+  // Función para manejar focus en el campo de fecha (permite "reconfirmar")
+  const handleDateFocus = () => {
+    if (formData.cost_date) {
+      setDateNeedsHistoricalUpdate(true);
+      setExchangeRateManuallyChanged(false);
+    }
+  };
 
   const handleAddExpense = () => {
     setEditingExpense({});
@@ -249,6 +253,7 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                     type="date"
                     value={formData.cost_date}
                     onChange={(e) => handleChange('cost_date', e.target.value)}
+                    onFocus={handleDateFocus}
                   />
                 </div>
                 <div>
@@ -285,11 +290,13 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                   <div className="h-9 bg-blue-50 rounded px-3 flex items-center justify-between">
                     <span className="text-[11px] font-medium text-blue-700">
                       {formData.cost_value ?
-                        `${formData.cost_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.cost_value), formData.cost_currency, currentBlueRate)?.toLocaleString(formData.cost_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
+                        `${formData.cost_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.cost_value), formData.cost_currency, parseFloat(formData.cost_exchange_rate) || currentBlueRate)?.toLocaleString(formData.cost_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
                         : '-'
                       }
                     </span>
-                    <span className="text-[9px] text-blue-600">BLUE actual</span>
+                    <span className="text-[9px] text-blue-600">
+                      {formData.cost_date ? `Cotización ${formData.cost_date}` : 'BLUE actual'}
+                    </span>
                   </div>
                 </div>
               </div>
