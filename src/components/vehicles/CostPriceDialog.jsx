@@ -119,14 +119,6 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
     setHasChanges(true);
   };
 
-  // Función para manejar focus en el campo de fecha (permite "reconfirmar")
-  const handleDateFocus = () => {
-    if (formData.cost_date) {
-      setDateNeedsHistoricalUpdate(true);
-      setExchangeRateManuallyChanged(false);
-    }
-  };
-
   const handleAddExpense = () => {
     setEditingExpense({});
     setEditingExpenseIndex(-1);
@@ -253,7 +245,6 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                     type="date"
                     value={formData.cost_date}
                     onChange={(e) => handleChange('cost_date', e.target.value)}
-                    onFocus={handleDateFocus}
                   />
                 </div>
                 <div>
@@ -282,22 +273,6 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
                     onChange={(e) => handleChange('cost_value', e.target.value)}
                     placeholder="0"
                   />
-                </div>
-                <div>
-                  <Label className="text-[11px] text-gray-600">
-                    Conversión actual
-                  </Label>
-                  <div className="h-9 bg-blue-50 rounded px-3 flex items-center justify-between">
-                    <span className="text-[11px] font-medium text-blue-700">
-                      {formData.cost_value ?
-                        `${formData.cost_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.cost_value), formData.cost_currency, parseFloat(formData.cost_exchange_rate) || currentBlueRate)?.toLocaleString(formData.cost_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
-                        : '-'
-                      }
-                    </span>
-                    <span className="text-[9px] text-blue-600">
-                      {formData.cost_date ? `Cotización ${formData.cost_date}` : 'BLUE actual'}
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>

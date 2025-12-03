@@ -17,6 +17,8 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
     description: ''
   });
 
+  const [dateNeedsHistoricalUpdate, setDateNeedsHistoricalUpdate] = useState(false);
+
   const { getHistoricalRate } = useDollarHistory();
 
   useEffect(() => {
@@ -29,24 +31,27 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
         date: expense.date || new Date().toISOString().split('T')[0],
         description: expense.description || ''
       });
+      setDateNeedsHistoricalUpdate(false); // Reset flag when opening modal
     }
   }, [expense, currentBlueRate]);
 
-  // Efecto para buscar cotización histórica cuando cambia la fecha
+  // Efecto para buscar cotización histórica cuando se solicita
   useEffect(() => {
     const updateHistoricalRate = async () => {
-      if (formData.date) {
+      if (formData.date && dateNeedsHistoricalUpdate) {
         const historicalRate = await getHistoricalRate(formData.date);
         if (historicalRate && historicalRate !== parseFloat(formData.exchange_rate)) {
           setFormData(prev => ({ ...prev, exchange_rate: historicalRate.toString() }));
         }
+        setDateNeedsHistoricalUpdate(false); // Reset flag after update
       }
     };
 
-    // Pequeño delay para evitar llamadas excesivas mientras el usuario escribe
-    const timeoutId = setTimeout(updateHistoricalRate, 500);
-    return () => clearTimeout(timeoutId);
-  }, [formData.date, getHistoricalRate]); // Quité la dependencia de 'open' para evitar ejecución automática al abrir
+    if (dateNeedsHistoricalUpdate) {
+      const timeoutId = setTimeout(updateHistoricalRate, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [formData.date, getHistoricalRate, dateNeedsHistoricalUpdate]);
 
   const handleSave = () => {
     onSave(index, {
@@ -82,7 +87,12 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
             </div>
             <div>
               <Label className={lbl}>Fecha</Label>
-              <Input className={inp} type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
+              <Input className={inp} type="date" value={formData.date} onChange={(e) => {
+                setFormData({...formData, date: e.target.value});
+                if (e.target.value) {
+                  setDateNeedsHistoricalUpdate(true);
+                }
+              }} />
             </div>
           </div>
 

@@ -318,8 +318,8 @@ export default function Vehicles() {
       const targetArs = convertValue(v.target_price_value, v.target_price_currency, targetRate, 'ARS');
       const publicArs = convertValue(v.public_price_value, v.public_price_currency, publicRate, 'ARS');
 
-      // Calcular valores en USD usando currentBlueRate para consistencia
-      const costoUsd = costoTotal ? costoTotal / currentBlueRate : null;
+      // Para costo usar la cotización histórica, para otros precios usar cotización actual
+      const costoUsd = costoTotal ? costoTotal / costRate : null;
       const infoautoUsd = infoautoArs ? infoautoArs / currentBlueRate : null;
       const targetUsd = targetArs ? targetArs / currentBlueRate : null;
       const publicUsd = publicArs ? publicArs / currentBlueRate : null;
