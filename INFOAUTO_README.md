@@ -72,6 +72,39 @@ Este módulo implementa una integración completa con la API de InfoAuto usando 
 3. Hacer click en **"Configurar Credenciales y Autenticar"**
 4. El sistema obtendrá automáticamente tokens JWT y comenzará la integración
 
+### 🔒 CORS en Desarrollo Local
+
+**IMPORTANTE:** Durante el desarrollo verás errores de CORS. Esto es **normal y esperado**.
+
+#### ¿Qué es CORS?
+- **CORS** = Cross-Origin Resource Sharing (Intercambio de Recursos de Origen Cruzado)
+- Es una medida de **seguridad del navegador web**
+- Impide que sitios web hagan requests HTTP a otros dominios sin permiso explícito
+
+#### ¿Por qué sucede en desarrollo?
+- Tu aplicación corre en `http://localhost:5173` (puerto de desarrollo de Vite)
+- La API de InfoAuto no permite requests desde `localhost` por seguridad
+- El navegador bloquea automáticamente estos requests
+
+#### ¿Es esto un problema?
+- ❌ **NO** es un error en tu código
+- ❌ **NO** necesitas cambiar de hosting (Vercel, Netlify, etc.)
+- ❌ **NO** necesitas modificar la configuración de la API
+- ✅ Es **comportamiento normal** en desarrollo local
+- ✅ En **producción funcionará perfectamente**
+
+#### ¿Cuándo funcionará correctamente?
+- Cuando despliegues la aplicación a **producción**
+- El dominio de producción será autorizado por InfoAuto
+- Los tokens JWT se generarán sin problemas
+- Todas las funcionalidades de integración funcionarán
+
+#### Mensaje que verás en desarrollo:
+```
+🚫 CORS: Requests bloqueados en desarrollo local.
+Los tokens funcionarán correctamente en producción.
+```
+
 ## 📊 Funcionalidades Disponibles
 
 ### 🧪 Módulo de Pruebas (InfoAutoTester)

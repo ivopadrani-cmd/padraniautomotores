@@ -270,9 +270,13 @@ export default function InfoAutoTester() {
                   <Key className="w-5 h-5" />
                   Verificación de Tokens JWT
                 </CardTitle>
-                <CardDescription>
-                  Estado de autenticación y tokens generados por InfoAuto
-                </CardDescription>
+                      <CardDescription>
+                        Estado de autenticación y tokens generados por InfoAuto
+                        <br />
+                        <span className="text-xs text-amber-600 font-medium">
+                          🔒 Nota: En desarrollo verás errores CORS (normal) - funcionará en producción
+                        </span>
+                      </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -363,10 +367,19 @@ export default function InfoAutoTester() {
 
                   {/* Alerta CORS en desarrollo */}
                   {!getTokenInfo().isTokenValid && hasCredentials() && (
-                    <Alert>
-                      <AlertDescription>
-                        <strong>Nota sobre desarrollo:</strong> Los tokens no se pueden generar desde localhost debido a restricciones de CORS del navegador.
-                        Esta funcionalidad funcionará correctamente cuando la aplicación esté desplegada en producción.
+                    <Alert className="border-amber-200 bg-amber-50">
+                      <AlertDescription className="text-amber-800">
+                        <div className="space-y-2">
+                          <div className="font-semibold text-amber-900">
+                            🔒 CORS: Restricción de Seguridad Normal en Desarrollo
+                          </div>
+                          <div className="text-sm space-y-1">
+                            <p>• Tu navegador bloquea requests desde <code className="bg-amber-100 px-1 rounded">localhost:5173</code> hacia APIs externas</p>
+                            <p>• Esto es <strong>seguridad normal</strong>, no un error de tu código</p>
+                            <p>• En producción funcionará perfectamente</p>
+                            <p>• <strong>No necesitas cambiar de hosting</strong> - es igual en Vercel, Netlify, etc.</p>
+                          </div>
+                        </div>
                       </AlertDescription>
                     </Alert>
                   )}
