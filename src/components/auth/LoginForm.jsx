@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, Lock, Mail } from 'lucide-react';
+import { Shield, Lock, Mail, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function LoginForm() {
-  const { login } = useAuth();
+  const { login, loginAttempts, isBlocked, blockTimeLeft } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [attemptsLeft, setAttemptsLeft] = useState(5);
+
+  useEffect(() => {
+    setAttemptsLeft(Math.max(0, 5 - loginAttempts));
+  }, [loginAttempts]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,12 +26,18 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const result = login(username, password);
+      const result = await login(username, password);
       if (result.success) {
         toast.success('Inicio de sesión exitoso');
+        // Limpiar campos después de login exitoso
+        setUsername('');
+        setPassword('');
       } else {
         setError(result.error);
-        toast.error('Credenciales incorrectas');
+        // Solo mostrar toast si no es bloqueo (el bloqueo ya tiene su propio mensaje)
+        if (!result.error.includes('bloqueada') && !result.error.includes('bloqueada')) {
+          toast.error('Credenciales incorrectas');
+        }
       }
     } catch (err) {
       setError('Error inesperado. Intenta nuevamente.');
@@ -48,14 +59,43 @@ export function LoginForm() {
               Padrani Automotores
             </CardTitle>
             <CardDescription className="text-gray-600 mt-2">
-              Sistema de Gestión de Vehículos
+              Sistema Interno de Gestión
             </CardDescription>
           </div>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
+            {/* Alerta de bloqueo */}
+            {isBlocked && (
+              <Alert variant="destructive" className="border-red-200 bg-red-50">
+                <Clock className="h-4 w-4" />
+                <AlertDescription className="text-red-800 font-medium">
+                  🚫 Cuenta bloqueada temporalmente
+                  <br />
+                  <span className="text-sm font-normal">
+                    Tiempo restante: {Math.floor(blockTimeLeft / 60)}:{(blockTimeLeft % 60).toString().padStart(2, '0')}
+                  </span>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Alerta de intentos restantes */}
+            {!isBlocked && loginAttempts > 0 && loginAttempts < 5 && (
+              <Alert variant="destructive" className="border-orange-200 bg-orange-50">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-orange-800">
+                  ⚠️ Intentos fallidos: {loginAttempts}/5
+                  <br />
+                  <span className="text-sm font-normal">
+                    Te quedan {attemptsLeft} intento{attemptsLeft !== 1 ? 's' : ''} antes del bloqueo
+                  </span>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Alerta de error general */}
+            {error && !isBlocked && (
               <Alert variant="destructive" className="border-red-200 bg-red-50">
                 <AlertDescription className="text-red-800">
                   {error}
@@ -103,10 +143,19 @@ export function LoginForm() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-              disabled={isLoading}
+              className={`w-full font-medium py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg ${
+                isBlocked
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white'
+              }`}
+              disabled={isLoading || isBlocked}
             >
-              {isLoading ? (
+              {isBlocked ? (
+                <div className="flex items-center justify-center">
+                  <Clock className="w-4 h-4 mr-2" />
+                  Bloqueado ({Math.floor(blockTimeLeft / 60)}:{(blockTimeLeft % 60).toString().padStart(2, '0')})
+                </div>
+              ) : isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   Iniciando sesión...
@@ -117,9 +166,12 @@ export function LoginForm() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 space-y-2 text-center">
             <p className="text-xs text-gray-500">
-              Sistema seguro - Acceso restringido
+              🔐 Sistema seguro - Acceso restringido
+            </p>
+            <p className="text-xs text-gray-400">
+              Intentos fallidos se registran y pueden bloquear el acceso temporalmente
             </p>
           </div>
         </CardContent>
