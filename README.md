@@ -2,6 +2,30 @@
 
 Sistema de gestión integral para concesionarias de automotores. Aplicación profesional desarrollada con Vite+React y backend Supabase.
 
+## 🔐 Autenticación Requerida
+
+**IMPORTANTE:** Toda la aplicación requiere autenticación para acceder.
+
+### Credenciales de Acceso
+- **Usuario:** `ivopadrani@gmail.com`
+- **Contraseña:** `1victoria`
+
+### Funcionalidades de Seguridad
+- ✅ **Acceso protegido:** Login obligatorio para toda la aplicación
+- ✅ **Sesión persistente:** Mantengo la sesión entre visitas
+- ✅ **Logout seguro:** Cierra sesión tanto del sistema local como de Supabase
+- ✅ **UI moderna:** Pantalla de login elegante y responsive
+
+### Primer Acceso
+1. Ve a `https://padraniautomotores.vercel.app`
+2. Ingresa las credenciales arriba mencionadas
+3. Haz click en "Iniciar Sesión"
+4. ¡Listo! Tendrás acceso completo al sistema
+
+### Cerrar Sesión
+- En la barra lateral superior derecha → "Cerrar Sesión"
+- Esto te devolverá a la pantalla de login
+
 ## 🚀 Estado del Proyecto
 
 ✅ **Migración a Supabase completada**
