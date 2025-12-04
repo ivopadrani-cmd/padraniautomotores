@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle, XCircle, Key, Search, Car, DollarSign, Calendar, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Key, Search, Car, DollarSign, Calendar, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { infoautoAPI } from '../services/infoautoApi';
 
@@ -185,12 +185,17 @@ export default function InfoAutoTester() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
+            <AlertCircle className="h-4 w-4" />
             <AlertDescription>
+              <strong>🧪 ESTADO ACTUAL DE LA INTEGRACIÓN:</strong><br />
+              • ✅ **Credenciales correctas** - Autenticación funciona desde Node.js<br />
+              • ✅ **API responde correctamente** - Tokens JWT generados exitosamente<br />
+              • ❌ **CORS bloquea en navegador** - Solo funciona desde extensión Chrome específica<br />
+              • ⏳ **Esperando autorización de dominio** por parte de InfoAuto<br />
+              <br />
               <strong>⚠️ NORMAS CRÍTICAS DE USO (NO INFRINGIR):</strong><br />
               • <strong>NO generes access tokens nuevos por cada consulta</strong> (mal uso = bloqueo)<br />
               • <strong>Reutiliza access tokens</strong> mientras sean válidos (1 hora)<br />
-              • <strong>Usa refresh tokens para renovación automática</strong> (válidos 24 horas)<br />
-              • <strong>Implementa persistencia de tokens</strong> (localStorage/cron jobs/Redis)<br />
               • <strong>Respeta límites de rate limiting</strong> para evitar bloqueos<br />
               • <strong>Access tokens por Basic Auth inicial</strong>, luego Bearer tokens
             </AlertDescription>
