@@ -79,8 +79,8 @@ export default function InfoAutoTester() {
   const [apiMode, setApiMode] = useState(true); // true = usar API local, false = datos mock
   const [apiData, setApiData] = useState({
     brands: [],
-    searchResults: [],
-    modelDetails: null
+    models: [],
+    selectedModel: null
   });
 
   // Credentials management
@@ -101,7 +101,7 @@ export default function InfoAutoTester() {
   const [offlineLoading, setOfflineLoading] = useState(false);
 
   const { data: completeModel, isLoading: loadingCompleteModel } = useCompleteModelInfo(
-    offlineMode ? '' : codiaSearch
+    apiMode ? '' : codiaSearch
   );
 
   // Efecto para búsqueda por CODIA
@@ -185,15 +185,48 @@ export default function InfoAutoTester() {
   };
 
   const getModelsData = () => {
-    if (!apiMode && apiData.searchResults.length > 0) {
-      // Filtrar por marca si está seleccionada
-      const brandId = parseInt(selectedBrand);
-      const filteredModels = apiData.searchResults.filter(model =>
-        !brandId || model.brand?.id === brandId
-      );
-      return filteredModels;
+    if (!apiMode && apiData.models.length > 0) {
+      return apiData.models;
     }
     return models;
+  };
+
+  // Función para cargar modelos de una marca
+  const loadModelsForBrand = async (brandId) => {
+    if (!brandId) return;
+
+    try {
+      const response = await queryLocalAPI(`/brands/${brandId}/models`);
+      if (response.success) {
+        setApiData(prev => ({
+          ...prev,
+          models: response.data || []
+        }));
+      }
+    } catch (error) {
+      console.error('Error cargando modelos:', error);
+    }
+  };
+
+  // Función para manejar selección de marca
+  const handleBrandChange = (brandId) => {
+    setSelectedBrand(brandId);
+    setSelectedModel(''); // Resetear modelo seleccionado
+    setModelSearch(''); // Resetear búsqueda
+
+    if (apiMode && brandId) {
+      loadModelsForBrand(brandId);
+    }
+  };
+
+  // Función para manejar selección de modelo
+  const handleModelChange = (model) => {
+    setSelectedModel(model.codia.toString());
+    setModelSearch(`${model.name} (CODIA: ${model.codia})`);
+    setApiData(prev => ({ ...prev, selectedModel: model }));
+
+    // Automáticamente buscar detalles del modelo por CODIA
+    setCodiaSearch(model.codia.toString());
   };
 
   // Función para buscar modelo por CODIA via API local
@@ -261,12 +294,6 @@ export default function InfoAutoTester() {
     };
   };
 
-  const handleBrandChange = (brandId) => {
-    setSelectedBrand(brandId);
-    setSelectedModel('');
-    setModelSearch('');
-  };
-
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -320,14 +347,16 @@ export default function InfoAutoTester() {
           <Alert>
             <Database className="h-4 w-4" />
             <AlertDescription>
-              <strong>🔗 API PROXY IMPLEMENTADO:</strong><br />
-              • ✅ **Backend proxy creado** - API routes en `/api/infoauto/`<br />
-              • ✅ **Sin problemas CORS** - Navegador → Tu servidor → InfoAuto<br />
-              • ✅ **Funciona en producción** - Vercel ejecuta las API routes<br />
-              • 🔧 **Endpoints disponibles:** `/brands`, `/search`, `/models/[codia]`<br />
+              <strong>🚗 FLUJO COMPLETO IMPLEMENTADO:</strong><br />
+              • ✅ **API proxy funcionando** - Sin problemas CORS<br />
+              • ✅ **Selección inteligente** - Marca → Modelo → CODIA automático → Precios<br />
+              • ✅ **Precios históricos** - Desde 2015 hasta 2025 por modelo<br />
+              • 🎯 **Flujo intuitivo:** Elige marca, selecciona modelo, ¡ve precios automáticamente!<br />
               <br />
-              <strong>🎯 ¿Cómo funciona?</strong><br />
-              Tu webapp consulta tus propias APIs → Tus APIs consultan InfoAuto → Resultados sin CORS
+              <strong>💡 ¿Cómo usar?</strong><br />
+              1. Selecciona marca (Toyota, Ford, etc.)<br />
+              2. Elige modelo de la lista<br />
+              3. ¡Los precios aparecen automáticamente!
             </AlertDescription>
           </Alert>
 
@@ -624,10 +653,10 @@ export default function InfoAutoTester() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Car className="w-5 h-5" />
-                Buscador de Vehículos InfoAuto
+                Consulta Inteligente de Precios
               </CardTitle>
               <CardDescription>
-                Selecciona marca y modelo para consultar precios
+                Selecciona marca → elige modelo → ¡ve precios automáticamente!
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -707,15 +736,15 @@ export default function InfoAutoTester() {
                             .map((model) => (
                               <button
                                 key={model.codia}
-                                onClick={() => {
-                                  setSelectedModel(model.codia);
-                                  setModelSearch(`${model.modelName} (CODIA: ${model.codia})`);
-                                }}
+                                onClick={() => handleModelChange(model)}
                                 className={`w-full text-left px-3 py-2 rounded hover:bg-green-50 hover:text-green-700 transition-colors ${
-                                  selectedModel === model.codia ? 'bg-green-100 text-green-800 font-medium' : ''
+                                  selectedModel === model.codia.toString() ? 'bg-green-100 text-green-800 font-medium' : ''
                                 }`}
                               >
-                                {model.modelName} (CODIA: {model.codia})
+                                <div className="flex justify-between items-center">
+                                  <span>{model.name || model.modelName}</span>
+                                  <span className="text-xs text-gray-500">CODIA: {model.codia}</span>
+                                </div>
                               </button>
                             ))
                         )}
@@ -745,26 +774,48 @@ export default function InfoAutoTester() {
                 </div>
               </div>
 
-              {/* Search by CODIA */}
-              <Separator />
-              <div>
-                <Label className="text-sm font-medium">O buscar directamente por CODIA</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    value={codiaSearch}
-                    onChange={(e) => setCodiaSearch(e.target.value)}
-                    placeholder="Ej: VW001AA"
-                    className="font-mono"
-                  />
-                  <Button
-                    onClick={() => setCodiaSearch(codiaSearch)}
-                    disabled={!codiaSearch.trim() || loadingCompleteModel}
-                  >
-                    {currentLoadingCompleteModel && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Buscar
-                  </Button>
+              {/* CODIA Automático */}
+              {selectedModel && (
+                <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                  <Label className="text-sm font-medium text-green-800 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    CODIA Detectado Automáticamente
+                  </Label>
+                  <p className="text-lg font-mono font-bold text-green-700 mt-1">
+                    {selectedModel}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    ✅ Los precios se cargan automáticamente para este modelo
+                  </p>
                 </div>
-              </div>
+              )}
+
+              {/* Search by CODIA (opcional) */}
+              <Separator />
+              <details>
+                <summary className="text-sm text-gray-600 cursor-pointer hover:text-gray-800 list-none">
+                  🔍 Búsqueda manual por CODIA (avanzado)
+                </summary>
+                <div className="mt-3">
+                  <Label className="text-sm font-medium">Buscar modelo por código CODIA</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      value={codiaSearch}
+                      onChange={(e) => setCodiaSearch(e.target.value)}
+                      placeholder="Ej: 12345"
+                      className="font-mono"
+                    />
+                    <Button
+                      onClick={() => setCodiaSearch(codiaSearch)}
+                      disabled={!codiaSearch.trim() || loadingCompleteModel}
+                      size="sm"
+                    >
+                      {currentLoadingCompleteModel && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Buscar
+                    </Button>
+                  </div>
+                </div>
+              </details>
             </CardContent>
           </Card>
 
@@ -786,18 +837,49 @@ export default function InfoAutoTester() {
                     <p className="font-mono text-lg">{currentCompleteModel.codia}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Precio 0km</Label>
-                    <p className="text-lg font-bold text-green-600">
+                    <Label className="text-sm font-medium">Precio 0km Actual</Label>
+                    <p className="text-2xl font-bold text-green-600">
                       ${currentCompleteModel.list_price?.toLocaleString() || 'N/A'}
                     </p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Marca</Label>
-                    <p className="text-lg">{currentCompleteModel.brandName || currentCompleteModel.brand_name}</p>
+                    <p className="text-lg">{currentCompleteModel.brand?.name || currentCompleteModel.brandName || currentCompleteModel.brand_name}</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Modelo</Label>
-                    <p className="text-lg">{currentCompleteModel.modelName || currentCompleteModel.name}</p>
+                    <p className="text-lg">{currentCompleteModel.name || currentCompleteModel.modelName}</p>
+                  </div>
+                </div>
+
+                {/* Precios Históricos */}
+                {currentCompleteModel.prices && currentCompleteModel.prices.length > 0 && (
+                  <div className="border-t pt-4">
+                    <Label className="text-sm font-medium mb-3 block">Precios Usados Históricos</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {currentCompleteModel.prices
+                        .sort((a, b) => b.year - a.year) // Más recientes primero
+                        .map((price) => (
+                        <div key={price.year} className="bg-gray-50 p-3 rounded-lg">
+                          <div className="text-sm text-gray-600">{price.year}</div>
+                          <div className="text-lg font-semibold text-blue-600">
+                            ${price.price?.toLocaleString() || 'N/A'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Información adicional */}
+                <div className="border-t pt-4 grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Año Modelo</Label>
+                    <p className="text-lg">{currentCompleteModel.year || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Grupo</Label>
+                    <p className="text-lg">{currentCompleteModel.group?.name || 'N/A'}</p>
                   </div>
                 </div>
 
