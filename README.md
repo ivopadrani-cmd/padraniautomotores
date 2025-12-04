@@ -16,6 +16,14 @@ Sistema de gestión integral para concesionarias de automotores. Aplicación pro
 - ✅ **Logout seguro:** Cierra sesión tanto del sistema local como de Supabase
 - ✅ **UI moderna:** Pantalla de login elegante y responsive
 
+### 🛡️ Medidas de Seguridad Avanzadas
+- ✅ **Rate Limiting:** Máximo 5 intentos de login fallidos
+- ✅ **Bloqueo Progresivo:** 30s → 1min → 2min → 4min → 5min máximo
+- ✅ **Anti-Brute Force:** Delays progresivos entre intentos
+- ✅ **Credenciales Ofuscadas:** Protección básica contra inspección casual
+- ✅ **Bloqueo Temporal:** Cuenta regresiva visual durante bloqueos
+- ✅ **Contador de Intentos:** Visualización clara de intentos restantes
+
 ### Primer Acceso
 1. Ve a `https://padraniautomotores.vercel.app`
 2. Ingresa las credenciales arriba mencionadas
