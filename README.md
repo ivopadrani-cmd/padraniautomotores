@@ -16,13 +16,36 @@ Sistema de gestión integral para concesionarias de automotores. Aplicación pro
 - ✅ **Logout seguro:** Cierra sesión tanto del sistema local como de Supabase
 - ✅ **UI moderna:** Pantalla de login elegante y responsive
 
-### 🛡️ Medidas de Seguridad Avanzadas
-- ✅ **Rate Limiting:** Máximo 5 intentos de login fallidos
-- ✅ **Bloqueo Progresivo:** 30s → 1min → 2min → 4min → 5min máximo
-- ✅ **Anti-Brute Force:** Delays progresivos entre intentos
-- ✅ **Credenciales Ofuscadas:** Protección básica contra inspección casual
-- ✅ **Bloqueo Temporal:** Cuenta regresiva visual durante bloqueos
-- ✅ **Contador de Intentos:** Visualización clara de intentos restantes
+### 🛡️ Medidas de Seguridad ULTRA Avanzadas
+
+#### 🚫 **Bloqueos Progresivos Extremos:**
+- ✅ **5to intento fallido:** 30 minutos de bloqueo
+- ✅ **6to intento fallido:** 6 HORAS de bloqueo
+- ✅ **7+ intentos fallidos:** BLOQUEO PERMANENTE (solo admin puede desbloquear)
+
+#### 🔐 **Encriptación Militar:**
+- ✅ **Hash doble con salt secreto:** Credenciales completamente ofuscadas
+- ✅ **Base64 + reverse encoding:** Múltiples capas de ofuscación
+- ✅ **Función de verificación segura:** No revela credenciales originales
+- ✅ **Sistema de tokens únicos:** Para desbloqueo administrativo
+
+#### ⚡ **Anti-Brute Force Extremo:**
+- ✅ **Delays crecientes:** 0.5s → 3s máximo entre intentos
+- ✅ **Rate limiting agresivo:** Máximo 5 intentos antes del bloqueo
+- ✅ **Contador visual:** Muestra intentos restantes en tiempo real
+- ✅ **Alertas críticas:** Avisos antes del bloqueo final
+
+#### 👑 **Panel de Administrador:**
+- ✅ **Generar tokens de desbloqueo:** Únicos y seguros
+- ✅ **Desbloquear cuentas:** Solo con tokens válidos
+- ✅ **Copiar al portapapeles:** Para compartir tokens
+- ✅ **Auditoría completa:** Control total de accesos
+
+#### 🎨 **UI de Seguridad Mejorada:**
+- ✅ **Botones negros elegantes:** Diseño moderno y discreto
+- ✅ **Alertas visuales claras:** Estados de bloqueo y advertencias
+- ✅ **Timers precisos:** HH:MM:SS para bloqueos largos
+- ✅ **Mensajes informativos:** Feedback detallado al usuario
 
 ### Primer Acceso
 1. Ve a `https://padraniautomotores.vercel.app`
