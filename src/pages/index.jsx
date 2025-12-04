@@ -23,6 +23,7 @@ import Tasks from "./Tasks";
 import Inspections from "./Inspections";
 
 import InfoAutoTester from "./InfoAutoTester";
+import { AdminPanel } from "@/components/auth/AdminPanel";
 
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -51,6 +52,8 @@ const PAGES = {
     Inspections: Inspections,
 
     InfoAutoTester: InfoAutoTester,
+
+    AdminPanel: AdminPanel,
 
 }
 

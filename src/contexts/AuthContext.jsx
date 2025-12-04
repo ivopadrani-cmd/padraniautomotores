@@ -1,10 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-// Credenciales válidas (ofuscadas para evitar inspección casual)
-const getValidCredentials = () => ({
-  username: atob('aXZvcGFkcmFuaUBnbWFpbC5jb20='), // ivopadrani@gmail.com
-  password: atob('MXZpY3Rvcmlh') // 1victoria
-});
+import { verifyCredentials, verifyAdminUnlockToken, createAdminUnlockToken } from '@/utils/security';
 
 const AuthContext = createContext();
 
@@ -14,6 +9,7 @@ export function AuthProvider({ children }) {
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockTimeLeft, setBlockTimeLeft] = useState(0);
+  const [isPermanentBlock, setIsPermanentBlock] = useState(false);
 
   useEffect(() => {
     // Verificar si hay una sesión activa en localStorage
@@ -22,7 +18,15 @@ export function AuthProvider({ children }) {
       setIsAuthenticated(true);
     }
 
-    // Verificar si hay bloqueo activo
+    // Verificar si hay bloqueo permanente
+    const permanentBlock = localStorage.getItem('auth_permanent_block');
+    if (permanentBlock === 'true') {
+      setIsPermanentBlock(true);
+      setIsBlocked(true);
+      setBlockTimeLeft(-1); // -1 indica bloqueo permanente
+    }
+
+    // Verificar si hay bloqueo temporal activo
     const blockUntil = localStorage.getItem('auth_block_until');
     if (blockUntil) {
       const blockTime = parseInt(blockUntil);
@@ -88,14 +92,16 @@ export function AuthProvider({ children }) {
       return { success: false, error: 'Usuario y contraseña son requeridos' };
     }
 
-    // Verificar credenciales (con delay para prevenir brute force)
-    const isValid = username === validCredentials.username && password === validCredentials.password;
+    // Verificar credenciales usando el sistema de hash seguro
+    const isValid = await verifyCredentials(username, password);
 
     if (isValid) {
       // Resetear contador de intentos en login exitoso
       setLoginAttempts(0);
       localStorage.removeItem('auth_attempts');
       localStorage.removeItem('auth_block_until');
+      localStorage.removeItem('auth_permanent_block');
+      setIsPermanentBlock(false);
 
       setIsAuthenticated(true);
       localStorage.setItem('auth_session', 'true');
@@ -111,17 +117,42 @@ export function AuthProvider({ children }) {
       localStorage.setItem('auth_attempts', newAttempts.toString());
 
       // Delay progresivo para prevenir brute force
-      const delay = Math.min(2000, 500 * Math.pow(1.5, Math.max(0, newAttempts - 2)));
+      const delay = Math.min(3000, 500 * Math.pow(1.8, Math.max(0, newAttempts - 2)));
       await new Promise(resolve => setTimeout(resolve, delay));
 
-      // Bloquear después de 5 intentos
-      if (newAttempts >= 5) {
-        const blockDuration = Math.min(300, 30 * Math.pow(2, newAttempts - 5));
+      // Sistema de bloqueo progresivo más agresivo
+      if (newAttempts >= 7) {
+        // Bloqueo PERMANENTE después de 7 intentos
+        localStorage.setItem('auth_permanent_block', 'true');
+        setIsPermanentBlock(true);
+        setIsBlocked(true);
+        setBlockTimeLeft(-1);
+        return {
+          success: false,
+          error: 'CUENTA BLOQUEADA PERMANENTEMENTE. Contacta al administrador para desbloquear.'
+        };
+      } else if (newAttempts >= 6) {
+        // Bloqueo de 6 HORAS después del 6to intento
+        const blockDuration = 6 * 60 * 60; // 6 horas en segundos
         const blockUntil = Date.now() + (blockDuration * 1000);
         localStorage.setItem('auth_block_until', blockUntil.toString());
         setIsBlocked(true);
         setBlockTimeLeft(blockDuration);
-        return { success: false, error: `Demasiados intentos fallidos. Cuenta bloqueada por ${blockDuration} segundos.` };
+        return {
+          success: false,
+          error: `Demasiados intentos fallidos. Cuenta bloqueada por 6 horas.`
+        };
+      } else if (newAttempts >= 5) {
+        // Bloqueo de 30 MINUTOS después del 5to intento
+        const blockDuration = 30 * 60; // 30 minutos en segundos
+        const blockUntil = Date.now() + (blockDuration * 1000);
+        localStorage.setItem('auth_block_until', blockUntil.toString());
+        setIsBlocked(true);
+        setBlockTimeLeft(blockDuration);
+        return {
+          success: false,
+          error: `Demasiados intentos fallidos. Cuenta bloqueada por 30 minutos.`
+        };
       }
 
       return { success: false, error: 'Credenciales inválidas' };
@@ -134,6 +165,29 @@ export function AuthProvider({ children }) {
     // No resetear intentos fallidos al hacer logout
   };
 
+  const adminUnlock = (unlockToken) => {
+    if (verifyAdminUnlockToken(unlockToken)) {
+      // Desbloquear cuenta
+      setIsBlocked(false);
+      setIsPermanentBlock(false);
+      setBlockTimeLeft(0);
+      setLoginAttempts(0);
+
+      // Limpiar localStorage
+      localStorage.removeItem('auth_permanent_block');
+      localStorage.removeItem('auth_block_until');
+      localStorage.removeItem('auth_attempts');
+
+      return { success: true, message: 'Cuenta desbloqueada exitosamente' };
+    }
+    return { success: false, error: 'Token de desbloqueo inválido' };
+  };
+
+  const generateAdminToken = () => {
+    const token = createAdminUnlockToken();
+    return { success: true, token, message: 'Token generado. Copia este token para desbloquear cuentas bloqueadas.' };
+  };
+
   const value = {
     isAuthenticated,
     isLoading,
@@ -141,7 +195,10 @@ export function AuthProvider({ children }) {
     logout,
     loginAttempts,
     isBlocked,
-    blockTimeLeft
+    blockTimeLeft,
+    isPermanentBlock,
+    adminUnlock,
+    generateAdminToken
   };
 
   return (
