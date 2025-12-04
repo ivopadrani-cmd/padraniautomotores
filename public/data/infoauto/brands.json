@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "name": "Toyota",
+    "logo_url": "https://example.com/toyota-logo.png",
+    "list_price": true,
+    "prices": true,
+    "prices_from": 2015,
+    "prices_to": 2025,
+    "summary": "Marca japonesa líder en calidad y confiabilidad"
+  },
+  {
+    "id": 2,
+    "name": "Ford",
+    "logo_url": "https://example.com/ford-logo.png",
+    "list_price": true,
+    "prices": true,
+    "prices_from": 2010,
+    "prices_to": 2025,
+    "summary": "Marca americana con amplia gama de vehículos"
+  },
+  {
+    "id": 3,
+    "name": "Volkswagen",
+    "logo_url": "https://example.com/vw-logo.png",
+    "list_price": true,
+    "prices": true,
+    "prices_from": 2012,
+    "prices_to": 2025,
+    "summary": "Marca alemana con tecnología avanzada"
+  },
+  {
+    "id": 4,
+    "name": "Chevrolet",
+    "logo_url": "https://example.com/chevrolet-logo.png",
+    "list_price": true,
+    "prices": true,
+    "prices_from": 2010,
+    "prices_to": 2025,
+    "summary": "Marca americana accesible y popular"
+  },
+  {
+    "id": 5,
+    "name": "Honda",
+    "logo_url": "https://example.com/honda-logo.png",
+    "list_price": true,
+    "prices": true,
+    "prices_from": 2013,
+    "prices_to": 2025,
+    "summary": "Marca japonesa conocida por su eficiencia"
+  }
+]

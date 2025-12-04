@@ -13,9 +13,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle, XCircle, Key, Search, Car, DollarSign, Calendar, RefreshCw, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Key, Search, Car, DollarSign, Calendar, RefreshCw, AlertCircle, Database } from 'lucide-react';
 import { toast } from 'sonner';
 import { infoautoAPI } from '../services/infoautoApi';
+
+// Funciones para cargar datos offline
+const loadOfflineData = async (filename) => {
+  try {
+    const response = await fetch(`/data/infoauto/${filename}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Error cargando ${filename}:`, error);
+    return null;
+  }
+};
 
 // Hooks personalizados
 import {
@@ -47,6 +61,14 @@ export default function InfoAutoTester() {
   const [brandSearch, setBrandSearch] = useState('');
   const [modelSearch, setModelSearch] = useState('');
 
+  // Estado para modo offline
+  const [offlineMode, setOfflineMode] = useState(true);
+  const [offlineData, setOfflineData] = useState({
+    brands: [],
+    allModels: [],
+    stats: null
+  });
+
   // Credentials management
   const { setCredentials, getCredentials, hasCredentials } = useInfoAutoCredentials();
 
@@ -60,7 +82,32 @@ export default function InfoAutoTester() {
   const { data: allBrandsWithGroups, isLoading: loadingAllBrands } = useAllBrandsWithGroups();
   const { data: models, isLoading: loadingModels } = useModelsByBrand(selectedBrand);
   const { data: modelInfo, isLoading: loadingModel } = useModelByCodia(codiaSearch);
-  const { data: completeModel, isLoading: loadingCompleteModel } = useCompleteModelInfo(codiaSearch);
+  // Estado para modelo completo (online/offline)
+  const [offlineCompleteModel, setOfflineCompleteModel] = useState(null);
+  const [offlineLoading, setOfflineLoading] = useState(false);
+
+  const { data: completeModel, isLoading: loadingCompleteModel } = useCompleteModelInfo(
+    offlineMode ? '' : codiaSearch
+  );
+
+  // Efecto para búsqueda offline
+  useEffect(() => {
+    if (offlineMode && codiaSearch) {
+      setOfflineLoading(true);
+      // Simular búsqueda async
+      setTimeout(() => {
+        const foundModel = findModelByCodiaOffline(codiaSearch);
+        setOfflineCompleteModel(foundModel);
+        setOfflineLoading(false);
+      }, 500); // Simular delay de búsqueda
+    } else {
+      setOfflineCompleteModel(null);
+    }
+  }, [codiaSearch, offlineMode]);
+
+  // Modelo completo actual (online u offline)
+  const currentCompleteModel = offlineMode ? offlineCompleteModel : completeModel;
+  const currentLoadingCompleteModel = offlineMode ? offlineLoading : loadingCompleteModel;
 
   // Integration features
   const { data: integrationStats, isLoading: loadingStats } = useIntegrationStats();
@@ -75,6 +122,64 @@ export default function InfoAutoTester() {
     setUsernameInput(credentials.username);
     setPasswordInput(credentials.password);
   }, []);
+
+  // Cargar datos offline
+  useEffect(() => {
+    const loadOfflineDataAsync = async () => {
+      console.log('📂 Cargando datos offline...');
+
+      const [brands, allModels, stats] = await Promise.all([
+        loadOfflineData('brands.json'),
+        loadOfflineData('all-models.json'),
+        loadOfflineData('stats.json')
+      ]);
+
+      if (brands && allModels && stats) {
+        setOfflineData({
+          brands: brands || [],
+          allModels: allModels || [],
+          stats: stats
+        });
+        console.log('✅ Datos offline cargados:', {
+          brands: brands.length,
+          models: allModels.length,
+          type: stats.type
+        });
+      } else {
+        console.log('⚠️  No se pudieron cargar datos offline');
+      }
+    };
+
+    loadOfflineDataAsync();
+  }, []);
+
+  // Función para obtener datos según el modo
+  const getBrandsData = () => {
+    if (offlineMode && offlineData.brands.length > 0) {
+      return { results: offlineData.brands };
+    }
+    return brands;
+  };
+
+  const getModelsData = () => {
+    if (offlineMode && offlineData.allModels.length > 0) {
+      // Filtrar modelos por marca seleccionada
+      const brandId = parseInt(selectedBrand);
+      const filteredModels = offlineData.allModels.filter(model =>
+        !brandId || model.brandId === brandId
+      );
+      return filteredModels;
+    }
+    return models;
+  };
+
+  // Función para buscar modelo por CODIA (modo offline)
+  const findModelByCodiaOffline = (codia) => {
+    if (!offlineMode || !offlineData.allModels.length) return null;
+
+    const codiaNum = parseInt(codia);
+    return offlineData.allModels.find(model => model.codia === codiaNum) || null;
+  };
 
   const handleCredentialsSubmit = async (e) => {
     e.preventDefault();
@@ -185,21 +290,38 @@ export default function InfoAutoTester() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
-            <AlertCircle className="h-4 w-4" />
+            <Database className="h-4 w-4" />
             <AlertDescription>
-              <strong>🧪 ESTADO ACTUAL DE LA INTEGRACIÓN:</strong><br />
-              • ✅ **Credenciales correctas** - Autenticación funciona desde Node.js<br />
-              • ✅ **API responde correctamente** - Tokens JWT generados exitosamente<br />
-              • ❌ **CORS bloquea en navegador** - Solo funciona desde extensión Chrome específica<br />
-              • ⏳ **Esperando autorización de dominio** por parte de InfoAuto<br />
+              <strong>🎭 MODO OFFLINE ACTIVADO:</strong><br />
+              • ✅ **Datos mock cargados** - {offlineData.stats?.totalBrands || 0} marcas, {offlineData.stats?.totalModels || 0} modelos<br />
+              • ✅ **Funciona sin CORS** - No hay llamadas a API externa<br />
+              • ✅ **Interfaz completa** - Todas las funciones disponibles<br />
+              • 💡 **Para datos reales:** Usa Postman manualmente con las credenciales<br />
               <br />
-              <strong>⚠️ NORMAS CRÍTICAS DE USO (NO INFRINGIR):</strong><br />
-              • <strong>NO generes access tokens nuevos por cada consulta</strong> (mal uso = bloqueo)<br />
-              • <strong>Reutiliza access tokens</strong> mientras sean válidos (1 hora)<br />
-              • <strong>Respeta límites de rate limiting</strong> para evitar bloqueos<br />
-              • <strong>Access tokens por Basic Auth inicial</strong>, luego Bearer tokens
+              <strong>🔄 Cambiar a modo API real:</strong> Desactiva el modo offline para probar con InfoAuto (requiere autorización de dominio)
             </AlertDescription>
           </Alert>
+
+          {/* Toggle Modo Offline/Online */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Modo de Datos</Label>
+                  <p className="text-sm text-gray-600">
+                    {offlineMode ? 'Usando datos mock locales (sin API)' : 'Usando API de InfoAuto (requiere CORS)'}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setOfflineMode(!offlineMode)}
+                  variant={offlineMode ? "default" : "outline"}
+                  size="sm"
+                >
+                  {offlineMode ? '🔄 Cambiar a API Real' : '🎭 Cambiar a Datos Mock'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           <Alert>
             <AlertDescription>
@@ -507,7 +629,7 @@ export default function InfoAutoTester() {
                           <span>Cargando marcas...</span>
                         </div>
                       ) : (
-                        brands?.results
+                        getBrandsData()?.results
                           ?.filter(brand =>
                             brand.name.toLowerCase().includes(brandSearch.toLowerCase())
                           )
@@ -548,23 +670,23 @@ export default function InfoAutoTester() {
                             <span>Cargando modelos...</span>
                           </div>
                         ) : (
-                          models?.results
+                          getModelsData()
                             ?.filter(model =>
-                              model.name.toLowerCase().includes(modelSearch.toLowerCase()) ||
-                              model.year.toString().includes(modelSearch)
+                              model.modelName.toLowerCase().includes(modelSearch.toLowerCase()) ||
+                              model.codia.toString().includes(modelSearch)
                             )
                             .map((model) => (
                               <button
                                 key={model.codia}
                                 onClick={() => {
                                   setSelectedModel(model.codia);
-                                  setModelSearch(`${model.name} (${model.year})`);
+                                  setModelSearch(`${model.modelName} (CODIA: ${model.codia})`);
                                 }}
                                 className={`w-full text-left px-3 py-2 rounded hover:bg-green-50 hover:text-green-700 transition-colors ${
                                   selectedModel === model.codia ? 'bg-green-100 text-green-800 font-medium' : ''
                                 }`}
                               >
-                                {model.name} ({model.year})
+                                {model.modelName} (CODIA: {model.codia})
                               </button>
                             ))
                         )}
@@ -609,7 +731,7 @@ export default function InfoAutoTester() {
                     onClick={() => setCodiaSearch(codiaSearch)}
                     disabled={!codiaSearch.trim() || loadingCompleteModel}
                   >
-                    {loadingCompleteModel && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {currentLoadingCompleteModel && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Buscar
                   </Button>
                 </div>
@@ -618,31 +740,34 @@ export default function InfoAutoTester() {
           </Card>
 
           {/* Results */}
-          {completeModel && (
+          {currentCompleteModel && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Car className="w-5 h-5" />
-                  Resultado: {completeModel.name}
+                  Resultado: {currentCompleteModel.modelName || currentCompleteModel.name}
+                  {offlineMode && <Badge variant="outline" className="ml-2">Datos Mock</Badge>}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium">CODIA</Label>
-                    <p className="font-mono text-lg">{completeModel.codia}</p>
+                    <p className="font-mono text-lg">{currentCompleteModel.codia}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Año</Label>
-                    <p className="text-lg">{completeModel.year}</p>
+                    <Label className="text-sm font-medium">Precio 0km</Label>
+                    <p className="text-lg font-bold text-green-600">
+                      ${currentCompleteModel.list_price?.toLocaleString() || 'N/A'}
+                    </p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Marca</Label>
-                    <p className="text-lg">{completeModel.brand_name}</p>
+                    <p className="text-lg">{currentCompleteModel.brandName || currentCompleteModel.brand_name}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium">Grupo</Label>
-                    <p className="text-lg">{completeModel.group_name}</p>
+                    <Label className="text-sm font-medium">Modelo</Label>
+                    <p className="text-lg">{currentCompleteModel.modelName || currentCompleteModel.name}</p>
                   </div>
                 </div>
 
