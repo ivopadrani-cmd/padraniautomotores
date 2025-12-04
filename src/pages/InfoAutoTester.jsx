@@ -105,9 +105,9 @@ export default function InfoAutoTester() {
     }
   }, [codiaSearch, mockMode]);
 
-  // Modelo completo actual (API o mock)
-  const currentCompleteModel = !apiMode ? offlineCompleteModel : completeModel;
-  const currentLoadingCompleteModel = !apiMode ? offlineLoading : loadingCompleteModel;
+  // Modelo completo actual (solo mock disponible)
+  const currentCompleteModel = offlineCompleteModel;
+  const currentLoadingCompleteModel = offlineLoading;
 
   // Integration features
   const { data: integrationStats, isLoading: loadingStats } = useIntegrationStats();
@@ -795,8 +795,7 @@ export default function InfoAutoTester() {
                 <CardTitle className="flex items-center gap-2">
                   <Car className="w-5 h-5" />
                   Resultado: {currentCompleteModel.modelName || currentCompleteModel.name}
-                  {!apiMode && <Badge variant="outline" className="ml-2">Datos Mock</Badge>}
-                  {apiMode && <Badge variant="outline" className="ml-2">InfoAuto API</Badge>}
+                  <Badge variant="outline" className="ml-2">Datos Demo</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
