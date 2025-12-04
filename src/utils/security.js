@@ -5,8 +5,8 @@ const SECRET_KEY = 'P4dr4n1_4ut0m0t0r3s_2025_S3cr3t_K3y';
 
 // Credenciales encriptadas (generadas con la función hash)
 const ENCRYPTED_CREDENTIALS = {
-  username: '2f7a8b1c9e5d4f3a6b8c0e9d2f5a7b1c', // Hash de ivopadrani@gmail.com
-  password: '8c5e9a2f1b7d4c3e6a8b0f9c5e2a7d1b'  // Hash de 1victoria
+  username: '0000000000000000000000002c88524f', // Hash de ivopadrani@gmail.com
+  password: '0000000000000000000000001635d1ad'  // Hash de 1victoria
 };
 
 /**
