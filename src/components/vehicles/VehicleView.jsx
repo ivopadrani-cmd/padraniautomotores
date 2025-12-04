@@ -934,15 +934,23 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
               const [expensesExpanded, setExpensesExpanded] = React.useState(false);
               const currentRate = rates.find(r => r.rate_type === 'Diaria')?.usd_rate || 1200;
 
-              // Calculate USD values using their original rates
-              const valorTomaUsd = updatedVehicle.cost_currency === 'USD' 
-                ? updatedVehicle.cost_value 
-                : (updatedVehicle.cost_exchange_rate ? updatedVehicle.cost_value / updatedVehicle.cost_exchange_rate : updatedVehicle.cost_value / currentRate);
+              // Usar SIEMPRE la cotización histórica guardada para reflejar el costo real
+              const historicalRate = updatedVehicle.cost_exchange_rate || currentRate;
+
+              const valorTomaArs = convertValue(updatedVehicle.cost_value, updatedVehicle.cost_currency, historicalRate, 'ARS');
+
+              const expensesArs = (updatedVehicle.expenses || []).reduce((sum, e) => {
+                // Usar la cotización del gasto si existe, sino la del costo principal
+                const expenseRate = e.exchange_rate || historicalRate;
+                return sum + convertValue(e.value, e.currency, expenseRate, 'ARS');
+              }, 0);
+
+              // Para USD, usar la cotización histórica del costo principal
+              const valorTomaUsd = valorTomaArs / historicalRate;
 
               const expensesUsd = (updatedVehicle.expenses || []).reduce((sum, e) => {
-                if (e.currency === 'USD') return sum + (e.value || 0);
-                const rate = e.exchange_rate || currentRate;
-                return sum + ((e.value || 0) / rate);
+                const expenseArs = convertValue(e.value, e.currency, e.exchange_rate || historicalRate, 'ARS');
+                return sum + (expenseArs / historicalRate);
               }, 0);
 
               const totalCostUsd = valorTomaUsd + expensesUsd;

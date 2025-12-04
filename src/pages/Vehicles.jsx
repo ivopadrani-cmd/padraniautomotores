@@ -437,32 +437,24 @@ export default function Vehicles() {
     let historicalInfo = null;
 
     if (type === 'cost') {
-      // Calcular el valor total en ARS usando cotizaciones apropiadas
-      const costRate = v.cost_currency === 'USD' ? currentBlueRate : (v.cost_exchange_rate || currentBlueRate);
-      const tomaArs = convertValue(v.cost_value, v.cost_currency, costRate, 'ARS');
-      const gastosArs = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate || currentBlueRate, 'ARS'), 0);
+      // Usar la cotización histórica para calcular exactamente cuánto se pagó
+      const historicalRate = v.cost_exchange_rate || currentBlueRate;
+
+      // Calcular valor de toma en ARS usando la cotización histórica
+      const tomaArs = convertValue(v.cost_value, v.cost_currency, historicalRate, 'ARS');
+
+      // Calcular gastos usando su propia cotización histórica o la del costo principal
+      const gastosArs = (v.expenses || []).reduce((sum, e) => {
+        // Si el gasto tiene fecha y cotización, usar esa; sino usar la del costo principal
+        const expenseRate = e.exchange_rate || historicalRate;
+        return sum + convertValue(e.value, e.currency, expenseRate, 'ARS');
+      }, 0);
+
       valueArs = tomaArs + gastosArs;
 
-      // Información histórica para costo
-      if (v.cost_value && v.cost_currency && v.cost_exchange_rate) {
-        const pactadoValue = v.cost_value;
-        const pactadoCurrency = v.cost_currency;
-        const pactadoRate = v.cost_exchange_rate;
-
-        // Calcular valor actual vs pactado
-        const actualArs = convertValue(pactadoValue, pactadoCurrency, currentBlueRate, 'ARS');
-        const historicalArs = convertValue(pactadoValue, pactadoCurrency, pactadoRate, 'ARS');
-
-        historicalInfo = {
-          pactado: `${pactadoCurrency === 'USD' ? 'U$D' : '$'}${pactadoValue.toLocaleString(pactadoCurrency === 'USD' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`,
-          cotizacion: `$${pactadoRate.toLocaleString('es-AR')} ${pactadoCurrency}`,
-          diferencia: actualArs - historicalArs
-        };
-      }
-
-      // Para mostrar USD: SIEMPRE usar la cotización actual para conversión consistente
-      // Esto asegura que el valor en USD refleje el costo real actual en pesos dividido por cotización actual
-      rateForUsd = currentBlueRate;
+      // Para USD, usar la cotización histórica del costo principal
+      // Esto muestra cuánto valía realmente en dólares cuando se compró
+      rateForUsd = historicalRate;
     } else {
       const keyMap = {
         'target': { value: 'target_price_value', currency: 'target_price_currency', rate: 'target_price_exchange_rate' },
@@ -684,11 +676,6 @@ export default function Vehicles() {
                                     <div className="font-semibold text-[11px] text-right">{p.ars}</div>
                                     <div className="flex items-center justify-end gap-1">
                                       {p.usd && <div className="text-[10px] font-semibold text-cyan-600">{p.usd}</div>}
-                                      {hasHistorical && (
-                                        <div className="text-[8px] text-amber-600 font-bold" title={`Pactado: ${p.historical.pactado} (${p.historical.cotizacion})`}>
-                                          {p.historical.diferencia > 0 ? '📈' : p.historical.diferencia < 0 ? '📉' : '➡️'}
-                                        </div>
-                                      )}
                                     </div>
                                   </div>
                                 );
