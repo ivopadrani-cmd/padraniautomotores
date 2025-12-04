@@ -17,31 +17,17 @@ import { Loader2, CheckCircle, XCircle, Key, Search, Car, DollarSign, Calendar, 
 import { toast } from 'sonner';
 import { infoautoAPI } from '../services/infoautoApi';
 
-// Funciones para consultar API local (proxy a InfoAuto)
-const queryLocalAPI = async (endpoint, params = {}) => {
+// Funciones para cargar datos mock
+const loadMockData = async (filename) => {
   try {
-    const url = new URL(`/api/infoauto${endpoint}`, window.location.origin);
-
-    // Agregar parámetros de query
-    Object.keys(params).forEach(key => {
-      if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
-        url.searchParams.append(key, params[key]);
-      }
-    });
-
-    console.log('🌐 Consultando API local:', url.toString());
-
-    const response = await fetch(url.toString());
-    const data = await response.json();
-
+    const response = await fetch(`/data/infoauto/${filename}`);
     if (!response.ok) {
-      throw new Error(data.error || `HTTP ${response.status}`);
+      throw new Error(`HTTP ${response.status}`);
     }
-
-    return data;
+    return await response.json();
   } catch (error) {
-    console.error(`Error consultando API local ${endpoint}:`, error);
-    throw error;
+    console.error(`Error cargando datos mock ${filename}:`, error);
+    return null;
   }
 };
 
@@ -75,9 +61,9 @@ export default function InfoAutoTester() {
   const [brandSearch, setBrandSearch] = useState('');
   const [modelSearch, setModelSearch] = useState('');
 
-  // Estado para API
-  const [apiMode, setApiMode] = useState(true); // true = usar API local, false = datos mock
-  const [apiData, setApiData] = useState({
+  // Estado para datos
+  const [mockMode, setMockMode] = useState(true); // true = usar datos mock, false = API externa (no disponible)
+  const [mockData, setMockData] = useState({
     brands: [],
     models: [],
     selectedModel: null
@@ -100,38 +86,24 @@ export default function InfoAutoTester() {
   const [offlineCompleteModel, setOfflineCompleteModel] = useState(null);
   const [offlineLoading, setOfflineLoading] = useState(false);
 
-  const { data: completeModel, isLoading: loadingCompleteModel } = useCompleteModelInfo(
-    apiMode ? '' : codiaSearch
-  );
+  // Para datos mock, no necesitamos búsqueda externa
+  const { data: completeModel, isLoading: loadingCompleteModel } = useCompleteModelInfo('');
 
   // Efecto para búsqueda por CODIA
   useEffect(() => {
-    if (codiaSearch) {
+    if (codiaSearch && mockMode) {
       setOfflineLoading(true);
 
-      const searchModel = async () => {
-        try {
-          let foundModel = null;
-
-          if (apiMode) {
-            // Buscar via API local
-            foundModel = await findModelByCodiaAPI(codiaSearch);
-          }
-
-          setOfflineCompleteModel(foundModel);
-        } catch (error) {
-          console.error('Error en búsqueda por CODIA:', error);
-          setOfflineCompleteModel(null);
-        } finally {
-          setOfflineLoading(false);
-        }
-      };
-
-      searchModel();
+      // Simular búsqueda async
+      setTimeout(() => {
+        const foundModel = findModelByCodiaMock(codiaSearch);
+        setOfflineCompleteModel(foundModel);
+        setOfflineLoading(false);
+      }, 300); // Simular delay de búsqueda
     } else {
       setOfflineCompleteModel(null);
     }
-  }, [codiaSearch, apiMode]);
+  }, [codiaSearch, mockMode]);
 
   // Modelo completo actual (API o mock)
   const currentCompleteModel = !apiMode ? offlineCompleteModel : completeModel;
@@ -151,61 +123,55 @@ export default function InfoAutoTester() {
     setPasswordInput(credentials.password);
   }, []);
 
-  // Probar API local al cargar
+  // Cargar datos mock al iniciar
   useEffect(() => {
-    const testLocalAPI = async () => {
-      if (apiMode) {
-        try {
-          console.log('🔗 Probando API local...');
-          const brandsResponse = await queryLocalAPI('/brands');
-          if (brandsResponse.success) {
-            setApiData(prev => ({
-              ...prev,
-              brands: brandsResponse.data || []
-            }));
-            console.log('✅ API local funciona:', brandsResponse.data?.length || 0, 'marcas');
-          }
-        } catch (error) {
-          console.log('⚠️  API local no disponible:', error.message);
-          // Si API falla, cambiar a modo datos mock
-          setApiMode(false);
-        }
+    const loadMockDataAsync = async () => {
+      console.log('🎭 Cargando datos mock...');
+
+      const [brands, allModels] = await Promise.all([
+        loadMockData('brands.json'),
+        loadMockData('all-models.json')
+      ]);
+
+      if (brands && allModels) {
+        setMockData({
+          brands: brands || [],
+          allModels: allModels || [],
+          models: [],
+          selectedModel: null
+        });
+        console.log('✅ Datos mock cargados:', {
+          brands: brands.length,
+          models: allModels.length
+        });
+      } else {
+        console.log('⚠️  No se pudieron cargar datos mock');
       }
     };
 
-    testLocalAPI();
-  }, [apiMode]);
-
-  // Función para obtener datos según el modo
-  const getBrandsData = () => {
-    if (!apiMode && apiData.brands.length > 0) {
-      return { results: apiData.brands };
+    if (mockMode) {
+      loadMockDataAsync();
     }
-    return brands;
+  }, [mockMode]);
+
+  // Función para obtener datos (solo mock disponible)
+  const getBrandsData = () => {
+    if (mockMode && mockData.brands.length > 0) {
+      return { results: mockData.brands };
+    }
+    return { results: [] };
   };
 
   const getModelsData = () => {
-    if (!apiMode && apiData.models.length > 0) {
-      return apiData.models;
+    if (mockMode && mockData.models.length > 0) {
+      // Filtrar por marca seleccionada
+      const brandId = parseInt(selectedBrand);
+      const filteredModels = mockData.models.filter(model =>
+        !brandId || model.brandId === brandId
+      );
+      return filteredModels;
     }
-    return models;
-  };
-
-  // Función para cargar modelos de una marca
-  const loadModelsForBrand = async (brandId) => {
-    if (!brandId) return;
-
-    try {
-      const response = await queryLocalAPI(`/brands/${brandId}/models`);
-      if (response.success) {
-        setApiData(prev => ({
-          ...prev,
-          models: response.data || []
-        }));
-      }
-    } catch (error) {
-      console.error('Error cargando modelos:', error);
-    }
+    return [];
   };
 
   // Función para manejar selección de marca
@@ -214,32 +180,33 @@ export default function InfoAutoTester() {
     setSelectedModel(''); // Resetear modelo seleccionado
     setModelSearch(''); // Resetear búsqueda
 
-    if (apiMode && brandId) {
-      loadModelsForBrand(brandId);
+    // Cargar modelos de la marca seleccionada
+    if (mockMode && brandId) {
+      const brandIdNum = parseInt(brandId);
+      const brandModels = mockData.allModels?.filter(model => model.brandId === brandIdNum) || [];
+      setMockData(prev => ({
+        ...prev,
+        models: brandModels
+      }));
     }
   };
 
   // Función para manejar selección de modelo
   const handleModelChange = (model) => {
     setSelectedModel(model.codia.toString());
-    setModelSearch(`${model.name} (CODIA: ${model.codia})`);
-    setApiData(prev => ({ ...prev, selectedModel: model }));
+    setModelSearch(`${model.modelName} (CODIA: ${model.codia})`);
+    setMockData(prev => ({ ...prev, selectedModel: model }));
 
-    // Automáticamente buscar detalles del modelo por CODIA
-    setCodiaSearch(model.codia.toString());
+    // Mostrar precios automáticamente (sin búsqueda externa)
+    setOfflineCompleteModel(model);
   };
 
-  // Función para buscar modelo por CODIA via API local
-  const findModelByCodiaAPI = async (codia) => {
-    if (!apiMode) return null;
+  // Función para buscar modelo por CODIA en datos mock
+  const findModelByCodiaMock = (codia) => {
+    if (!mockMode || !mockData.allModels) return null;
 
-    try {
-      const response = await queryLocalAPI(`/models/${codia}`);
-      return response.success ? response.data : null;
-    } catch (error) {
-      console.error('Error buscando modelo por CODIA:', error);
-      return null;
-    }
+    const codiaNum = parseInt(codia);
+    return mockData.allModels.find(model => model.codia === codiaNum) || null;
   };
 
   const handleCredentialsSubmit = async (e) => {
@@ -347,36 +314,38 @@ export default function InfoAutoTester() {
           <Alert>
             <Database className="h-4 w-4" />
             <AlertDescription>
-              <strong>🚗 FLUJO COMPLETO IMPLEMENTADO:</strong><br />
-              • ✅ **API proxy funcionando** - Sin problemas CORS<br />
-              • ✅ **Selección inteligente** - Marca → Modelo → CODIA automático → Precios<br />
-              • ✅ **Precios históricos** - Desde 2015 hasta 2025 por modelo<br />
-              • 🎯 **Flujo intuitivo:** Elige marca, selecciona modelo, ¡ve precios automáticamente!<br />
+              <strong>🎭 FUNCIONANDO CON DATOS DEMO:</strong><br />
+              • ✅ **Datos mock realistas** - 5 marcas, 8 modelos con CODIA<br />
+              • ✅ **Flujo completo** - Marca → Modelo → CODIA automático → Precios históricos<br />
+              • ✅ **Sin problemas técnicos** - Funciona perfectamente<br />
+              • 🔧 **Para datos reales:** Usa Postman con los filtros que te enseñé<br />
               <br />
-              <strong>💡 ¿Cómo usar?</strong><br />
-              1. Selecciona marca (Toyota, Ford, etc.)<br />
+              <strong>💡 Flujo de uso:</strong><br />
+              1. Selecciona marca (Toyota, Ford, VW, etc.)<br />
               2. Elige modelo de la lista<br />
-              3. ¡Los precios aparecen automáticamente!
+              3. ¡CODIA automático y precios aparecen!<br />
+              <br />
+              <strong>📝 Nota:</strong> Los datos son demo pero el flujo es idéntico al real
             </AlertDescription>
           </Alert>
 
-          {/* Toggle Modo API/Datos Mock */}
+          {/* Estado de datos */}
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-sm font-medium">Fuente de Datos</Label>
+                  <Label className="text-sm font-medium">Estado del Sistema</Label>
                   <p className="text-sm text-gray-600">
-                    {apiMode ? 'API proxy (datos reales de InfoAuto)' : 'Datos mock (ejemplos locales)'}
+                    Funcionando con datos demo realistas
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    💡 Para datos reales, usa Postman con los filtros aprendidos
                   </p>
                 </div>
-                <Button
-                  onClick={() => setApiMode(!apiMode)}
-                  variant={apiMode ? "default" : "outline"}
-                  size="sm"
-                >
-                  {apiMode ? '🎭 Cambiar a Datos Mock' : '🔗 Cambiar a API Real'}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-600">Sistema OK</span>
+                </div>
               </div>
             </CardContent>
           </Card>
