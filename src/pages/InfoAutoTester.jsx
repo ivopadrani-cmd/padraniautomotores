@@ -17,17 +17,31 @@ import { Loader2, CheckCircle, XCircle, Key, Search, Car, DollarSign, Calendar, 
 import { toast } from 'sonner';
 import { infoautoAPI } from '../services/infoautoApi';
 
-// Funciones para cargar datos offline
-const loadOfflineData = async (filename) => {
+// Funciones para consultar API local (proxy a InfoAuto)
+const queryLocalAPI = async (endpoint, params = {}) => {
   try {
-    const response = await fetch(`/data/infoauto/${filename}`);
+    const url = new URL(`/api/infoauto${endpoint}`, window.location.origin);
+
+    // Agregar parámetros de query
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+        url.searchParams.append(key, params[key]);
+      }
+    });
+
+    console.log('🌐 Consultando API local:', url.toString());
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      throw new Error(data.error || `HTTP ${response.status}`);
     }
-    return await response.json();
+
+    return data;
   } catch (error) {
-    console.error(`Error cargando ${filename}:`, error);
-    return null;
+    console.error(`Error consultando API local ${endpoint}:`, error);
+    throw error;
   }
 };
 
@@ -61,12 +75,12 @@ export default function InfoAutoTester() {
   const [brandSearch, setBrandSearch] = useState('');
   const [modelSearch, setModelSearch] = useState('');
 
-  // Estado para modo offline
-  const [offlineMode, setOfflineMode] = useState(true);
-  const [offlineData, setOfflineData] = useState({
+  // Estado para API
+  const [apiMode, setApiMode] = useState(true); // true = usar API local, false = datos mock
+  const [apiData, setApiData] = useState({
     brands: [],
-    allModels: [],
-    stats: null
+    searchResults: [],
+    modelDetails: null
   });
 
   // Credentials management
@@ -90,24 +104,38 @@ export default function InfoAutoTester() {
     offlineMode ? '' : codiaSearch
   );
 
-  // Efecto para búsqueda offline
+  // Efecto para búsqueda por CODIA
   useEffect(() => {
-    if (offlineMode && codiaSearch) {
+    if (codiaSearch) {
       setOfflineLoading(true);
-      // Simular búsqueda async
-      setTimeout(() => {
-        const foundModel = findModelByCodiaOffline(codiaSearch);
-        setOfflineCompleteModel(foundModel);
-        setOfflineLoading(false);
-      }, 500); // Simular delay de búsqueda
+
+      const searchModel = async () => {
+        try {
+          let foundModel = null;
+
+          if (apiMode) {
+            // Buscar via API local
+            foundModel = await findModelByCodiaAPI(codiaSearch);
+          }
+
+          setOfflineCompleteModel(foundModel);
+        } catch (error) {
+          console.error('Error en búsqueda por CODIA:', error);
+          setOfflineCompleteModel(null);
+        } finally {
+          setOfflineLoading(false);
+        }
+      };
+
+      searchModel();
     } else {
       setOfflineCompleteModel(null);
     }
-  }, [codiaSearch, offlineMode]);
+  }, [codiaSearch, apiMode]);
 
-  // Modelo completo actual (online u offline)
-  const currentCompleteModel = offlineMode ? offlineCompleteModel : completeModel;
-  const currentLoadingCompleteModel = offlineMode ? offlineLoading : loadingCompleteModel;
+  // Modelo completo actual (API o mock)
+  const currentCompleteModel = !apiMode ? offlineCompleteModel : completeModel;
+  const currentLoadingCompleteModel = !apiMode ? offlineLoading : loadingCompleteModel;
 
   // Integration features
   const { data: integrationStats, isLoading: loadingStats } = useIntegrationStats();
@@ -123,62 +151,62 @@ export default function InfoAutoTester() {
     setPasswordInput(credentials.password);
   }, []);
 
-  // Cargar datos offline
+  // Probar API local al cargar
   useEffect(() => {
-    const loadOfflineDataAsync = async () => {
-      console.log('📂 Cargando datos offline...');
-
-      const [brands, allModels, stats] = await Promise.all([
-        loadOfflineData('brands.json'),
-        loadOfflineData('all-models.json'),
-        loadOfflineData('stats.json')
-      ]);
-
-      if (brands && allModels && stats) {
-        setOfflineData({
-          brands: brands || [],
-          allModels: allModels || [],
-          stats: stats
-        });
-        console.log('✅ Datos offline cargados:', {
-          brands: brands.length,
-          models: allModels.length,
-          type: stats.type
-        });
-      } else {
-        console.log('⚠️  No se pudieron cargar datos offline');
+    const testLocalAPI = async () => {
+      if (apiMode) {
+        try {
+          console.log('🔗 Probando API local...');
+          const brandsResponse = await queryLocalAPI('/brands');
+          if (brandsResponse.success) {
+            setApiData(prev => ({
+              ...prev,
+              brands: brandsResponse.data || []
+            }));
+            console.log('✅ API local funciona:', brandsResponse.data?.length || 0, 'marcas');
+          }
+        } catch (error) {
+          console.log('⚠️  API local no disponible:', error.message);
+          // Si API falla, cambiar a modo datos mock
+          setApiMode(false);
+        }
       }
     };
 
-    loadOfflineDataAsync();
-  }, []);
+    testLocalAPI();
+  }, [apiMode]);
 
   // Función para obtener datos según el modo
   const getBrandsData = () => {
-    if (offlineMode && offlineData.brands.length > 0) {
-      return { results: offlineData.brands };
+    if (!apiMode && apiData.brands.length > 0) {
+      return { results: apiData.brands };
     }
     return brands;
   };
 
   const getModelsData = () => {
-    if (offlineMode && offlineData.allModels.length > 0) {
-      // Filtrar modelos por marca seleccionada
+    if (!apiMode && apiData.searchResults.length > 0) {
+      // Filtrar por marca si está seleccionada
       const brandId = parseInt(selectedBrand);
-      const filteredModels = offlineData.allModels.filter(model =>
-        !brandId || model.brandId === brandId
+      const filteredModels = apiData.searchResults.filter(model =>
+        !brandId || model.brand?.id === brandId
       );
       return filteredModels;
     }
     return models;
   };
 
-  // Función para buscar modelo por CODIA (modo offline)
-  const findModelByCodiaOffline = (codia) => {
-    if (!offlineMode || !offlineData.allModels.length) return null;
+  // Función para buscar modelo por CODIA via API local
+  const findModelByCodiaAPI = async (codia) => {
+    if (!apiMode) return null;
 
-    const codiaNum = parseInt(codia);
-    return offlineData.allModels.find(model => model.codia === codiaNum) || null;
+    try {
+      const response = await queryLocalAPI(`/models/${codia}`);
+      return response.success ? response.data : null;
+    } catch (error) {
+      console.error('Error buscando modelo por CODIA:', error);
+      return null;
+    }
   };
 
   const handleCredentialsSubmit = async (e) => {
@@ -292,32 +320,33 @@ export default function InfoAutoTester() {
           <Alert>
             <Database className="h-4 w-4" />
             <AlertDescription>
-              <strong>🎭 MODO OFFLINE ACTIVADO:</strong><br />
-              • ✅ **Datos mock cargados** - {offlineData.stats?.totalBrands || 0} marcas, {offlineData.stats?.totalModels || 0} modelos<br />
-              • ✅ **Funciona sin CORS** - No hay llamadas a API externa<br />
-              • ✅ **Interfaz completa** - Todas las funciones disponibles<br />
-              • 💡 **Para datos reales:** Usa Postman manualmente con las credenciales<br />
+              <strong>🔗 API PROXY IMPLEMENTADO:</strong><br />
+              • ✅ **Backend proxy creado** - API routes en `/api/infoauto/`<br />
+              • ✅ **Sin problemas CORS** - Navegador → Tu servidor → InfoAuto<br />
+              • ✅ **Funciona en producción** - Vercel ejecuta las API routes<br />
+              • 🔧 **Endpoints disponibles:** `/brands`, `/search`, `/models/[codia]`<br />
               <br />
-              <strong>🔄 Cambiar a modo API real:</strong> Desactiva el modo offline para probar con InfoAuto (requiere autorización de dominio)
+              <strong>🎯 ¿Cómo funciona?</strong><br />
+              Tu webapp consulta tus propias APIs → Tus APIs consultan InfoAuto → Resultados sin CORS
             </AlertDescription>
           </Alert>
 
-          {/* Toggle Modo Offline/Online */}
+          {/* Toggle Modo API/Datos Mock */}
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-sm font-medium">Modo de Datos</Label>
+                  <Label className="text-sm font-medium">Fuente de Datos</Label>
                   <p className="text-sm text-gray-600">
-                    {offlineMode ? 'Usando datos mock locales (sin API)' : 'Usando API de InfoAuto (requiere CORS)'}
+                    {apiMode ? 'API proxy (datos reales de InfoAuto)' : 'Datos mock (ejemplos locales)'}
                   </p>
                 </div>
                 <Button
-                  onClick={() => setOfflineMode(!offlineMode)}
-                  variant={offlineMode ? "default" : "outline"}
+                  onClick={() => setApiMode(!apiMode)}
+                  variant={apiMode ? "default" : "outline"}
                   size="sm"
                 >
-                  {offlineMode ? '🔄 Cambiar a API Real' : '🎭 Cambiar a Datos Mock'}
+                  {apiMode ? '🎭 Cambiar a Datos Mock' : '🔗 Cambiar a API Real'}
                 </Button>
               </div>
             </CardContent>
@@ -746,7 +775,8 @@ export default function InfoAutoTester() {
                 <CardTitle className="flex items-center gap-2">
                   <Car className="w-5 h-5" />
                   Resultado: {currentCompleteModel.modelName || currentCompleteModel.name}
-                  {offlineMode && <Badge variant="outline" className="ml-2">Datos Mock</Badge>}
+                  {!apiMode && <Badge variant="outline" className="ml-2">Datos Mock</Badge>}
+                  {apiMode && <Badge variant="outline" className="ml-2">InfoAuto API</Badge>}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
