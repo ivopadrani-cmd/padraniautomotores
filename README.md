@@ -6,9 +6,18 @@ Sistema de gestión integral para concesionarias de automotores. Aplicación pro
 
 **IMPORTANTE:** Toda la aplicación requiere autenticación para acceder.
 
-### Credenciales de Acceso
+### ⚠️ ATENCIÓN: DOS TIPOS DE CREDENCIALES
+
+#### 1. **Credenciales para acceder a TU aplicación:**
 - **Usuario:** `ivopadrani@gmail.com`
 - **Contraseña:** `1victoria`
+- **Propósito:** Proteger el acceso a tu sistema
+
+#### 2. **Credenciales para la API de InfoAuto:**
+- **Usuario:** `ivopadrani@gmail.com`
+- **Contraseña:** `padrani.API2025`
+- **Propósito:** Conectar con la base de datos de InfoAuto
+- **Proporcionadas por:** InfoAuto directamente
 
 ### Funcionalidades de Seguridad
 - ✅ **Acceso protegido:** Login obligatorio para toda la aplicación

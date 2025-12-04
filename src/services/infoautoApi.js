@@ -4,10 +4,29 @@ const BASE_URL = 'https://demo.api.infoauto.com.ar/cars';
 const AUTH_URL = 'https://demo.api.infoauto.com.ar/cars/auth/login';
 const REFRESH_URL = 'https://demo.api.infoauto.com.ar/cars/auth/refresh';
 
+// Credenciales oficiales proporcionadas por InfoAuto
+const INFOAUTO_OFFICIAL_CREDENTIALS = {
+  username: 'ivopadrani@gmail.com',
+  password: 'padrani.API2025'
+};
+
 class InfoAutoAPI {
   constructor() {
-    this.username = localStorage.getItem('infoauto_username') || '';
-    this.password = localStorage.getItem('infoauto_password') || '';
+    // Usar credenciales oficiales por defecto si no hay otras configuradas
+    const storedUsername = localStorage.getItem('infoauto_username');
+    const storedPassword = localStorage.getItem('infoauto_password');
+
+    this.username = storedUsername || INFOAUTO_OFFICIAL_CREDENTIALS.username;
+    this.password = storedPassword || INFOAUTO_OFFICIAL_CREDENTIALS.password;
+
+    // Si no había credenciales guardadas, guardar las oficiales
+    if (!storedUsername) {
+      localStorage.setItem('infoauto_username', INFOAUTO_OFFICIAL_CREDENTIALS.username);
+    }
+    if (!storedPassword) {
+      localStorage.setItem('infoauto_password', INFOAUTO_OFFICIAL_CREDENTIALS.password);
+    }
+
     this.baseURL = BASE_URL;
     this.accessToken = localStorage.getItem('infoauto_access_token') || null;
     this.refreshToken = localStorage.getItem('infoauto_refresh_token') || null;
