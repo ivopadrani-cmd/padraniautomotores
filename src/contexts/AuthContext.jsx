@@ -62,100 +62,123 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (username, password) => {
-    // Verificar si está bloqueado
-    if (isBlocked) {
-      return {
-        success: false,
-        error: `Cuenta bloqueada temporalmente. Intenta en ${blockTimeLeft} segundos.`
-      };
-    }
-
-    // Obtener credenciales válidas
-    const validCredentials = getValidCredentials();
-
-    // Validaciones básicas de seguridad
-    if (!username || !password) {
-      const newAttempts = loginAttempts + 1;
-      setLoginAttempts(newAttempts);
-      localStorage.setItem('auth_attempts', newAttempts.toString());
-
-      // Bloquear después de 5 intentos
-      if (newAttempts >= 5) {
-        const blockDuration = Math.min(300, 30 * Math.pow(2, newAttempts - 5)); // Máximo 5 minutos
-        const blockUntil = Date.now() + (blockDuration * 1000);
-        localStorage.setItem('auth_block_until', blockUntil.toString());
-        setIsBlocked(true);
-        setBlockTimeLeft(blockDuration);
-        return { success: false, error: `Cuenta bloqueada por ${blockDuration} segundos debido a múltiples intentos fallidos.` };
-      }
-
-      return { success: false, error: 'Usuario y contraseña son requeridos' };
-    }
-
-    // Verificar credenciales usando el sistema de hash seguro
-    const isValid = await verifyCredentials(username, password);
-
-    if (isValid) {
-      // Resetear contador de intentos en login exitoso
-      setLoginAttempts(0);
-      localStorage.removeItem('auth_attempts');
-      localStorage.removeItem('auth_block_until');
-      localStorage.removeItem('auth_permanent_block');
-      setIsPermanentBlock(false);
-
-      setIsAuthenticated(true);
-      localStorage.setItem('auth_session', 'true');
-
-      // Delay pequeño para UX
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      return { success: true };
-    } else {
-      // Incrementar contador de intentos fallidos
-      const newAttempts = loginAttempts + 1;
-      setLoginAttempts(newAttempts);
-      localStorage.setItem('auth_attempts', newAttempts.toString());
-
-      // Delay progresivo para prevenir brute force
-      const delay = Math.min(3000, 500 * Math.pow(1.8, Math.max(0, newAttempts - 2)));
-      await new Promise(resolve => setTimeout(resolve, delay));
-
-      // Sistema de bloqueo progresivo más agresivo
-      if (newAttempts >= 7) {
-        // Bloqueo PERMANENTE después de 7 intentos
-        localStorage.setItem('auth_permanent_block', 'true');
-        setIsPermanentBlock(true);
-        setIsBlocked(true);
-        setBlockTimeLeft(-1);
+    try {
+      // Verificar si está bloqueado
+      if (isBlocked) {
+        const errorMsg = isPermanentBlock
+          ? 'CUENTA BLOQUEADA PERMANENTEMENTE. Contacta al administrador para desbloquear.'
+          : `Cuenta bloqueada temporalmente. Intenta en ${blockTimeLeft} segundos.`;
         return {
           success: false,
-          error: 'CUENTA BLOQUEADA PERMANENTEMENTE. Contacta al administrador para desbloquear.'
-        };
-      } else if (newAttempts >= 6) {
-        // Bloqueo de 6 HORAS después del 6to intento
-        const blockDuration = 6 * 60 * 60; // 6 horas en segundos
-        const blockUntil = Date.now() + (blockDuration * 1000);
-        localStorage.setItem('auth_block_until', blockUntil.toString());
-        setIsBlocked(true);
-        setBlockTimeLeft(blockDuration);
-        return {
-          success: false,
-          error: `Demasiados intentos fallidos. Cuenta bloqueada por 6 horas.`
-        };
-      } else if (newAttempts >= 5) {
-        // Bloqueo de 30 MINUTOS después del 5to intento
-        const blockDuration = 30 * 60; // 30 minutos en segundos
-        const blockUntil = Date.now() + (blockDuration * 1000);
-        localStorage.setItem('auth_block_until', blockUntil.toString());
-        setIsBlocked(true);
-        setBlockTimeLeft(blockDuration);
-        return {
-          success: false,
-          error: `Demasiados intentos fallidos. Cuenta bloqueada por 30 minutos.`
+          error: errorMsg
         };
       }
 
-      return { success: false, error: 'Credenciales inválidas' };
+      // Validaciones básicas de seguridad
+      if (!username || !password) {
+        const newAttempts = loginAttempts + 1;
+        setLoginAttempts(newAttempts);
+        localStorage.setItem('auth_attempts', newAttempts.toString());
+
+        // Bloquear después de 5 intentos
+        if (newAttempts >= 7) {
+          // Bloqueo PERMANENTE después de 7 intentos
+          localStorage.setItem('auth_permanent_block', 'true');
+          setIsPermanentBlock(true);
+          setIsBlocked(true);
+          setBlockTimeLeft(-1);
+          return { success: false, error: 'CUENTA BLOQUEADA PERMANENTEMENTE. Contacta al administrador para desbloquear.' };
+        } else if (newAttempts >= 6) {
+          // Bloqueo de 6 HORAS después del 6to intento
+          const blockDuration = 6 * 60 * 60; // 6 horas en segundos
+          const blockUntil = Date.now() + (blockDuration * 1000);
+          localStorage.setItem('auth_block_until', blockUntil.toString());
+          setIsBlocked(true);
+          setBlockTimeLeft(blockDuration);
+          return { success: false, error: `Demasiados intentos fallidos. Cuenta bloqueada por 6 horas.` };
+        } else if (newAttempts >= 5) {
+          // Bloqueo de 30 MINUTOS después del 5to intento
+          const blockDuration = 30 * 60; // 30 minutos en segundos
+          const blockUntil = Date.now() + (blockDuration * 1000);
+          localStorage.setItem('auth_block_until', blockUntil.toString());
+          setIsBlocked(true);
+          setBlockTimeLeft(blockDuration);
+          return { success: false, error: `Demasiados intentos fallidos. Cuenta bloqueada por 30 minutos.` };
+        }
+
+        return { success: false, error: 'Usuario y contraseña son requeridos' };
+      }
+
+      // Verificar credenciales usando el sistema de hash seguro
+      console.log('🔐 Intentando verificar credenciales...');
+      console.log('👤 Usuario:', username);
+      console.log('🔑 Password length:', password.length);
+
+      const isValid = verifyCredentials(username, password);
+      console.log('🔍 Resultado de verificación:', isValid);
+
+      if (isValid) {
+        // Resetear contador de intentos en login exitoso
+        console.log('✅ Credenciales válidas - Login exitoso');
+        setLoginAttempts(0);
+        localStorage.removeItem('auth_attempts');
+        localStorage.removeItem('auth_block_until');
+        localStorage.removeItem('auth_permanent_block');
+        setIsPermanentBlock(false);
+
+        setIsAuthenticated(true);
+        localStorage.setItem('auth_session', 'true');
+
+        // Delay pequeño para UX
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        return { success: true };
+      } else {
+        // Incrementar contador de intentos fallidos
+        console.log('❌ Credenciales inválidas - Incrementando contador');
+        const newAttempts = loginAttempts + 1;
+        setLoginAttempts(newAttempts);
+        localStorage.setItem('auth_attempts', newAttempts.toString());
+
+        // Delay progresivo para prevenir brute force
+        const delay = Math.min(3000, 500 * Math.pow(1.8, Math.max(0, newAttempts - 2)));
+        console.log(`⏳ Aplicando delay de ${delay}ms antes del bloqueo`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        // Sistema de bloqueo progresivo más agresivo
+        if (newAttempts >= 7) {
+          // Bloqueo PERMANENTE después de 7 intentos
+          console.log('🚫 Bloqueo permanente activado');
+          localStorage.setItem('auth_permanent_block', 'true');
+          setIsPermanentBlock(true);
+          setIsBlocked(true);
+          setBlockTimeLeft(-1);
+          return { success: false, error: 'CUENTA BLOQUEADA PERMANENTEMENTE. Contacta al administrador para desbloquear.' };
+        } else if (newAttempts >= 6) {
+          // Bloqueo de 6 HORAS después del 6to intento
+          console.log('🚫 Bloqueo de 6 horas activado');
+          const blockDuration = 6 * 60 * 60; // 6 horas en segundos
+          const blockUntil = Date.now() + (blockDuration * 1000);
+          localStorage.setItem('auth_block_until', blockUntil.toString());
+          setIsBlocked(true);
+          setBlockTimeLeft(blockDuration);
+          return { success: false, error: `Demasiados intentos fallidos. Cuenta bloqueada por 6 horas.` };
+        } else if (newAttempts >= 5) {
+          // Bloqueo de 30 MINUTOS después del 5to intento
+          console.log('🚫 Bloqueo de 30 minutos activado');
+          const blockDuration = 30 * 60; // 30 minutos en segundos
+          const blockUntil = Date.now() + (blockDuration * 1000);
+          localStorage.setItem('auth_block_until', blockUntil.toString());
+          setIsBlocked(true);
+          setBlockTimeLeft(blockDuration);
+          return { success: false, error: `Demasiados intentos fallidos. Cuenta bloqueada por 30 minutos.` };
+        }
+
+        return { success: false, error: 'Credenciales inválidas' };
+      }
+    } catch (error) {
+      console.error('💥 Error en login:', error);
+      return { success: false, error: 'Error inesperado en el sistema de autenticación' };
     }
   };
 
