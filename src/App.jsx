@@ -1,11 +1,14 @@
 import './App.css'
 import Pages from "@/pages/index.jsx"
 import { Toaster } from "@/components/ui/toaster"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 
 function App() {
   return (
     <>
-      <Pages />
+      <ProtectedRoute>
+        <Pages />
+      </ProtectedRoute>
       <Toaster />
     </>
   )
