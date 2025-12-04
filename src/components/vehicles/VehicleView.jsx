@@ -1004,13 +1004,6 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                       <Button variant="outline" size="sm" className="h-7 text-[11px] px-3" onClick={() => { setEditingExpense({}); setEditingExpenseIndex(-1); }}>+ Agregar</Button>
                     </div>
                     {expensesExpanded && <div className="space-y-2">
-                      <div className="flex justify-between items-center p-2 bg-gray-100 rounded">
-                        <span className="text-[12px] text-gray-600">Valor de toma</span>
-                        <div className="text-right">
-                          <span className="font-bold text-[14px] text-gray-900 block">{formatValDual(valorTomaArs).ars}</span>
-                          {valorTomaArs > 0 && <span className="text-[10px] font-semibold text-cyan-500">U$D {valorTomaUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>}
-                        </div>
-                      </div>
                       {(updatedVehicle.expenses || []).map((exp, i) => {
                         const expArs = convertValue(exp.value, exp.currency, exp.exchange_rate, 'ARS');
                         const expUsd = exp.currency === 'USD' ? exp.value : (exp.exchange_rate ? exp.value / exp.exchange_rate : exp.value / currentRate);

@@ -12,6 +12,7 @@ import { Save, Car, User, Search, ChevronDown, ChevronUp } from "lucide-react";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import SalesContractView from "./SalesContractView";
 import { toast } from "sonner";
+import { useDollarHistory } from "@/hooks/useDollarHistory";
 
 export default function SaleFormDialog({ open, onOpenChange, vehicle, reservation, prefillData, existingSale, onSaleCreated }) {
   const queryClient = useQueryClient();
@@ -27,10 +28,13 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
   const [createdSale, setCreatedSale] = useState(null);
   const [showContract, setShowContract] = useState(false);
   const [showNewClientForm, setShowNewClientForm] = useState(false);
+  const [isNewClient, setIsNewClient] = useState(false);
   const [newClientData, setNewClientData] = useState({
     full_name: '', phone: '', dni: '', cuit_cuil: '', email: '', birth_date: '',
     address: '', city: '', province: '', postal_code: '', marital_status: '', observations: ''
   });
+
+  const { getHistoricalRate } = useDollarHistory();
 
   const getInitialFormData = (blueRate) => {
     const rate = blueRate || 1200;
@@ -44,6 +48,8 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       sale_date: new Date().toISOString().split('T')[0],
       client_name: '',
       seller: '',
+      seller_email: '',
+      seller_dni: '',
       sale_price: publicPriceArs,
       sale_price_currency: 'ARS',
       sale_price_exchange_rate: rate,
@@ -266,7 +272,26 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
   };
 
   const handleChange = (field, value) => { setFormData(prev => ({ ...prev, [field]: value })); setHasChanges(true); };
-  const handleNestedChange = (parent, field, value) => { setFormData(prev => ({ ...prev, [parent]: { ...prev[parent], [field]: value } })); setHasChanges(true); };
+  const handleNestedChange = async (parent, field, value) => {
+    const newFormData = { ...formData, [parent]: { ...formData[parent], [field]: value } };
+
+    // Si se cambia la fecha de un pago, buscar cotización histórica automáticamente
+    if (field === 'date' && value) {
+      try {
+        console.log(`🔍 Buscando cotización histórica para fecha ${value} en ${parent}`);
+        const historicalRate = await getHistoricalRate(value);
+        if (historicalRate) {
+          console.log(`📊 Cotización histórica encontrada: ${historicalRate} para ${parent}`);
+          newFormData[parent] = { ...newFormData[parent], exchange_rate: historicalRate.toString() };
+        }
+      } catch (error) {
+        console.error('Error obteniendo cotización histórica:', error);
+      }
+    }
+
+    setFormData(newFormData);
+    setHasChanges(true);
+  };
   const handleClose = () => { if (hasChanges) setShowConfirm(true); else onOpenChange(false); };
 
   const handleTradeInChange = (index, field, value) => {
@@ -389,13 +414,45 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 <User className="w-3.5 h-3.5 text-gray-400" />
                 <span className="text-[10px] font-medium text-gray-500 uppercase">Cliente (datos obligatorios para el boleto)</span>
               </div>
-              {!selectedClientId && !showNewClientForm && (
-                <Button type="button" variant="link" className="h-5 text-[9px] px-1 text-cyan-600" onClick={() => setShowNewClientForm(true)}>
-                  + Cargar nuevo cliente
-                </Button>
-              )}
             </div>
-            {showNewClientForm ? (
+
+            {/* Toggle Nuevo Cliente / Cliente Existente */}
+            <div className="flex rounded overflow-hidden mb-3">
+              <button
+                type="button"
+                className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
+                  isNewClient
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                }`}
+                onClick={() => {
+                  setIsNewClient(true);
+                  setSelectedClientId('');
+                  setFormData(prev => ({ ...prev, client_name: '' }));
+                  setEditingClientData({});
+                  setShowNewClientForm(true);
+                }}
+              >
+                Nuevo Cliente
+              </button>
+              <button
+                type="button"
+                className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
+                  !isNewClient
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                }`}
+                onClick={() => {
+                  setIsNewClient(false);
+                  setShowNewClientForm(false);
+                  setNewClientData({ full_name: '', phone: '', dni: '', cuit_cuil: '', email: '', birth_date: '', address: '', city: '', province: '', postal_code: '', marital_status: '', observations: '' });
+                  // No resetear selectedClient aquí, mantener si ya hay uno seleccionado
+                }}
+              >
+                Cliente Existente
+              </button>
+            </div>
+            {isNewClient ? (
               <div className="space-y-2 p-2 bg-cyan-50 rounded border border-cyan-200">
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-[10px] font-medium text-cyan-700">Nuevo Cliente</span>
@@ -479,6 +536,22 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 )}
                 {!vehicle.chassis_number && (
                   <div><Label className="text-[9px] text-gray-400">N° Chasis *</Label><Input className="h-7 text-[10px]" placeholder="Número de chasis" value={editingVehicleData.chassis_number || ''} onChange={(e) => setEditingVehicleData(prev => ({ ...prev, chassis_number: e.target.value }))} /></div>
+                )}
+                {!vehicle.chassis_brand && (
+                  <div><Label className="text-[9px] text-gray-400">Marca Chasis *</Label><Input className="h-7 text-[10px]" placeholder="Marca del chasis" value={editingVehicleData.chassis_brand || ''} onChange={(e) => setEditingVehicleData(prev => ({ ...prev, chassis_brand: e.target.value }))} /></div>
+                )}
+                {!vehicle.engine_brand && (
+                  <div><Label className="text-[9px] text-gray-400">Marca Motor *</Label><Input className="h-7 text-[10px]" placeholder="Marca del motor" value={editingVehicleData.engine_brand || ''} onChange={(e) => setEditingVehicleData(prev => ({ ...prev, engine_brand: e.target.value }))} /></div>
+                )}
+                {(!vehicle.registration_city || !vehicle.registration_province) && (
+                  <div className="col-span-2 grid grid-cols-2 gap-1.5">
+                    {!vehicle.registration_city && (
+                      <div><Label className="text-[9px] text-gray-400">Ciudad Radicación *</Label><Input className="h-7 text-[10px]" placeholder="Ciudad" value={editingVehicleData.registration_city || ''} onChange={(e) => setEditingVehicleData(prev => ({ ...prev, registration_city: e.target.value }))} /></div>
+                    )}
+                    {!vehicle.registration_province && (
+                      <div><Label className="text-[9px] text-gray-400">Provincia Radicación *</Label><Input className="h-7 text-[10px]" placeholder="Provincia" value={editingVehicleData.registration_province || ''} onChange={(e) => setEditingVehicleData(prev => ({ ...prev, registration_province: e.target.value }))} /></div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -671,10 +744,10 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
                     <Label className="text-[9px] text-gray-400 uppercase">Fecha límite de pago del saldo</Label>
-                    <Input 
-                      type="date" 
-                      className="h-7 text-[11px]" 
-                      value={formData.balance_due_date || ''} 
+                    <Input
+                      type="date"
+                      className="h-7 text-[11px]"
+                      value={formData.balance_due_date || ''}
                       onChange={(e) => handleChange('balance_due_date', e.target.value)}
                     />
                   </div>
@@ -684,6 +757,24 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                       <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                       <SelectContent>{sellers.map(s => <SelectItem key={s.id} value={s.full_name} className="text-[10px]">{s.full_name}</SelectItem>)}</SelectContent>
                     </Select>
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-[9px] text-gray-400 uppercase">Mail Vendedor *</Label>
+                    <Input
+                      className="h-7 text-[10px]"
+                      value={formData.seller_email}
+                      onChange={(e) => handleChange('seller_email', e.target.value)}
+                      placeholder="email@vendedor.com"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-[9px] text-gray-400 uppercase">DNI Vendedor *</Label>
+                    <Input
+                      className="h-7 text-[10px]"
+                      value={formData.seller_dni}
+                      onChange={(e) => handleChange('seller_dni', e.target.value)}
+                      placeholder="12345678"
+                    />
                   </div>
                 </div>
               </div>

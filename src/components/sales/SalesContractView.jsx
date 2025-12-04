@@ -209,22 +209,30 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
             <div style={{ fontSize: '8pt', marginBottom: '6px', paddingLeft: '8px', lineHeight: 1.5 }}>
               {(depositARS > 0 || cashARS > 0 || tradeInARS > 0 || financingARS > 0) ? (
                 <>
-                  {(depositARS > 0 || cashARS > 0) && (
-                    <p>• Al contado{currentSale.deposit?.amount > 0 ? ' como seña' : ''} y en este acto, la suma de {formatCurrency(depositARS + cashARS)} ({amountInWords(depositARS + cashARS)}){tradeInARS > 0 ? ',' : ', sirviendo el presente documento como suficiente recibo.'}</p>
+                  {depositARS > 0 && (
+                    <p>• En concepto de seña, la suma de {formatCurrency(depositARS)} ({amountInWords(depositARS)}) el día {currentSale.deposit?.date ? format(new Date(currentSale.deposit.date), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'de la fecha'}.</p>
+                  )}
+                  {cashARS > 0 && (
+                    <p>• Al contado y en este acto, la suma de {formatCurrency(cashARS)} ({amountInWords(cashARS)}).</p>
                   )}
                   {tradeInARS > 0 && (
-                    <p>• {depositARS > 0 || cashARS > 0 ? 'más un' : 'Un'} vehículo tomado en parte de pago valuado en {formatCurrency(tradeInARS)} ({amountInWords(tradeInARS)}), sirviendo el presente documento como suficiente recibo.</p>
+                    <p>• Un vehículo tomado en parte de pago valuado en {formatCurrency(tradeInARS)} ({amountInWords(tradeInARS)}).</p>
                   )}
                   {financingARS > 0 && (
                     <p>• Financiación según detalle a continuación.</p>
                   )}
                   {balanceARS > 0 && currentSale.balance_due_date && (
-                    <p>• El saldo restante de {formatCurrency(balanceARS)} ({amountInWords(balanceARS)}) será abonado en su totalidad antes del día {format(new Date(currentSale.balance_due_date), "d 'de' MMMM 'de' yyyy", { locale: es })}.</p>
+                    <p>• El saldo restante de {formatCurrency(balanceARS)} ({amountInWords(balanceARS)}) deberá ser abonado en su totalidad antes del día {format(new Date(currentSale.balance_due_date), "d 'de' MMMM 'de' yyyy", { locale: es })}. En caso de incumplimiento, el COMPRADOR se obliga a pagar intereses punitorios del 3% mensual sobre el monto adeudado, más costas judiciales en caso de interposición de demanda.</p>
                   )}
                 </>
               ) : (
-                <p>Al contado y en este acto, sirviendo el presente documento como suficiente recibo.</p>
+                <p>Al contado y en este acto.</p>
               )}
+
+              {/* Recibo suficiente */}
+              <p style={{ marginTop: '8px', fontSize: '7.5pt', fontStyle: 'italic', color: '#666' }}>
+                Sirviendo el presente documento como recibo suficiente de los montos abonados hasta la fecha.
+              </p>
             </div>
 
             {/* Trade-ins detail - more compact */}
@@ -255,6 +263,9 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                   <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>CANTIDAD DE CUOTAS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{currentSale.financing.installments || '-'}</p></div>
                   <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>VALOR DE CUOTA</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{currentSale.financing.installment_value ? `$${currentSale.financing.installment_value.toLocaleString('es-AR')}` : '-'}</p></div>
                 </div>
+                <p style={{ fontSize: '6.5pt', color: '#666', marginTop: '4px', lineHeight: '1.3', textAlign: 'justify' }}>
+                  Las cuotas son aproximadas y no incluyen seguro. El VENDEDOR actúa únicamente como intermediario y gestor del crédito, siendo el acuerdo de financiación un contrato particular entre el COMPRADOR y la entidad financiera acreedora.
+                </p>
               </div>
             )}
 
