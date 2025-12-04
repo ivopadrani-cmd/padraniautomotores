@@ -72,38 +72,40 @@ Este módulo implementa una integración completa con la API de InfoAuto usando 
 3. Hacer click en **"Configurar Credenciales y Autenticar"**
 4. El sistema obtendrá automáticamente tokens JWT y comenzará la integración
 
-### 🔒 CORS en Desarrollo Local
+### 🔒 CORS - Configuración de Dominios Autorizados
 
-**IMPORTANTE:** Durante el desarrollo verás errores de CORS. Esto es **normal y esperado**.
+**IMPORTANTE:** InfoAuto requiere configuración específica de dominios autorizados.
 
-#### ¿Qué es CORS?
-- **CORS** = Cross-Origin Resource Sharing (Intercambio de Recursos de Origen Cruzado)
-- Es una medida de **seguridad del navegador web**
-- Impide que sitios web hagan requests HTTP a otros dominios sin permiso explícito
+#### ❌ Lo que acabamos de descubrir:
+- **NO funciona en localhost** (normal - desarrollo local)
+- **NO funciona automáticamente en Vercel** (requiere configuración)
+- **InfoAuto tiene una whitelist de dominios permitidos**
 
-#### ¿Por qué sucede en desarrollo?
-- Tu aplicación corre en `http://localhost:5173` (puerto de desarrollo de Vite)
-- La API de InfoAuto no permite requests desde `localhost` por seguridad
-- El navegador bloquea automáticamente estos requests
+#### ✅ ¿Cómo solucionarlo?
 
-#### ¿Es esto un problema?
-- ❌ **NO** es un error en tu código
-- ❌ **NO** necesitas cambiar de hosting (Vercel, Netlify, etc.)
-- ❌ **NO** necesitas modificar la configuración de la API
-- ✅ Es **comportamiento normal** en desarrollo local
-- ✅ En **producción funcionará perfectamente**
+**Paso 1: Contactar a InfoAuto**
+- Debes contactar al soporte de InfoAuto
+- Solicitar que autoricen tu dominio de producción
+- Proporcionar la URL: `https://padraniautomotores.vercel.app`
 
-#### ¿Cuándo funcionará correctamente?
-- Cuando despliegues la aplicación a **producción**
-- El dominio de producción será autorizado por InfoAuto
-- Los tokens JWT se generarán sin problemas
-- Todas las funcionalidades de integración funcionarán
+**Paso 2: Dominio personalizado (opcional)**
+- Si prefieres usar tu propio dominio (ej: `tuempresa.com`)
+- Configúralo en Vercel
+- Pídele a InfoAuto que autorice ese dominio también
 
-#### Mensaje que verás en desarrollo:
-```
-🚫 CORS: Requests bloqueados en desarrollo local.
-Los tokens funcionarán correctamente en producción.
-```
+**Paso 3: Confirmar funcionamiento**
+- Una vez autorizado el dominio, funcionará perfectamente
+- Los tokens se generarán correctamente
+- Todas las consultas funcionarán
+
+#### 🔍 Estado actual:
+- ❌ **localhost:5173** → Bloqueado por CORS (normal en desarrollo)
+- ❌ **padraniautomotores.vercel.app** → No autorizado por InfoAuto
+- ✅ **tu-dominio-autorizado** → Funcionará una vez aprobado
+
+#### 💡 Para desarrollo local:
+Mientras tanto, puedes trabajar normalmente - el error CORS es esperado.
+La funcionalidad funcionará cuando InfoAuto autorice tu dominio de producción.
 
 ## 📊 Funcionalidades Disponibles
 

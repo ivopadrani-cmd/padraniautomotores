@@ -273,8 +273,8 @@ export default function InfoAutoTester() {
                       <CardDescription>
                         Estado de autenticación y tokens generados por InfoAuto
                         <br />
-                        <span className="text-xs text-amber-600 font-medium">
-                          🔒 Nota: En desarrollo verás errores CORS (normal) - funcionará en producción
+                        <span className="text-xs text-red-600 font-medium">
+                          🚫 Requiere: Autorización de dominio por InfoAuto
                         </span>
                       </CardDescription>
               </CardHeader>
@@ -365,19 +365,33 @@ export default function InfoAutoTester() {
                     </div>
                   </div>
 
-                  {/* Alerta CORS en desarrollo */}
+                  {/* Alerta CORS - InfoAuto requiere dominios autorizados */}
                   {!getTokenInfo().isTokenValid && hasCredentials() && (
-                    <Alert className="border-amber-200 bg-amber-50">
-                      <AlertDescription className="text-amber-800">
-                        <div className="space-y-2">
-                          <div className="font-semibold text-amber-900">
-                            🔒 CORS: Restricción de Seguridad Normal en Desarrollo
+                    <Alert className="border-orange-200 bg-orange-50">
+                      <AlertDescription className="text-orange-800">
+                        <div className="space-y-3">
+                          <div className="font-semibold text-orange-900">
+                            🚫 InfoAuto: Requiere Autorización de Dominio
                           </div>
-                          <div className="text-sm space-y-1">
-                            <p>• Tu navegador bloquea requests desde <code className="bg-amber-100 px-1 rounded">localhost:5173</code> hacia APIs externas</p>
-                            <p>• Esto es <strong>seguridad normal</strong>, no un error de tu código</p>
-                            <p>• En producción funcionará perfectamente</p>
-                            <p>• <strong>No necesitas cambiar de hosting</strong> - es igual en Vercel, Netlify, etc.</p>
+                          <div className="text-sm space-y-2">
+                            <div>
+                              <p className="font-medium">❌ Dominios bloqueados:</p>
+                              <ul className="ml-4 space-y-1">
+                                <li>• <code className="bg-orange-100 px-1 rounded">localhost:5173</code> (desarrollo local)</li>
+                                <li>• <code className="bg-orange-100 px-1 rounded">*.vercel.app</code> (no autorizado)</li>
+                              </ul>
+                            </div>
+                            <div>
+                              <p className="font-medium">✅ Solución necesaria:</p>
+                              <ul className="ml-4 space-y-1">
+                                <li>• Contactar a InfoAuto para autorizar tu dominio</li>
+                                <li>• O configurar un dominio personalizado</li>
+                              </ul>
+                            </div>
+                            <div className="bg-orange-100 p-2 rounded text-xs">
+                              <strong>Nota:</strong> InfoAuto mantiene una whitelist de dominios permitidos por seguridad.
+                              Esto es normal para APIs comerciales.
+                            </div>
                           </div>
                         </div>
                       </AlertDescription>
