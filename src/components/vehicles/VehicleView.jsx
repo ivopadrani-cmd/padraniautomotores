@@ -979,12 +979,12 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
               const historicalRate = updatedVehicle.cost_exchange_rate || currentRate;
 
               // Calcular valor de toma igual que en CostPriceDialog
-              const valorTomaPrincipal = updatedVehicle.cost_value;
+              const valorTomaPrincipal = updatedVehicle.cost_value || 0;
               const valorTomaConversion = updatedVehicle.cost_currency === 'ARS'
                 ? valorTomaPrincipal / historicalRate  // ARS -> USD
                 : valorTomaPrincipal * historicalRate; // USD -> ARS
 
-              const valorTomaArs = convertValue(updatedVehicle.cost_value, updatedVehicle.cost_currency, historicalRate, 'ARS');
+              const valorTomaArs = convertValue(updatedVehicle.cost_value || 0, updatedVehicle.cost_currency, historicalRate, 'ARS');
               const valorTomaUsd = valorTomaConversion;
 
               const expensesArs = (updatedVehicle.expenses || []).reduce((sum, e) => {

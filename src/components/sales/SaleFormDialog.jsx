@@ -862,7 +862,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
             const balance = salePriceArs - depositArs - cashArs - tradeInArs - financingArs;
             const hasDeductions = depositArs > 0 || cashArs > 0 || tradeInArs > 0 || financingArs > 0;
             
-            return salePrice > 0 && hasDeductions ? (
+            return salePriceArs > 0 && hasDeductions ? (
               <div className="space-y-2">
                 {/* Breakdown rows */}
                 <div className="space-y-1 text-[11px]">
@@ -910,11 +910,11 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   </div>
                 </div>
               </div>
-            ) : salePrice > 0 ? (
+            ) : salePriceArs > 0 ? (
               <div className="space-y-2">
                 <div className="p-4 bg-cyan-600 text-white rounded-lg flex justify-between items-center">
                   <span className="text-[10px] opacity-80 uppercase tracking-wider">Total de contado</span>
-                  <span className="text-2xl font-bold">${salePrice.toLocaleString('es-AR')}</span>
+                  <span className="text-2xl font-bold">${salePriceArs.toLocaleString('es-AR')}</span>
                 </div>
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
