@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { Save, Car, User, CreditCard, Search, Plus, Trash2, X } from "lucide-react";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import useDollarHistory from "@/hooks/useDollarHistory";
 
 export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit, editingQuote, multiVehicleMode = false }) {
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -38,6 +39,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
   const { data: rates = [] } = useQuery({ queryKey: ['exchange-rates'], queryFn: () => base44.entities.ExchangeRate.list('-rate_date') });
 
   const currentBlueRate = rates.find(r => r.rate_type === 'Diaria')?.usd_rate || 1200;
+  const { getHistoricalRate } = useDollarHistory();
 
   // Get interest vehicles from lead
   const interestVehicleIds = lead?.interested_vehicles?.map(iv => iv.vehicle_id) || [];
@@ -73,11 +75,18 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
           quoted_price: publicPriceArs,
           quoted_price_currency: 'ARS',
           quoted_price_exchange_rate: currentBlueRate,
+          quoted_price_date: new Date().toISOString().split('T')[0],
           includeFinancing: false,
           financing_amount: '',
           financing_bank: '',
           financing_installments: '',
-          financing_installment_value: ''
+          financing_installment_value: '',
+          financing_currency: 'ARS',
+          financing_exchange_rate: currentBlueRate,
+          financing_date: new Date().toISOString().split('T')[0],
+          trade_in_date: new Date().toISOString().split('T')[0],
+          trade_in_currency: 'ARS',
+          trade_in_exchange_rate: currentBlueRate
         }]);
       } else if (multiVehicleMode && interestVehicles.length > 0) {
         // Pre-load interest vehicles with proper price conversion
@@ -107,7 +116,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
       setFormData({
         client_name: editingQuote?.client_name || lead?.client_name || '',
         client_phone: editingQuote?.client_phone || lead?.client_phone || '',
-        trade_in: editingQuote?.trade_in || lead?.trade_in || { brand: '', model: '', year: '', plate: '', kilometers: '', value_ars: '' },
+      trade_in: editingQuote?.trade_in || lead?.trade_in || { brand: '', model: '', year: '', plate: '', kilometers: '', value_ars: '', currency: 'ARS', exchange_rate: currentBlueRate, date: new Date().toISOString().split('T')[0] },
         notes: editingQuote?.notes || '',
         date: editingQuote?.quote_date || new Date().toISOString().split('T')[0]
       });
@@ -140,9 +149,49 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
   };
 
   const handleChange = (field, value) => { setFormData(prev => ({ ...prev, [field]: value })); setHasChanges(true); };
-  const handleTradeInChange = (field, value) => { setFormData(prev => ({ ...prev, trade_in: { ...prev.trade_in, [field]: value } })); setHasChanges(true); };
+  const handleTradeInChange = async (field, value) => {
+    if (field === 'date' && value) {
+      try {
+        const rate = await getHistoricalRate(value);
+        if (rate) {
+          setFormData(prev => ({ ...prev, trade_in: { ...prev.trade_in, [field]: value, exchange_rate: rate.toString() } }));
+          setHasChanges(true);
+          return;
+        }
+      } catch (err) {
+        console.error('Error obteniendo cotización histórica para permuta en presupuesto:', err);
+      }
+    }
+    setFormData(prev => ({ ...prev, trade_in: { ...prev.trade_in, [field]: value } }));
+    setHasChanges(true);
+  };
 
-  const handleVehicleItemChange = (index, field, value) => {
+  const handleVehicleItemChange = async (index, field, value) => {
+    // Si cambia la fecha, buscar cotización histórica
+    if (field === 'quoted_price_date' && value) {
+      try {
+        const rate = await getHistoricalRate(value);
+        if (rate) {
+          setVehicleItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value, quoted_price_exchange_rate: rate.toString() } : item));
+          setHasChanges(true);
+          return;
+        }
+      } catch (err) {
+        console.error('Error obteniendo cotización histórica en presupuesto:', err);
+      }
+    }
+    if (field === 'financing_date' && value) {
+      try {
+        const rate = await getHistoricalRate(value);
+        if (rate) {
+          setVehicleItems(prev => prev.map((item, i) => i === index ? { ...item, financing_date: value, financing_exchange_rate: rate.toString() } : item));
+          setHasChanges(true);
+          return;
+        }
+      } catch (err) {
+        console.error('Error obteniendo cotización histórica financiación presupuesto:', err);
+      }
+    }
     setVehicleItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
     setHasChanges(true);
   };
@@ -195,13 +244,17 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
       vehicle_description: `${item.vehicle?.brand} ${item.vehicle?.model} ${item.vehicle?.year}`,
       client_id: selectedClientId || null,
       quoted_price_ars: parseFloat(item.quoted_price) || 0,
-      quoted_price_currency: item.quoted_price_currency || 'ARS',
-      quoted_price_exchange_rate: item.quoted_price_exchange_rate || currentBlueRate,
-      trade_in: tradeInData,
-      financing_amount: item.includeFinancing ? (parseFloat(item.financing_amount) || 0) : 0,
-      financing_bank: item.includeFinancing ? item.financing_bank : '',
-      financing_installments: item.includeFinancing ? item.financing_installments : '',
-      financing_installment_value: item.includeFinancing ? item.financing_installment_value : '',
+          quoted_price_currency: item.quoted_price_currency || 'ARS',
+          quoted_price_exchange_rate: item.quoted_price_exchange_rate || currentBlueRate,
+          quoted_price_date: item.quoted_price_date || formData.date,
+          trade_in: tradeInData ? { ...tradeInData, currency: tradeInData.currency || 'ARS', exchange_rate: tradeInData.exchange_rate || currentBlueRate, date: tradeInData.date || formData.date } : null,
+          financing_amount: item.includeFinancing ? (parseFloat(item.financing_amount) || 0) : 0,
+          financing_currency: item.financing_currency || 'ARS',
+          financing_exchange_rate: item.financing_exchange_rate || currentBlueRate,
+          financing_date: item.financing_date || formData.date,
+          financing_bank: item.includeFinancing ? item.financing_bank : '',
+          financing_installments: item.includeFinancing ? item.financing_installments : '',
+          financing_installment_value: item.includeFinancing ? item.financing_installment_value : '',
       is_multi_quote: isMultiQuote,
       multi_quote_group_id: multiQuoteGroupId
     }));
@@ -284,7 +337,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
                       </Button>
                     </div>
                     
-                    <div className="grid grid-cols-5 gap-2 mb-2">
+                  <div className="grid grid-cols-6 gap-2 mb-2">
                       <div className="col-span-2">
                         <Label className={lbl}>Precio cotizado</Label>
                         <Input className={inp} value={item.quoted_price} onChange={(e) => handleVehicleItemChange(index, 'quoted_price', e.target.value)} placeholder="0" />
@@ -302,7 +355,11 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
                       <div>
                         <Label className={lbl}>Cotización</Label>
                         <Input className={inp} value={item.quoted_price_exchange_rate || ''} onChange={(e) => handleVehicleItemChange(index, 'quoted_price_exchange_rate', e.target.value)} placeholder={currentBlueRate.toString()} />
-                      </div>
+                    </div>
+                    <div>
+                      <Label className={lbl}>Fecha</Label>
+                      <Input className={inp} type="date" value={item.quoted_price_date || ''} onChange={(e) => handleVehicleItemChange(index, 'quoted_price_date', e.target.value)} />
+                    </div>
                       <div className="flex items-end">
                         <div className="flex items-center gap-2">
                           <Checkbox 
@@ -317,11 +374,28 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
                     </div>
 
                     {item.includeFinancing && (
-                      <div className="grid grid-cols-4 gap-2 pt-2 border-t">
+                      <div className="grid grid-cols-6 gap-2 pt-2 border-t">
                         <div><Label className={lbl}>Monto</Label><Input className={inp} value={item.financing_amount} onChange={(e) => handleVehicleItemChange(index, 'financing_amount', e.target.value)} /></div>
+                        <div>
+                          <Label className={lbl}>Moneda</Label>
+                          <Select value={item.financing_currency || 'ARS'} onValueChange={(v) => handleVehicleItemChange(index, 'financing_currency', v)}>
+                            <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="ARS" className="text-[11px]">ARS</SelectItem><SelectItem value="USD" className="text-[11px]">USD</SelectItem></SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className={lbl}>Cotización</Label>
+                          <Input className={inp} value={item.financing_exchange_rate || ''} onChange={(e) => handleVehicleItemChange(index, 'financing_exchange_rate', e.target.value)} placeholder={currentBlueRate.toString()} />
+                        </div>
+                        <div>
+                          <Label className={lbl}>Fecha</Label>
+                          <Input className={inp} type="date" value={item.financing_date || ''} onChange={(e) => handleVehicleItemChange(index, 'financing_date', e.target.value)} />
+                        </div>
                         <div><Label className={lbl}>Banco</Label><Input className={inp} value={item.financing_bank} onChange={(e) => handleVehicleItemChange(index, 'financing_bank', e.target.value)} /></div>
-                        <div><Label className={lbl}>Cuotas</Label><Input className={inp} value={item.financing_installments} onChange={(e) => handleVehicleItemChange(index, 'financing_installments', e.target.value)} /></div>
-                        <div><Label className={lbl}>Valor cuota</Label><Input className={inp} value={item.financing_installment_value} onChange={(e) => handleVehicleItemChange(index, 'financing_installment_value', e.target.value)} /></div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div><Label className={lbl}>Cuotas</Label><Input className={inp} value={item.financing_installments} onChange={(e) => handleVehicleItemChange(index, 'financing_installments', e.target.value)} /></div>
+                          <div><Label className={lbl}>Valor cuota</Label><Input className={inp} value={item.financing_installment_value} onChange={(e) => handleVehicleItemChange(index, 'financing_installment_value', e.target.value)} /></div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -359,13 +433,24 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
               <div className="flex items-center gap-2"><Checkbox id="include-tradein" checked={includeTradeIn} onCheckedChange={setIncludeTradeIn} className="h-4 w-4" /><label htmlFor="include-tradein" className="text-[10px]">Incluir</label></div>
             </div>
             {includeTradeIn && (
-              <div className="grid grid-cols-6 gap-2">
+              <div className="grid grid-cols-7 gap-2">
                 <div><Label className={lbl}>Marca</Label><Input className={inp} value={formData.trade_in.brand} onChange={(e) => handleTradeInChange('brand', e.target.value)} /></div>
                 <div><Label className={lbl}>Modelo</Label><Input className={inp} value={formData.trade_in.model} onChange={(e) => handleTradeInChange('model', e.target.value)} /></div>
                 <div><Label className={lbl}>Año</Label><Input className={inp} value={formData.trade_in.year} onChange={(e) => handleTradeInChange('year', e.target.value)} /></div>
                 <div><Label className={lbl}>Dominio</Label><Input className={inp} value={formData.trade_in.plate} onChange={(e) => handleTradeInChange('plate', e.target.value.toUpperCase())} /></div>
                 <div><Label className={lbl}>KM</Label><Input className={inp} value={formData.trade_in.kilometers} onChange={(e) => handleTradeInChange('kilometers', e.target.value)} /></div>
-                <div><Label className={lbl}>Valor $</Label><Input className={inp} value={formData.trade_in.value_ars} onChange={(e) => handleTradeInChange('value_ars', e.target.value)} /></div>
+                <div>
+                  <Label className={lbl}>Moneda</Label>
+                  <Select value={formData.trade_in.currency || 'ARS'} onValueChange={(v) => handleTradeInChange('currency', v)}>
+                    <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="ARS" className="text-[11px]">ARS</SelectItem><SelectItem value="USD" className="text-[11px]">USD</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-3 gap-2 col-span-3">
+                  <div className="col-span-1"><Label className={lbl}>Valor</Label><Input className={inp} value={formData.trade_in.value_ars} onChange={(e) => handleTradeInChange('value_ars', e.target.value)} /></div>
+                  <div className="col-span-1"><Label className={lbl}>Cotización</Label><Input className={inp} value={formData.trade_in.exchange_rate || ''} onChange={(e) => handleTradeInChange('exchange_rate', e.target.value)} placeholder={currentBlueRate.toString()} /></div>
+                  <div className="col-span-1"><Label className={lbl}>Fecha</Label><Input className={inp} type="date" value={formData.trade_in.date || ''} onChange={(e) => handleTradeInChange('date', e.target.value)} /></div>
+                </div>
               </div>
             )}
           </div>

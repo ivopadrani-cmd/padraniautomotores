@@ -76,6 +76,10 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
       queryClient.invalidateQueries({ queryKey: ['sale', currentSale.id] });
       toast.success("Boleto guardado");
       setIsEditing(false);
+    },
+    onSettled: () => {
+      // Garantizar volver a vista previa aunque la mutación termine con error
+      setIsEditing(false);
     }
   });
 

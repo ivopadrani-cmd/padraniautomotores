@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { Save, Car, User, Receipt, CreditCard, Search } from "lucide-react";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import useDollarHistory from "@/hooks/useDollarHistory";
 
 export default function ReservationForm({ open, onOpenChange, vehicle, quote, lead, onSubmit }) {
   const [clientSearch, setClientSearch] = useState('');
@@ -31,14 +32,18 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
     seller_name: '',
     deposit_amount: '',
     deposit_currency: 'ARS',
-    deposit_exchange_rate: '',
+    deposit_exchange_rate: currentBlueRate,
     deposit_date: new Date().toISOString().split('T')[0],
     deposit_description: '',
     agreed_price: '',
     agreed_price_currency: 'ARS',
-    agreed_price_exchange_rate: '',
-    trade_in: { brand: '', model: '', year: '', plate: '', kilometers: '', value: '', value_currency: 'ARS', value_exchange_rate: '' },
+    agreed_price_exchange_rate: currentBlueRate,
+    agreed_price_date: new Date().toISOString().split('T')[0],
+    trade_in: { brand: '', model: '', year: '', plate: '', kilometers: '', value: '', value_currency: 'ARS', value_exchange_rate: currentBlueRate, value_date: new Date().toISOString().split('T')[0] },
     financing_amount: '',
+    financing_currency: 'ARS',
+    financing_exchange_rate: currentBlueRate,
+    financing_date: new Date().toISOString().split('T')[0],
     financing_bank: '',
     financing_installments: '',
     financing_installment_value: '',
@@ -50,6 +55,7 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
   const { data: rates = [] } = useQuery({ queryKey: ['exchange-rates'], queryFn: () => base44.entities.ExchangeRate.list('-rate_date') });
 
   const currentBlueRate = rates.find(r => r.rate_type === 'Diaria')?.usd_rate || 1200;
+  const { getHistoricalRate } = useDollarHistory();
 
   useEffect(() => {
     if (open) {
@@ -83,8 +89,12 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
         agreed_price: quote?.quoted_price_ars || publicPriceArs,
         agreed_price_currency: 'ARS',
         agreed_price_exchange_rate: rate,
-        trade_in: quote?.trade_in ? { ...quote.trade_in, value_exchange_rate: rate } : lead?.trade_in ? { ...lead.trade_in, value: lead.trade_in.value_ars || '', value_currency: 'ARS', value_exchange_rate: rate, photos: lead.trade_in.photos || [] } : { brand: '', model: '', year: '', plate: '', kilometers: '', value: '', value_currency: 'ARS', value_exchange_rate: rate },
+        agreed_price_date: new Date().toISOString().split('T')[0],
+        trade_in: quote?.trade_in ? { ...quote.trade_in, value_exchange_rate: rate, value_currency: quote.trade_in.value_currency || 'ARS', value_date: new Date().toISOString().split('T')[0] } : lead?.trade_in ? { ...lead.trade_in, value: lead.trade_in.value_ars || '', value_currency: 'ARS', value_exchange_rate: rate, value_date: new Date().toISOString().split('T')[0], photos: lead.trade_in.photos || [] } : { brand: '', model: '', year: '', plate: '', kilometers: '', value: '', value_currency: 'ARS', value_exchange_rate: rate, value_date: new Date().toISOString().split('T')[0] },
         financing_amount: quote?.financing_amount || '',
+        financing_currency: quote?.financing_currency || 'ARS',
+        financing_exchange_rate: quote?.financing_exchange_rate || rate,
+        financing_date: new Date().toISOString().split('T')[0],
         financing_bank: quote?.financing_bank || '',
         financing_installments: quote?.financing_installments || '',
         financing_installment_value: quote?.financing_installment_value || '',
@@ -116,8 +126,47 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
     if (seller) setFormData(prev => ({ ...prev, seller_id: sellerId, seller_name: seller.full_name }));
   };
 
-  const handleChange = (field, value) => { setFormData(prev => ({ ...prev, [field]: value })); setHasChanges(true); };
-  const handleTradeInChange = (field, value) => { setFormData(prev => ({ ...prev, trade_in: { ...prev.trade_in, [field]: value } })); setHasChanges(true); };
+  const handleChange = async (field, value) => {
+    // Fechas con cotización histórica
+    if (field === 'agreed_price_date' && value) {
+      const rate = await getHistoricalRate(value).catch(() => null);
+      if (rate) {
+        setFormData(prev => ({ ...prev, agreed_price_date: value, agreed_price_exchange_rate: rate.toString() }));
+        setHasChanges(true);
+        return;
+      }
+    }
+    if (field === 'deposit_date' && value) {
+      const rate = await getHistoricalRate(value).catch(() => null);
+      if (rate) {
+        setFormData(prev => ({ ...prev, deposit_date: value, deposit_exchange_rate: rate.toString() }));
+        setHasChanges(true);
+        return;
+      }
+    }
+    if (field === 'financing_date' && value) {
+      const rate = await getHistoricalRate(value).catch(() => null);
+      if (rate) {
+        setFormData(prev => ({ ...prev, financing_date: value, financing_exchange_rate: rate.toString() }));
+        setHasChanges(true);
+        return;
+      }
+    }
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
+  const handleTradeInChange = async (field, value) => {
+    if (field === 'value_date' && value) {
+      const rate = await getHistoricalRate(value).catch(() => null);
+      if (rate) {
+        setFormData(prev => ({ ...prev, trade_in: { ...prev.trade_in, [field]: value, value_exchange_rate: rate.toString() } }));
+        setHasChanges(true);
+        return;
+      }
+    }
+    setFormData(prev => ({ ...prev, trade_in: { ...prev.trade_in, [field]: value } }));
+    setHasChanges(true);
+  };
 
   const handleClose = () => { if (hasChanges) setShowConfirm(true); else onOpenChange(false); };
 
@@ -158,14 +207,20 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
         client_id: selectedClientId || null,
         deposit_amount: includeDeposit ? (parseFloat(formData.deposit_amount) || 0) : 0,
         deposit_exchange_rate: parseFloat(formData.deposit_exchange_rate) || null,
+        deposit_date: formData.deposit_date,
         agreed_price: parseFloat(formData.agreed_price) || 0,
         agreed_price_exchange_rate: parseFloat(formData.agreed_price_exchange_rate) || null,
+        agreed_price_date: formData.agreed_price_date,
         trade_in: includeTradeIn ? {
           ...formData.trade_in,
           value_exchange_rate: parseFloat(formData.trade_in.value_exchange_rate) || null,
+          value_date: formData.trade_in.value_date,
           is_peritado: formData.trade_in.is_peritado || false
         } : null,
         financing_amount: includeFinancing ? (parseFloat(formData.financing_amount) || 0) : 0,
+        financing_currency: formData.financing_currency,
+        financing_exchange_rate: parseFloat(formData.financing_exchange_rate) || null,
+        financing_date: formData.financing_date,
         financing_bank: includeFinancing ? formData.financing_bank : '',
         financing_installments: includeFinancing ? formData.financing_installments : '',
         financing_installment_value: includeFinancing ? formData.financing_installment_value : '',
@@ -198,13 +253,14 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
           {/* Agreed Price with currency */}
           <div className="p-4 bg-gray-100 rounded-lg">
             <Label className="text-[11px] font-semibold text-gray-700 block mb-2">PRECIO ACORDADO</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <Input className="h-10 text-lg font-bold text-center col-span-1" value={formData.agreed_price} onChange={(e) => handleChange('agreed_price', e.target.value)} placeholder="0" />
               <Select value={formData.agreed_price_currency} onValueChange={(v) => handleChange('agreed_price_currency', v)}>
                 <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="ARS" className="text-[11px]">ARS</SelectItem><SelectItem value="USD" className="text-[11px]">USD</SelectItem></SelectContent>
               </Select>
               <Input className={inp} value={formData.agreed_price_exchange_rate} onChange={(e) => handleChange('agreed_price_exchange_rate', e.target.value)} placeholder="Cotización USD" />
+              <Input className={inp} type="date" value={formData.agreed_price_date} onChange={(e) => handleChange('agreed_price_date', e.target.value)} />
             </div>
           </div>
 
@@ -308,13 +364,22 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
             </div>
             {includeTradeIn && (
               <>
-                <div className="grid grid-cols-6 gap-2">
+                <div className="grid grid-cols-7 gap-2">
                   <div><Label className={lbl}>Marca</Label><Input className={inp} value={formData.trade_in.brand} onChange={(e) => handleTradeInChange('brand', e.target.value)} /></div>
                   <div><Label className={lbl}>Modelo</Label><Input className={inp} value={formData.trade_in.model} onChange={(e) => handleTradeInChange('model', e.target.value)} /></div>
                   <div><Label className={lbl}>Año</Label><Input className={inp} value={formData.trade_in.year} onChange={(e) => handleTradeInChange('year', e.target.value)} /></div>
                   <div><Label className={lbl}>Dominio</Label><Input className={inp} value={formData.trade_in.plate} onChange={(e) => handleTradeInChange('plate', e.target.value.toUpperCase())} /></div>
                   <div><Label className={lbl}>KM</Label><Input className={inp} value={formData.trade_in.kilometers} onChange={(e) => handleTradeInChange('kilometers', e.target.value)} /></div>
-                  <div><Label className={lbl}>Valor $</Label><Input className={inp} value={formData.trade_in.value} onChange={(e) => handleTradeInChange('value', e.target.value)} /></div>
+                  <div>
+                    <Label className={lbl}>Moneda</Label>
+                    <Select value={formData.trade_in.value_currency || 'ARS'} onValueChange={(v) => handleTradeInChange('value_currency', v)}>
+                      <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="ARS" className="text-[11px]">ARS</SelectItem><SelectItem value="USD" className="text-[11px]">USD</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label className={lbl}>Valor</Label><Input className={inp} value={formData.trade_in.value} onChange={(e) => handleTradeInChange('value', e.target.value)} /></div>
+                  <div><Label className={lbl}>Cotización</Label><Input className={inp} value={formData.trade_in.value_exchange_rate} onChange={(e) => handleTradeInChange('value_exchange_rate', e.target.value)} placeholder="USD" /></div>
+                  <div><Label className={lbl}>Fecha</Label><Input className={inp} type="date" value={formData.trade_in.value_date} onChange={(e) => handleTradeInChange('value_date', e.target.value)} /></div>
                 </div>
                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-dashed">
                   <Checkbox 
@@ -338,11 +403,22 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
               <div className="flex items-center gap-2"><Checkbox id="include-financing" checked={includeFinancing} onCheckedChange={setIncludeFinancing} className="h-4 w-4" /><label htmlFor="include-financing" className="text-[10px]">Incluir</label></div>
             </div>
             {includeFinancing && (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-6 gap-2">
                 <div><Label className={lbl}>Monto</Label><Input className={inp} value={formData.financing_amount} onChange={(e) => handleChange('financing_amount', e.target.value)} /></div>
+                <div>
+                  <Label className={lbl}>Moneda</Label>
+                  <Select value={formData.financing_currency || 'ARS'} onValueChange={(v) => handleChange('financing_currency', v)}>
+                    <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="ARS" className="text-[11px]">ARS</SelectItem><SelectItem value="USD" className="text-[11px]">USD</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div><Label className={lbl}>Cotización</Label><Input className={inp} value={formData.financing_exchange_rate} onChange={(e) => handleChange('financing_exchange_rate', e.target.value)} placeholder="USD" /></div>
+                <div><Label className={lbl}>Fecha</Label><Input className={inp} type="date" value={formData.financing_date} onChange={(e) => handleChange('financing_date', e.target.value)} /></div>
                 <div><Label className={lbl}>Banco</Label><Input className={inp} value={formData.financing_bank} onChange={(e) => handleChange('financing_bank', e.target.value)} /></div>
-                <div><Label className={lbl}>Cuotas</Label><Input className={inp} value={formData.financing_installments} onChange={(e) => handleChange('financing_installments', e.target.value)} /></div>
-                <div><Label className={lbl}>Valor cuota</Label><Input className={inp} value={formData.financing_installment_value} onChange={(e) => handleChange('financing_installment_value', e.target.value)} /></div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div><Label className={lbl}>Cuotas</Label><Input className={inp} value={formData.financing_installments} onChange={(e) => handleChange('financing_installments', e.target.value)} /></div>
+                  <div><Label className={lbl}>Valor cuota</Label><Input className={inp} value={formData.financing_installment_value} onChange={(e) => handleChange('financing_installment_value', e.target.value)} /></div>
+                </div>
               </div>
             )}
           </div>

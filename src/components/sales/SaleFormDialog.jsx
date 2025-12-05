@@ -940,9 +940,9 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               </div>
             ) : salePriceArs > 0 ? (
               <div className="space-y-2">
-                <div className="p-4 bg-cyan-600 text-white rounded-lg flex justify-between items-center">
-                  <span className="text-[10px] opacity-80 uppercase tracking-wider">Total de contado</span>
-                  <span className="text-2xl font-bold">${salePriceArs.toLocaleString('es-AR')}</span>
+                <div className="p-4 bg-gray-900 text-white rounded-lg flex justify-between items-center">
+                  <span className="text-[10px] opacity-80 uppercase tracking-wider">Saldo a abonar</span>
+                  <span className="text-2xl font-bold">${balance.toLocaleString('es-AR')}</span>
                 </div>
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
