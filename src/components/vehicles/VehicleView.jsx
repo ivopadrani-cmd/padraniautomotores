@@ -878,8 +878,9 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
 
           // Verificar si la venta tiene boleto creado (tiene todos los datos requeridos)
           const hasContractCreated = () => {
-            const hasClientData = activeSale.client_name && activeSale.client_dni && activeSale.client_cuit_cuil &&
-                                 activeSale.client_address && activeSale.client_city && activeSale.client_province;
+            const saleClient = clients.find(c => c.id === activeSale.client_id);
+            const hasClientData = saleClient && saleClient.dni && saleClient.cuit_cuil &&
+                                   saleClient.address && saleClient.city && saleClient.province;
             const hasVehicleData = updatedVehicle.brand && updatedVehicle.model && updatedVehicle.year && updatedVehicle.plate &&
                                   updatedVehicle.engine_number && updatedVehicle.chassis_number && updatedVehicle.chassis_brand &&
                                   updatedVehicle.engine_brand && updatedVehicle.registration_city && updatedVehicle.registration_province;
@@ -970,12 +971,9 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
 
               // Calcular valor de toma igual que en CostPriceDialog
               const valorTomaPrincipal = updatedVehicle.cost_value || 0;
-              const valorTomaConversion = updatedVehicle.cost_currency === 'ARS'
-                ? valorTomaPrincipal / historicalRate  // ARS -> USD
-                : valorTomaPrincipal * historicalRate; // USD -> ARS
-
-              const valorTomaArs = convertValue(updatedVehicle.cost_value || 0, updatedVehicle.cost_currency, historicalRate, 'ARS');
-              const valorTomaUsd = valorTomaConversion;
+              // Mostrar siempre la conversión correcta: si está en USD, mantener el valor original en USD
+              const valorTomaArs = convertValue(valorTomaPrincipal, updatedVehicle.cost_currency, historicalRate, 'ARS');
+              const valorTomaUsd = convertValue(valorTomaPrincipal, updatedVehicle.cost_currency, historicalRate, 'USD');
 
               const expensesArs = (updatedVehicle.expenses || []).reduce((sum, e) => {
                 // Usar la cotización del gasto si existe, sino la del costo principal
