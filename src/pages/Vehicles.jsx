@@ -316,8 +316,10 @@ export default function Vehicles() {
       const expensesArs = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate || v.cost_exchange_rate, 'ARS'), 0);
       const costoTotal = valorTomaArs + expensesArs;
 
-      // Convertir a USD usando la cotización del costo
-      const costoUsd = costoTotal ? costoTotal / v.cost_exchange_rate : null;
+      // Calcular costo en USD: si el costo original está en USD, usar ese valor; si no, convertir
+      const valorTomaUsd = convertValue(v.cost_value, v.cost_currency, v.cost_exchange_rate, 'USD');
+      const expensesUsd = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate || v.cost_exchange_rate, 'USD'), 0);
+      const costoUsd = valorTomaUsd + expensesUsd;
       const infoautoArs = convertValue(v.infoauto_value, v.infoauto_currency, infoautoRate, 'ARS');
       const targetArs = convertValue(v.target_price_value, v.target_price_currency, targetRate, 'ARS');
       const publicArs = convertValue(v.public_price_value, v.public_price_currency, publicRate, 'ARS');

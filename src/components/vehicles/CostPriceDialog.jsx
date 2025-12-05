@@ -239,13 +239,30 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
               <div className="grid grid-cols-4 gap-3">
                 <div>
                   <Label className="text-[11px] text-gray-600">Moneda</Label>
-                  <Select value={formData.cost_currency} onValueChange={(v) => handleChange('cost_currency', v)}>
-                    <SelectTrigger className="h-9 text-[12px] bg-white"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ARS" className="text-[12px]">ARS</SelectItem>
-                      <SelectItem value="USD" className="text-[12px]">USD</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex bg-gray-200 rounded h-9">
+                    <button
+                      type="button"
+                      onClick={() => handleChange('cost_currency', 'ARS')}
+                      className={`flex-1 text-[12px] font-medium rounded transition-colors ${
+                        formData.cost_currency === 'ARS'
+                          ? 'bg-cyan-600 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      ARS
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleChange('cost_currency', 'USD')}
+                      className={`flex-1 text-[12px] font-medium rounded transition-colors ${
+                        formData.cost_currency === 'USD'
+                          ? 'bg-cyan-600 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      USD
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <Label className="text-[11px] text-gray-600">Fecha</Label>

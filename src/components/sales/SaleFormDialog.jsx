@@ -294,100 +294,51 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
     setClientSearch('');
   };
 
-  const handleChange = (field, value) => { setFormData(prev => ({ ...prev, [field]: value })); setHasChanges(true); };
-  const handleNestedChange = (parent, field, value) => {
+  const handleChange = async (field, value) => {
+    // Si el campo es sale_date, actualizar también el sale_price_exchange_rate
+    if (field === 'sale_date' && value) {
+      try {
+        console.log(`📅 Fecha de venta cambiada: ${value}`);
+        const historicalRate = await getHistoricalRate(value);
+        if (historicalRate) {
+          console.log(`💱 Cotización histórica para precio de venta: ${historicalRate}`);
+          setFormData(prev => ({ ...prev, sale_date: value, sale_price_exchange_rate: historicalRate.toString() }));
+          setHasChanges(true);
+          return;
+        }
+      } catch (error) {
+        console.error(`❌ Error obteniendo cotización histórica para venta:`, error);
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
+  const handleNestedChange = async (parent, field, value) => {
+    // Si el campo es una fecha, actualizar también el exchange_rate
+    if (field === 'date' && value) {
+      try {
+        console.log(`📅 Fecha cambiada en ${parent}: ${value}`);
+        const historicalRate = await getHistoricalRate(value);
+        if (historicalRate) {
+          console.log(`💱 Cotización histórica obtenida: ${historicalRate}`);
+          setFormData(prev => ({
+            ...prev,
+            [parent]: { ...prev[parent], [field]: value, exchange_rate: historicalRate.toString() }
+          }));
+          setHasChanges(true);
+          return;
+        }
+      } catch (error) {
+        console.error(`❌ Error obteniendo cotización histórica:`, error);
+      }
+    }
+    
     setFormData(prev => ({ ...prev, [parent]: { ...prev[parent], [field]: value } }));
     setHasChanges(true);
   };
 
-  // Efecto para actualizar cotización histórica cuando cambia la fecha de pagos
-  useEffect(() => {
-    const updatePaymentRates = async () => {
-      const paymentsToUpdate = [];
-
-      // Verificar seña
-      if (formData.deposit?.date && formData.deposit.date !== new Date().toISOString().split('T')[0] &&
-          (!formData.deposit.exchange_rate || formData.deposit.exchange_rate === currentBlueRate.toString())) {
-        paymentsToUpdate.push({ parent: 'deposit', date: formData.deposit.date });
-      }
-
-      // Verificar pago contado
-      if (formData.cash_payment?.date && formData.cash_payment.date !== new Date().toISOString().split('T')[0] &&
-          (!formData.cash_payment.exchange_rate || formData.cash_payment.exchange_rate === currentBlueRate.toString())) {
-        paymentsToUpdate.push({ parent: 'cash_payment', date: formData.cash_payment.date });
-      }
-
-      // Verificar financiación
-      if (formData.financing?.date && formData.financing.date !== new Date().toISOString().split('T')[0] &&
-          (!formData.financing.exchange_rate || formData.financing.exchange_rate === currentBlueRate.toString())) {
-        paymentsToUpdate.push({ parent: 'financing', date: formData.financing.date });
-      }
-
-      // Verificar permutas
-      formData.trade_ins?.forEach((ti, index) => {
-        if (ti.date && ti.date !== new Date().toISOString().split('T')[0] &&
-            (!ti.exchange_rate || ti.exchange_rate === currentBlueRate.toString())) {
-          paymentsToUpdate.push({ parent: 'trade_ins', index, date: ti.date });
-        }
-      });
-
-      // Verificar precio de venta
-      if (formData.sale_date && formData.sale_date !== new Date().toISOString().split('T')[0] &&
-          (!formData.sale_price_exchange_rate || formData.sale_price_exchange_rate === currentBlueRate.toString())) {
-        paymentsToUpdate.push({ parent: 'sale_price', date: formData.sale_date });
-      }
-
-      // Verificar permutas
-      formData.trade_ins?.forEach((ti, index) => {
-        if (ti.date && ti.date !== new Date().toISOString().split('T')[0] &&
-            (!ti.exchange_rate || ti.exchange_rate === currentBlueRate.toString())) {
-          paymentsToUpdate.push({ parent: `trade_ins[${index}]`, date: ti.date, index });
-        }
-      });
-
-      // Actualizar cotizaciones
-      for (const payment of paymentsToUpdate) {
-        try {
-          console.log(`🔍 Buscando cotización histórica para fecha ${payment.date} en ${payment.parent}`);
-          const historicalRate = await getHistoricalRate(payment.date);
-          if (historicalRate) {
-            console.log(`📊 Cotización histórica encontrada: ${historicalRate} para ${payment.parent}`);
-
-            if (payment.parent === 'sale_price') {
-              // Actualizar cotización del precio de venta
-              setFormData(prev => ({
-                ...prev,
-                sale_price_exchange_rate: historicalRate.toString()
-              }));
-            } else if (payment.parent.startsWith('trade_ins[')) {
-              // Actualizar cotización de permuta específica
-              setFormData(prev => {
-                const newTradeIns = [...prev.trade_ins];
-                newTradeIns[payment.index] = {
-                  ...newTradeIns[payment.index],
-                  exchange_rate: historicalRate.toString()
-                };
-                return { ...prev, trade_ins: newTradeIns };
-              });
-            } else {
-              // Actualizar otros pagos (deposit, cash_payment, financing)
-              setFormData(prev => ({
-                ...prev,
-                [payment.parent]: {
-                  ...prev[payment.parent],
-                  exchange_rate: historicalRate.toString()
-                }
-              }));
-            }
-          }
-        } catch (error) {
-          console.error(`Error obteniendo cotización histórica para ${payment.parent}:`, error);
-        }
-      }
-    };
-
-    updatePaymentRates();
-  }, [formData.deposit?.date, formData.cash_payment?.date, formData.financing?.date, formData.sale_date, formData.trade_ins, getHistoricalRate, currentBlueRate]);
+  // La actualización de cotizaciones históricas ahora se maneja directamente en handleChange y handleNestedChange
   const handleClose = () => { if (hasChanges) setShowConfirm(true); else onOpenChange(false); };
 
   const handleTradeInChange = (index, field, value) => {
@@ -498,7 +449,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
             <div className="flex gap-2 items-end">
               <div className="flex-1">
                 <Label className="text-[9px] text-gray-400 uppercase">Precio de venta</Label>
-                <Input className="h-9 text-[15px] font-bold" defaultValue={formData.sale_price} onBlur={(e) => handleChange('sale_price', e.target.value)} placeholder="0" key={`price-${open}`} />
+                <Input className="h-9 text-[15px] font-bold" value={formData.sale_price} onChange={(e) => handleChange('sale_price', e.target.value)} placeholder="0" />
               </div>
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -683,7 +634,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 <div className="flex gap-1.5 items-end">
                   <div className="flex-1">
                     <Label className="text-[9px] text-gray-400 uppercase">Monto</Label>
-                    <Input className="h-7 text-[11px]" defaultValue={formData.deposit.amount} onBlur={(e) => handleNestedChange('deposit', 'amount', e.target.value)} key={`dep-amt-${open}`} />
+                    <Input className="h-7 text-[11px]" value={formData.deposit.amount} onChange={(e) => handleNestedChange('deposit', 'amount', e.target.value)} />
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -713,7 +664,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               <div className="flex gap-1.5 items-end">
                 <div className="flex-1">
                   <Label className="text-[9px] text-gray-400 uppercase">Monto</Label>
-                  <Input className="h-7 text-[11px]" defaultValue={formData.cash_payment.amount} onBlur={(e) => handleNestedChange('cash_payment', 'amount', e.target.value)} key={`cash-amt-${open}`} />
+                  <Input className="h-7 text-[11px]" value={formData.cash_payment.amount} onChange={(e) => handleNestedChange('cash_payment', 'amount', e.target.value)} />
                 </div>
                 <div>
                   <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -769,7 +720,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   <div className="flex gap-1.5 items-end pt-1 border-t border-cyan-200">
                     <div className="flex-1">
                       <Label className="text-[9px] text-gray-400 uppercase">Valor de toma *</Label>
-                      <Input className="h-7 text-[11px]" defaultValue={ti.value} onBlur={(e) => handleTradeInChange(i, 'value', e.target.value)} key={`ti-val-${i}-${open}`} required />
+                      <Input className="h-7 text-[11px]" value={ti.value} onChange={(e) => handleTradeInChange(i, 'value', e.target.value)} required />
                     </div>
                     <div>
                       <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -813,7 +764,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 <div className="flex gap-1.5 items-end">
                   <div className="flex-1">
                     <Label className="text-[9px] text-gray-400 uppercase">Monto</Label>
-                    <Input className="h-7 text-[11px]" defaultValue={formData.financing.amount} onBlur={(e) => handleNestedChange('financing', 'amount', e.target.value)} key={`fin-amt-${open}`} />
+                    <Input className="h-7 text-[11px]" value={formData.financing.amount} onChange={(e) => handleNestedChange('financing', 'amount', e.target.value)} />
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>

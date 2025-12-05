@@ -130,13 +130,30 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
                 </div>
                 <div>
                   <Label className="text-[11px] text-green-700">Moneda</Label>
-                  <Select value={formData.public_price_currency} onValueChange={(v) => handleChange('public_price_currency', v)}>
-                    <SelectTrigger className="h-9 text-[12px] bg-white"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ARS" className="text-[12px]">ARS - Pesos</SelectItem>
-                      <SelectItem value="USD" className="text-[12px]">USD - Dólares</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex bg-gray-200 rounded h-9">
+                    <button
+                      type="button"
+                      onClick={() => handleChange('public_price_currency', 'ARS')}
+                      className={`flex-1 text-[12px] font-medium rounded transition-colors ${
+                        formData.public_price_currency === 'ARS'
+                          ? 'bg-green-600 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      ARS
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleChange('public_price_currency', 'USD')}
+                      className={`flex-1 text-[12px] font-medium rounded transition-colors ${
+                        formData.public_price_currency === 'USD'
+                          ? 'bg-green-600 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      USD
+                    </button>
+                  </div>
                 </div>
               </div>
 
