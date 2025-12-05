@@ -937,6 +937,12 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
               // Usar SIEMPRE la cotización histórica guardada para reflejar el costo real
               const historicalRate = updatedVehicle.cost_exchange_rate || currentRate;
 
+              // Calcular valor de toma igual que en CostPriceDialog
+              const valorTomaPrincipal = updatedVehicle.cost_value;
+              const valorTomaConversion = updatedVehicle.cost_currency === 'ARS'
+                ? valorTomaPrincipal / historicalRate  // ARS -> USD
+                : valorTomaPrincipal * historicalRate; // USD -> ARS
+
               const valorTomaArs = convertValue(updatedVehicle.cost_value, updatedVehicle.cost_currency, historicalRate, 'ARS');
 
               const expensesArs = (updatedVehicle.expenses || []).reduce((sum, e) => {
@@ -945,8 +951,8 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                 return sum + convertValue(e.value, e.currency, expenseRate, 'ARS');
               }, 0);
 
-              // Para USD, usar la cotización histórica del costo principal
-              const valorTomaUsd = valorTomaArs / historicalRate;
+              // Para USD, usar la conversión igual que en CostPriceDialog
+              const valorTomaUsd = valorTomaConversion;
 
               const expensesUsd = (updatedVehicle.expenses || []).reduce((sum, e) => {
                 const expenseArs = convertValue(e.value, e.currency, e.exchange_rate || historicalRate, 'ARS');
@@ -1004,6 +1010,14 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                       <Button variant="outline" size="sm" className="h-7 text-[11px] px-3" onClick={() => { setEditingExpense({}); setEditingExpenseIndex(-1); }}>+ Agregar</Button>
                     </div>
                     {expensesExpanded && <div className="space-y-2">
+                      {/* Valor de toma distinguido */}
+                      <div className="flex justify-between items-center p-2 bg-blue-50 border border-blue-200 rounded">
+                        <span className="text-[12px] font-semibold text-blue-700">VALOR DE TOMA</span>
+                        <div className="text-right">
+                          <span className="font-bold text-[14px] text-blue-900 block">{formatValDual(valorTomaArs).ars}</span>
+                          {valorTomaArs > 0 && <span className="text-[10px] font-semibold text-blue-600">U$D {valorTomaUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>}
+                        </div>
+                      </div>
                       {(updatedVehicle.expenses || []).map((exp, i) => {
                         const expArs = convertValue(exp.value, exp.currency, exp.exchange_rate, 'ARS');
                         const expUsd = exp.currency === 'USD' ? exp.value : (exp.exchange_rate ? exp.value / exp.exchange_rate : exp.value / currentRate);

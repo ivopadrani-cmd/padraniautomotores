@@ -24,7 +24,18 @@ export default function SaleDetail({ sale, onClose }) {
   const [showBoleto, setShowBoleto] = useState(false);
   const [showRecibo, setShowRecibo] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showCompleteDataModal, setShowCompleteDataModal] = useState(false);
   const queryClient = useQueryClient();
+
+  // Verificar si la venta tiene todos los datos para crear boleto
+  const hasCompleteDataForBoleto = () => {
+    const hasClientData = client && client.dni && client.cuit_cuil && client.address && client.city && client.province;
+    const hasVehicleData = vehicle && vehicle.brand && vehicle.model && vehicle.year && vehicle.plate &&
+                          vehicle.engine_number && vehicle.chassis_number && vehicle.chassis_brand &&
+                          vehicle.engine_brand && vehicle.registration_city && vehicle.registration_province;
+    const hasSellerData = currentSale.seller_dni && currentSale.seller_dni.trim() !== '';
+    return hasClientData && hasVehicleData && hasSellerData;
+  };
 
   // Query refetchable para la venta actual
   const { data: currentSale } = useQuery({
@@ -140,7 +151,7 @@ export default function SaleDetail({ sale, onClose }) {
       const uploadPromises = files.map(async (file) => {
         try {
           const { file_url } = await base44.integrations.Core.UploadFile(file);
-          return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
+      return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
         } catch (error) {
           console.error('Error subiendo archivo:', file.name, error);
           return null;
@@ -160,8 +171,8 @@ export default function SaleDetail({ sale, onClose }) {
       toast.error("Error al subir archivos");
       console.error(error);
     } finally {
-      setUploading(false);
-      e.target.value = null;
+    setUploading(false);
+    e.target.value = null;
     }
   };
 
@@ -258,14 +269,15 @@ export default function SaleDetail({ sale, onClose }) {
           {currentSale.observations && <div className="text-[11px] p-2 bg-gray-50 rounded">{currentSale.observations}</div>}
 
           {/* Document Actions */}
-          <div className="flex gap-2 pt-2 border-t">
-            <Button 
-              variant="outline" 
-              className="flex-1 h-8 text-[10px]" 
-              onClick={() => setShowBoleto(true)}
+            <div className="flex gap-2 pt-2 border-t">
+            <Button
+              variant="outline"
+              className="flex-1 h-8 text-[10px]"
+              onClick={() => hasCompleteDataForBoleto() ? setShowBoleto(true) : setShowCompleteDataModal(true)}
               disabled={currentSale.sale_status === 'CANCELADA'}
             >
-              <FileText className="w-3.5 h-3.5 mr-1.5" />Ver Boleto
+              <FileText className="w-3.5 h-3.5 mr-1.5" />
+              {hasCompleteDataForBoleto() ? 'Ver Boleto' : 'Crear Boleto Compraventa'}
             </Button>
             {currentSale.deposit_amount_ars > 0 && (
               <Button 
@@ -373,6 +385,25 @@ export default function SaleDetail({ sale, onClose }) {
             queryClient.invalidateQueries({ queryKey: ['sales'] });
             queryClient.invalidateQueries({ queryKey: ['sale', currentSale.id] });
             setShowEditDialog(false);
+          }}
+        />
+      )}
+
+      {showCompleteDataModal && (
+        <SaleFormDialog
+          open={showCompleteDataModal}
+          onOpenChange={setShowCompleteDataModal}
+          vehicle={vehicle}
+          existingSale={currentSale}
+          onSaleCreated={(sale) => {
+            // Actualizar la venta actual y refrescar queries
+            queryClient.invalidateQueries({ queryKey: ['sales'] });
+            queryClient.invalidateQueries({ queryKey: ['sale', currentSale.id] });
+            setShowCompleteDataModal(false);
+            // Después de completar datos, intentar crear el boleto
+            if (hasCompleteDataForBoleto()) {
+              setShowBoleto(true);
+            }
           }}
         />
       )}

@@ -222,7 +222,7 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                     <p>• Financiación según detalle a continuación.</p>
                   )}
                   {balanceARS > 0 && currentSale.balance_due_date && (
-                    <p>• El saldo restante de {formatCurrency(balanceARS)} ({amountInWords(balanceARS)}) deberá ser abonado en su totalidad antes del día {format(new Date(currentSale.balance_due_date), "d 'de' MMMM 'de' yyyy", { locale: es })}. En caso de incumplimiento, el COMPRADOR se obliga a pagar intereses punitorios del 3% mensual sobre el monto adeudado, más costas judiciales en caso de interposición de demanda.</p>
+                    <p>• El saldo restante de {formatCurrency(balanceARS)} ({amountInWords(balanceARS)}) deberá ser abonado en su totalidad antes del día {format(new Date(currentSale.balance_due_date), "d 'de' MMMM 'de' yyyy", { locale: es })}. En caso de incumplimiento en el pago del saldo adeudado, se aplicarán intereses moratorios equivalentes al 3% mensual sobre el capital impago, sin perjuicio de las acciones legales que correspondan.</p>
                   )}
                 </>
               ) : (

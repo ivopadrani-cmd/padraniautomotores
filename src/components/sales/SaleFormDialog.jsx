@@ -48,7 +48,6 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       sale_date: new Date().toISOString().split('T')[0],
       client_name: '',
       seller: '',
-      seller_email: '',
       seller_dni: '',
       sale_price: publicPriceArs,
       sale_price_currency: 'ARS',
@@ -239,16 +238,18 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       setCreatedSale(saleWithId);
       
       // Validar si hay datos suficientes para el boleto
-      const clientHasData = selectedClient && selectedClient.dni && selectedClient.address && selectedClient.city;
-      const vehicleHasData = vehicle && vehicle.brand && vehicle.model && vehicle.year && vehicle.plate && vehicle.engine && vehicle.chassis;
-      
-      if (!clientHasData || !vehicleHasData) {
+      const clientHasData = selectedClient && selectedClient.dni && selectedClient.cuit_cuil && selectedClient.address && selectedClient.city && selectedClient.province;
+      const vehicleHasData = vehicle && vehicle.brand && vehicle.model && vehicle.year && vehicle.plate && vehicle.engine_number && vehicle.chassis_number && vehicle.chassis_brand && vehicle.engine_brand && vehicle.registration_city && vehicle.registration_province;
+      const sellerHasData = formData.seller_dni && formData.seller_dni.trim() !== '';
+
+      if (!clientHasData || !vehicleHasData || !sellerHasData) {
         // Faltan datos: mostrar advertencia y NO abrir boleto
         const missingData = [];
-        if (!clientHasData) missingData.push('datos del cliente (DNI, dirección, ciudad)');
-        if (!vehicleHasData) missingData.push('datos del vehículo (motor, chasis)');
-        
-        toast.warning(`Venta creada, pero faltan ${missingData.join(' y ')} para generar el boleto de compraventa.`);
+        if (!clientHasData) missingData.push('datos completos del cliente (DNI, CUIT, dirección, ciudad, provincia)');
+        if (!vehicleHasData) missingData.push('datos completos del vehículo (motor, chasis, marcas y radicación)');
+        if (!sellerHasData) missingData.push('DNI del vendedor');
+
+        toast.warning(`Se guardará la venta pero no se creará el boleto de compraventa. Para crear el boleto toca el botón "Crear Boleto Compraventa". Faltan: ${missingData.join('; ')}`);
         // Cerrar el formulario sin mostrar el boleto
         onOpenChange(false);
         // Si hay un callback onSaleCreated, llamarlo con el sale para que abra el SaleDetail
@@ -272,26 +273,56 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
   };
 
   const handleChange = (field, value) => { setFormData(prev => ({ ...prev, [field]: value })); setHasChanges(true); };
-  const handleNestedChange = async (parent, field, value) => {
-    const newFormData = { ...formData, [parent]: { ...formData[parent], [field]: value } };
-
-    // Si se cambia la fecha de un pago, buscar cotización histórica automáticamente
-    if (field === 'date' && value) {
-      try {
-        console.log(`🔍 Buscando cotización histórica para fecha ${value} en ${parent}`);
-        const historicalRate = await getHistoricalRate(value);
-        if (historicalRate) {
-          console.log(`📊 Cotización histórica encontrada: ${historicalRate} para ${parent}`);
-          newFormData[parent] = { ...newFormData[parent], exchange_rate: historicalRate.toString() };
-        }
-      } catch (error) {
-        console.error('Error obteniendo cotización histórica:', error);
-      }
-    }
-
-    setFormData(newFormData);
+  const handleNestedChange = (parent, field, value) => {
+    setFormData(prev => ({ ...prev, [parent]: { ...prev[parent], [field]: value } }));
     setHasChanges(true);
   };
+
+  // Efecto para actualizar cotización histórica cuando cambia la fecha de pagos
+  useEffect(() => {
+    const updatePaymentRates = async () => {
+      const paymentsToUpdate = [];
+
+      // Verificar seña
+      if (formData.deposit?.date && (!formData.deposit.exchange_rate || formData.deposit.exchange_rate === '')) {
+        paymentsToUpdate.push({ parent: 'deposit', date: formData.deposit.date });
+      }
+
+      // Verificar pago contado
+      if (formData.cash_payment?.date && (!formData.cash_payment.exchange_rate || formData.cash_payment.exchange_rate === '')) {
+        paymentsToUpdate.push({ parent: 'cash_payment', date: formData.cash_payment.date });
+      }
+
+      // Verificar financiación
+      if (formData.financing?.date && (!formData.financing.exchange_rate || formData.financing.exchange_rate === '')) {
+        paymentsToUpdate.push({ parent: 'financing', date: formData.financing.date });
+      }
+
+      // Actualizar cotizaciones
+      for (const payment of paymentsToUpdate) {
+        try {
+          console.log(`🔍 Buscando cotización histórica para fecha ${payment.date} en ${payment.parent}`);
+          const historicalRate = await getHistoricalRate(payment.date);
+          if (historicalRate) {
+            console.log(`📊 Cotización histórica encontrada: ${historicalRate} para ${payment.parent}`);
+            setFormData(prev => ({
+              ...prev,
+              [payment.parent]: {
+                ...prev[payment.parent],
+                exchange_rate: historicalRate.toString()
+              }
+            }));
+          }
+        } catch (error) {
+          console.error(`Error obteniendo cotización histórica para ${payment.parent}:`, error);
+        }
+      }
+    };
+
+    if (formData.deposit?.date || formData.cash_payment?.date || formData.financing?.date) {
+      updatePaymentRates();
+    }
+  }, [formData.deposit?.date, formData.cash_payment?.date, formData.financing?.date, getHistoricalRate]);
   const handleClose = () => { if (hasChanges) setShowConfirm(true); else onOpenChange(false); };
 
   const handleTradeInChange = (index, field, value) => {
@@ -757,15 +788,6 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                       <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                       <SelectContent>{sellers.map(s => <SelectItem key={s.id} value={s.full_name} className="text-[10px]">{s.full_name}</SelectItem>)}</SelectContent>
                     </Select>
-                  </div>
-                  <div className="flex-1">
-                    <Label className="text-[9px] text-gray-400 uppercase">Mail Vendedor *</Label>
-                    <Input
-                      className="h-7 text-[10px]"
-                      value={formData.seller_email}
-                      onChange={(e) => handleChange('seller_email', e.target.value)}
-                      placeholder="email@vendedor.com"
-                    />
                   </div>
                   <div className="flex-1">
                     <Label className="text-[9px] text-gray-400 uppercase">DNI Vendedor *</Label>
