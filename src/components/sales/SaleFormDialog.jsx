@@ -357,8 +357,24 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
   // La actualización de cotizaciones históricas ahora se maneja directamente en handleChange y handleNestedChange
   const handleClose = () => { if (hasChanges) setShowConfirm(true); else onOpenChange(false); };
 
-  const handleTradeInChange = (index, field, value) => {
+  const handleTradeInChange = async (index, field, value) => {
     const updated = [...formData.trade_ins];
+
+    // Si cambia la fecha, obtener cotización histórica y asignarla
+    if (field === 'date' && value) {
+      try {
+        const historicalRate = await getHistoricalRate(value);
+        if (historicalRate) {
+          updated[index] = { ...updated[index], [field]: value, exchange_rate: historicalRate.toString() };
+          setFormData(prev => ({ ...prev, trade_ins: updated }));
+          setHasChanges(true);
+          return;
+        }
+      } catch (error) {
+        console.error('Error obteniendo cotización histórica para permuta:', error);
+      }
+    }
+
     updated[index] = { ...updated[index], [field]: value };
     setFormData(prev => ({ ...prev, trade_ins: updated }));
     setHasChanges(true);
@@ -501,16 +517,15 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               </div>
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                <Input className="h-9 w-20 text-[11px]" defaultValue={formData.sale_price_exchange_rate} onBlur={(e) => handleChange('sale_price_exchange_rate', e.target.value)} key={`rate-${open}`} />
+                <Input className="h-9 w-20 text-[11px]" value={formData.sale_price_exchange_rate} onChange={(e) => handleChange('sale_price_exchange_rate', e.target.value)} />
               </div>
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Fecha</Label>
                 <Input
                   className="h-9 w-28 text-[11px]"
                   type="date"
-                  defaultValue={formData.sale_date}
-                  onBlur={(e) => handleChange('sale_date', e.target.value)}
-                  key={`sale-date-${open}`}
+                  value={formData.sale_date}
+                  onChange={(e) => handleChange('sale_date', e.target.value)}
                 />
               </div>
             </div>
@@ -686,11 +701,11 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                    <Input className="h-7 w-16 text-[10px]" defaultValue={formData.deposit.exchange_rate} onBlur={(e) => handleNestedChange('deposit', 'exchange_rate', e.target.value)} key={`dep-rate-${open}`} />
+                  <Input className="h-7 w-16 text-[10px]" value={formData.deposit.exchange_rate} onChange={(e) => handleNestedChange('deposit', 'exchange_rate', e.target.value)} />
                   </div>
                 </div>
                 <div className="flex gap-1.5 items-end">
-                  <div className="flex-1"><Label className="text-[9px] text-gray-400 uppercase">Fecha</Label><Input className="h-7 text-[10px]" type="date" defaultValue={formData.deposit.date} onBlur={(e) => handleNestedChange('deposit', 'date', e.target.value)} key={`dep-date-${open}`} /></div>
+                <div className="flex-1"><Label className="text-[9px] text-gray-400 uppercase">Fecha</Label><Input className="h-7 text-[10px]" type="date" value={formData.deposit.date} onChange={(e) => handleNestedChange('deposit', 'date', e.target.value)} /></div>
                   <div className="w-28"><Label className="text-[9px] text-gray-400 uppercase">Método</Label>
                     <Select value={formData.deposit.payment_method} onValueChange={(v) => handleNestedChange('deposit', 'payment_method', v)}>
                       <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
@@ -716,7 +731,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 </div>
                 <div>
                   <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                  <Input className="h-7 w-16 text-[10px]" defaultValue={formData.cash_payment.exchange_rate} onBlur={(e) => handleNestedChange('cash_payment', 'exchange_rate', e.target.value)} key={`cash-rate-${open}`} />
+                  <Input className="h-7 w-16 text-[10px]" value={formData.cash_payment.exchange_rate} onChange={(e) => handleNestedChange('cash_payment', 'exchange_rate', e.target.value)} />
                 </div>
                 <div className="w-28"><Label className="text-[9px] text-gray-400 uppercase">Método</Label>
                   <Select value={formData.cash_payment.payment_method} onValueChange={(v) => handleNestedChange('cash_payment', 'payment_method', v)}>
@@ -728,9 +743,8 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   <Input
                     className="h-7 text-[10px]"
                     type="date"
-                    defaultValue={formData.cash_payment.date}
-                    onBlur={(e) => handleNestedChange('cash_payment', 'date', e.target.value)}
-                    key={`cash-date-${open}`}
+                    value={formData.cash_payment.date}
+                    onChange={(e) => handleNestedChange('cash_payment', 'date', e.target.value)}
                   />
                 </div>
               </div>
@@ -775,14 +789,13 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                       <Input
                         className="h-7 text-[10px]"
                         type="date"
-                        defaultValue={ti.date}
-                        onBlur={(e) => handleTradeInChange(i, 'date', e.target.value)}
-                        key={`ti-date-${i}-${open}`}
+                        value={ti.date}
+                        onChange={(e) => handleTradeInChange(i, 'date', e.target.value)}
                       />
                     </div>
                     <div>
                       <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                      <Input className="h-7 w-16 text-[10px]" defaultValue={ti.exchange_rate} onBlur={(e) => handleTradeInChange(i, 'exchange_rate', e.target.value)} key={`ti-rate-${i}-${open}`} />
+                      <Input className="h-7 w-16 text-[10px]" value={ti.exchange_rate} onChange={(e) => handleTradeInChange(i, 'exchange_rate', e.target.value)} />
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pt-2 mt-2 border-t border-cyan-200 border-dashed">
@@ -816,7 +829,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                    <Input className="h-7 w-16 text-[10px]" defaultValue={formData.financing.exchange_rate} onBlur={(e) => handleNestedChange('financing', 'exchange_rate', e.target.value)} key={`fin-rate-${open}`} />
+                    <Input className="h-7 w-16 text-[10px]" value={formData.financing.exchange_rate} onChange={(e) => handleNestedChange('financing', 'exchange_rate', e.target.value)} />
                   </div>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -825,9 +838,8 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                     <Input
                       className="h-7 text-[10px]"
                       type="date"
-                      defaultValue={formData.financing.date}
-                      onBlur={(e) => handleNestedChange('financing', 'date', e.target.value)}
-                      key={`fin-date-${open}`}
+                      value={formData.financing.date}
+                      onChange={(e) => handleNestedChange('financing', 'date', e.target.value)}
                     />
                   </div>
                   <div><Label className="text-[9px] text-gray-400 uppercase">Cuotas</Label><Input className="h-7 text-[10px]" defaultValue={formData.financing.installments} onBlur={(e) => handleNestedChange('financing', 'installments', e.target.value)} key={`fin-inst-${open}`} /></div>
