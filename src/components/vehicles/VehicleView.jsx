@@ -81,6 +81,7 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
   const [showSaleDetail, setShowSaleDetail] = useState(null);
   const [editingSale, setEditingSale] = useState(null);
   const [showContractView, setShowContractView] = useState(null);
+  const [showSaleFormDialog, setShowSaleFormDialog] = useState(null);
 
   // Quote dialog state
   const [showStartQuote, setShowStartQuote] = useState(false);
@@ -445,6 +446,35 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
           />
         )}
         {showSaleDetail && <SaleDetail sale={showSaleDetail} onClose={() => setShowSaleDetail(null)} />}
+
+        {showSaleFormDialog && (
+          <SaleFormDialog
+            open={!!showSaleFormDialog}
+            onOpenChange={() => setShowSaleFormDialog(null)}
+            vehicle={updatedVehicle}
+            existingSale={showSaleFormDialog}
+            onSaleCreated={(sale) => {
+              // Actualizar la venta y refrescar queries
+              queryClient.invalidateQueries({ queryKey: ['sales'] });
+              queryClient.invalidateQueries({ queryKey: ['sale', showSaleFormDialog.id] });
+              queryClient.invalidateQueries({ queryKey: ['vehicle-sales'] });
+              setShowSaleFormDialog(null);
+              // Si ahora tiene datos completos, mostrar el boleto
+              const hasCompleteData = () => {
+                const hasClientData = sale.client_name && sale.client_dni && sale.client_cuit_cuil &&
+                                     sale.client_address && sale.client_city && sale.client_province;
+                const hasVehicleData = updatedVehicle.brand && updatedVehicle.model && updatedVehicle.year && updatedVehicle.plate &&
+                                      updatedVehicle.engine_number && updatedVehicle.chassis_number && updatedVehicle.chassis_brand &&
+                                      updatedVehicle.engine_brand && updatedVehicle.registration_city && updatedVehicle.registration_province;
+                const hasSellerData = sale.seller_dni && sale.seller_dni.trim() !== '';
+                return hasClientData && hasVehicleData && hasSellerData;
+              };
+              if (hasCompleteData()) {
+                setShowContractView(sale);
+              }
+            }}
+          />
+        )}
         <ExpenseEditDialog
           open={editingExpense !== null}
           onOpenChange={(open) => { if (!open) { setEditingExpense(null); setEditingExpenseIndex(null); } }}
@@ -854,6 +884,17 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
           const activeSale = sales.find(s => s.sale_status === 'PENDIENTE') || sales.find(s => s.sale_status === 'FINALIZADA');
           if (!activeSale) return null;
           const isEntregado = activeSale.sale_status === 'FINALIZADA' || updatedVehicle.status === 'ENTREGADO';
+
+          // Verificar si la venta tiene datos completos para boleto
+          const hasCompleteDataForBoleto = () => {
+            const hasClientData = activeSale.client_name && activeSale.client_dni && activeSale.client_cuit_cuil &&
+                                 activeSale.client_address && activeSale.client_city && activeSale.client_province;
+            const hasVehicleData = updatedVehicle.brand && updatedVehicle.model && updatedVehicle.year && updatedVehicle.plate &&
+                                  updatedVehicle.engine_number && updatedVehicle.chassis_number && updatedVehicle.chassis_brand &&
+                                  updatedVehicle.engine_brand && updatedVehicle.registration_city && updatedVehicle.registration_province;
+            const hasSellerData = activeSale.seller_dni && activeSale.seller_dni.trim() !== '';
+            return hasClientData && hasVehicleData && hasSellerData;
+          };
           return (
             <Card className={`shadow-sm ${isEntregado ? 'bg-red-700' : 'bg-gray-900'} text-white`}>
               <CardHeader className={`border-b ${isEntregado ? 'border-red-600' : 'border-gray-700'} p-4`}>
@@ -872,8 +913,8 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className={`h-8 text-[11px] bg-transparent ${isEntregado ? 'border-red-400' : 'border-gray-600'} text-white hover:bg-gray-800`} onClick={() => setShowContractView(activeSale)}>
-                      Ver Boleto
+                    <Button size="sm" variant="outline" className={`h-8 text-[11px] bg-transparent ${isEntregado ? 'border-red-400' : 'border-gray-600'} text-white hover:bg-gray-800`} onClick={() => hasCompleteDataForBoleto() ? setShowContractView(activeSale) : setShowSaleFormDialog(activeSale)}>
+                      {hasCompleteDataForBoleto() ? 'Ver Boleto' : 'Crear Boleto'}
                     </Button>
                     <Button size="sm" variant="outline" className={`h-8 text-[11px] bg-transparent ${isEntregado ? 'border-red-400' : 'border-gray-600'} text-white hover:bg-gray-800`} onClick={() => setShowSaleDetail(activeSale)}>
                       Ver venta
@@ -938,12 +979,10 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
               const historicalRate = updatedVehicle.cost_exchange_rate || currentRate;
 
               // Calcular valor de toma igual que en CostPriceDialog
-              const valorTomaPrincipal = updatedVehicle.cost_value;
-              const valorTomaConversion = updatedVehicle.cost_currency === 'ARS'
-                ? valorTomaPrincipal / historicalRate  // ARS -> USD
-                : valorTomaPrincipal * historicalRate; // USD -> ARS
-
               const valorTomaArs = convertValue(updatedVehicle.cost_value, updatedVehicle.cost_currency, historicalRate, 'ARS');
+              const valorTomaUsd = updatedVehicle.cost_currency === 'ARS'
+                ? valorTomaPrincipal / historicalRate  // ARS -> USD
+                : valorTomaPrincipal; // USD (ya está en USD)
 
               const expensesArs = (updatedVehicle.expenses || []).reduce((sum, e) => {
                 // Usar la cotización del gasto si existe, sino la del costo principal
@@ -951,8 +990,6 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                 return sum + convertValue(e.value, e.currency, expenseRate, 'ARS');
               }, 0);
 
-              // Para USD, usar la conversión igual que en CostPriceDialog
-              const valorTomaUsd = valorTomaConversion;
 
               const expensesUsd = (updatedVehicle.expenses || []).reduce((sum, e) => {
                 const expenseArs = convertValue(e.value, e.currency, e.exchange_rate || historicalRate, 'ARS');
@@ -1014,8 +1051,20 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                       <div className="flex justify-between items-center p-2 bg-blue-50 border border-blue-200 rounded">
                         <span className="text-[12px] font-semibold text-blue-700">VALOR DE TOMA</span>
                         <div className="text-right">
-                          <span className="font-bold text-[14px] text-blue-900 block">{formatValDual(valorTomaArs).ars}</span>
-                          {valorTomaArs > 0 && <span className="text-[10px] font-semibold text-blue-600">U$D {valorTomaUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}</span>}
+                          <span className="font-bold text-[14px] text-blue-900 block">
+                            {updatedVehicle.cost_currency === 'ARS'
+                              ? `$${updatedVehicle.cost_value?.toLocaleString('es-AR')}`
+                              : `U$D ${updatedVehicle.cost_value?.toLocaleString('en-US')}`
+                            }
+                          </span>
+                          {updatedVehicle.cost_value > 0 && (
+                            <span className="text-[10px] font-semibold text-blue-600">
+                              {updatedVehicle.cost_currency === 'ARS'
+                                ? `U$D ${valorTomaUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                                : `$${valorTomaArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+                              }
+                            </span>
+                          )}
                         </div>
                       </div>
                       {(updatedVehicle.expenses || []).map((exp, i) => {

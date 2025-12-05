@@ -53,9 +53,9 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       sale_price_currency: 'ARS',
       sale_price_exchange_rate: rate,
       deposit: { amount: '', currency: 'ARS', exchange_rate: rate, date: new Date().toISOString().split('T')[0], payment_method: 'Efectivo', description: '' },
-      cash_payment: { amount: '', currency: 'ARS', exchange_rate: rate, payment_method: 'Efectivo' },
+      cash_payment: { amount: '', currency: 'ARS', exchange_rate: rate, date: new Date().toISOString().split('T')[0], payment_method: 'Efectivo' },
       trade_ins: [],
-      financing: { amount: '', currency: 'ARS', exchange_rate: rate, bank: '', installments: '', installment_value: '' },
+      financing: { amount: '', currency: 'ARS', exchange_rate: rate, date: new Date().toISOString().split('T')[0], bank: '', installments: '', installment_value: '' },
       balance_due_date: '',
       observations: ''
     };
@@ -284,17 +284,20 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       const paymentsToUpdate = [];
 
       // Verificar seña
-      if (formData.deposit?.date && (!formData.deposit.exchange_rate || formData.deposit.exchange_rate === '')) {
+      if (formData.deposit?.date && formData.deposit.date !== new Date().toISOString().split('T')[0] &&
+          (!formData.deposit.exchange_rate || formData.deposit.exchange_rate === currentBlueRate.toString())) {
         paymentsToUpdate.push({ parent: 'deposit', date: formData.deposit.date });
       }
 
       // Verificar pago contado
-      if (formData.cash_payment?.date && (!formData.cash_payment.exchange_rate || formData.cash_payment.exchange_rate === '')) {
+      if (formData.cash_payment?.date && formData.cash_payment.date !== new Date().toISOString().split('T')[0] &&
+          (!formData.cash_payment.exchange_rate || formData.cash_payment.exchange_rate === currentBlueRate.toString())) {
         paymentsToUpdate.push({ parent: 'cash_payment', date: formData.cash_payment.date });
       }
 
       // Verificar financiación
-      if (formData.financing?.date && (!formData.financing.exchange_rate || formData.financing.exchange_rate === '')) {
+      if (formData.financing?.date && formData.financing.date !== new Date().toISOString().split('T')[0] &&
+          (!formData.financing.exchange_rate || formData.financing.exchange_rate === currentBlueRate.toString())) {
         paymentsToUpdate.push({ parent: 'financing', date: formData.financing.date });
       }
 
@@ -319,10 +322,8 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       }
     };
 
-    if (formData.deposit?.date || formData.cash_payment?.date || formData.financing?.date) {
-      updatePaymentRates();
-    }
-  }, [formData.deposit?.date, formData.cash_payment?.date, formData.financing?.date, getHistoricalRate]);
+    updatePaymentRates();
+  }, [formData.deposit?.date, formData.cash_payment?.date, formData.financing?.date, getHistoricalRate, currentBlueRate]);
   const handleClose = () => { if (hasChanges) setShowConfirm(true); else onOpenChange(false); };
 
   const handleTradeInChange = (index, field, value) => {
@@ -646,6 +647,15 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                     <SelectContent><SelectItem value="Efectivo" className="text-[10px]">Efectivo</SelectItem><SelectItem value="Transferencia" className="text-[10px]">Transferencia</SelectItem></SelectContent>
                   </Select>
                 </div>
+                <div className="flex-1"><Label className="text-[9px] text-gray-400 uppercase">Fecha</Label>
+                  <Input
+                    className="h-7 text-[10px]"
+                    type="date"
+                    defaultValue={formData.cash_payment.date}
+                    onBlur={(e) => handleNestedChange('cash_payment', 'date', e.target.value)}
+                    key={`cash-date-${open}`}
+                  />
+                </div>
               </div>
             </PaymentSection>
 
@@ -722,8 +732,17 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                     <Input className="h-7 w-16 text-[10px]" defaultValue={formData.financing.exchange_rate} onBlur={(e) => handleNestedChange('financing', 'exchange_rate', e.target.value)} key={`fin-rate-${open}`} />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-4 gap-1.5">
                   <div><Label className="text-[9px] text-gray-400 uppercase">Banco/Entidad</Label><Input className="h-7 text-[10px]" defaultValue={formData.financing.bank} onBlur={(e) => handleNestedChange('financing', 'bank', e.target.value)} key={`fin-bank-${open}`} /></div>
+                  <div><Label className="text-[9px] text-gray-400 uppercase">Fecha</Label>
+                    <Input
+                      className="h-7 text-[10px]"
+                      type="date"
+                      defaultValue={formData.financing.date}
+                      onBlur={(e) => handleNestedChange('financing', 'date', e.target.value)}
+                      key={`fin-date-${open}`}
+                    />
+                  </div>
                   <div><Label className="text-[9px] text-gray-400 uppercase">Cuotas</Label><Input className="h-7 text-[10px]" defaultValue={formData.financing.installments} onBlur={(e) => handleNestedChange('financing', 'installments', e.target.value)} key={`fin-inst-${open}`} /></div>
                   <div><Label className="text-[9px] text-gray-400 uppercase">Valor cuota</Label><Input className="h-7 text-[10px]" defaultValue={formData.financing.installment_value} onBlur={(e) => handleNestedChange('financing', 'installment_value', e.target.value)} key={`fin-instval-${open}`} /></div>
                 </div>
@@ -823,7 +842,13 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
           <div className="flex justify-end gap-2 pt-2 border-t">
             <Button type="button" variant="outline" onClick={handleClose} className="h-7 text-[10px] px-3">Cancelar</Button>
             <Button type="submit" className="h-7 text-[10px] px-4 bg-gray-900 hover:bg-gray-800" disabled={createSaleMutation.isPending}>
-              <Save className="w-3 h-3 mr-1" />{createSaleMutation.isPending ? 'Guardando...' : existingSale ? 'Guardar' : 'Crear Venta'}
+              <Save className="w-3 h-3 mr-1" />
+              {createSaleMutation.isPending
+                ? 'Guardando...'
+                : existingSale
+                  ? 'Crear Boleto'
+                  : 'Crear Venta'
+              }
             </Button>
           </div>
         </form>
