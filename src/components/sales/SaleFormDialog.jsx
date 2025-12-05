@@ -87,6 +87,22 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
     
     const rate = currentBlueRate || 1200;
     
+    // Si hay una venta existente pero está cancelada, no cargar sus datos (tratar como nueva venta)
+    if (existingSale && existingSale.sale_status === 'CANCELADA') {
+      setFormData(getInitialFormData(rate));
+      setSelectedClientId('');
+      setShowNewClientForm(false);
+      setIncludeDeposit(false);
+      setIncludeCashPayment(false);
+      setIncludeTradeIn(false);
+      setIncludeFinancing(false);
+      setEditingClientData({});
+      setEditingVehicleData({});
+      setNewClientData({ full_name: '', phone: '', dni: '', cuit_cuil: '', email: '', birth_date: '', address: '', city: '', province: '', postal_code: '', marital_status: '', observations: '' });
+      setHasChanges(false);
+      return;
+    }
+    
     if (existingSale) {
       setSelectedClientId(existingSale.client_id || '');
       setIncludeDeposit(!!existingSale.deposit?.amount);
@@ -366,18 +382,43 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
     // Warn if contract data incomplete
     if (isContractDataIncomplete()) {
       const missingFields = [];
+      
+      // Validar datos del cliente
       const clientComplete = selectedClient && selectedClient.dni && selectedClient.cuit_cuil && selectedClient.address && selectedClient.city && selectedClient.province;
       const newClientComplete = showNewClientForm && newClientData.full_name && newClientData.phone && newClientData.dni && newClientData.cuit_cuil && newClientData.address && newClientData.city && newClientData.province;
-      const vehicleComplete = vehicle && vehicle.engine_number && vehicle.chassis_number && vehicle.color && vehicle.kilometers;
-
+      
       if (!clientComplete && !newClientComplete && Object.keys(editingClientData).length === 0) {
-        missingFields.push('datos del cliente (DNI, CUIT, dirección, ciudad, provincia)');
+        const clientMissing = [];
+        const clientToCheck = selectedClient || {};
+        if (!clientToCheck.dni && !newClientData.dni) clientMissing.push('DNI');
+        if (!clientToCheck.cuit_cuil && !newClientData.cuit_cuil) clientMissing.push('CUIT/CUIL');
+        if (!clientToCheck.address && !newClientData.address) clientMissing.push('dirección');
+        if (!clientToCheck.city && !newClientData.city) clientMissing.push('ciudad');
+        if (!clientToCheck.province && !newClientData.province) clientMissing.push('provincia');
+        if (clientMissing.length > 0) {
+          missingFields.push(`Cliente: ${clientMissing.join(', ')}`);
+        }
       }
+      
+      // Validar datos del vehículo (los que realmente se necesitan para el boleto)
+      const vehicleComplete = vehicle && vehicle.engine_number && vehicle.chassis_number && vehicle.chassis_brand && vehicle.engine_brand && vehicle.registration_city && vehicle.registration_province;
+      
       if (!vehicleComplete && Object.keys(editingVehicleData).length === 0) {
-        missingFields.push('datos del vehículo (número de motor, chasis, color, kilometraje)');
+        const vehicleMissing = [];
+        if (!vehicle?.engine_number) vehicleMissing.push('N° Motor');
+        if (!vehicle?.chassis_number) vehicleMissing.push('N° Chasis');
+        if (!vehicle?.chassis_brand) vehicleMissing.push('Marca Chasis');
+        if (!vehicle?.engine_brand) vehicleMissing.push('Marca Motor');
+        if (!vehicle?.registration_city) vehicleMissing.push('Ciudad Radicación');
+        if (!vehicle?.registration_province) vehicleMissing.push('Provincia Radicación');
+        if (vehicleMissing.length > 0) {
+          missingFields.push(`Vehículo: ${vehicleMissing.join(', ')}`);
+        }
       }
 
-      toast.warning(`Se guardarán los cambios pero no se creará el boleto de compraventa. Faltan completar: ${missingFields.join(' y ')}.`);
+      if (missingFields.length > 0) {
+        toast.warning(`Se guardarán los cambios pero no se creará el boleto de compraventa. Faltan completar: ${missingFields.join(' | ')}`);
+      }
       // No pedimos confirmación, solo informamos y continuamos
     }
     

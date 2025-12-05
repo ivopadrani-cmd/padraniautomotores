@@ -18,6 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import ReservationDetail from "../reservations/ReservationDetail";
 import SaleFormDialog from "../sales/SaleFormDialog";
 import SaleDetail from "../sales/SaleDetail";
+import CompleteBoletoDataForm from "../sales/CompleteBoletoDataForm";
 import StartSaleDialog from "../sales/StartSaleDialog";
 import StartReservationDialog from "../sales/StartReservationDialog";
 import SalesContractView from "../sales/SalesContractView";
@@ -448,29 +449,20 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
         {showSaleDetail && <SaleDetail sale={showSaleDetail} onClose={() => setShowSaleDetail(null)} />}
 
         {showSaleFormDialog && (
-          <SaleFormDialog
+          <CompleteBoletoDataForm
             open={!!showSaleFormDialog}
             onOpenChange={() => setShowSaleFormDialog(null)}
+            sale={showSaleFormDialog}
             vehicle={updatedVehicle}
-            existingSale={showSaleFormDialog}
-            onSaleCreated={(sale) => {
-              // Actualizar la venta y refrescar queries
+            client={clients.find(c => c.id === showSaleFormDialog?.client_id)}
+            onBoletoComplete={() => {
               queryClient.invalidateQueries({ queryKey: ['sales'] });
               queryClient.invalidateQueries({ queryKey: ['sale', showSaleFormDialog.id] });
               queryClient.invalidateQueries({ queryKey: ['vehicle-sales'] });
+              queryClient.invalidateQueries({ queryKey: ['vehicle', updatedVehicle.id] });
               setShowSaleFormDialog(null);
-              // Si ahora tiene datos completos, mostrar el boleto
-              const hasContractData = () => {
-                const hasClientData = sale.client_name && sale.client_dni && sale.client_cuit_cuil &&
-                                     sale.client_address && sale.client_city && sale.client_province;
-                const hasVehicleData = updatedVehicle.brand && updatedVehicle.model && updatedVehicle.year && updatedVehicle.plate &&
-                                      updatedVehicle.engine_number && updatedVehicle.chassis_number && updatedVehicle.chassis_brand &&
-                                      updatedVehicle.engine_brand && updatedVehicle.registration_city && updatedVehicle.registration_province;
-                return hasClientData && hasVehicleData;
-              };
-              if (hasContractData()) {
-                setShowContractView(sale);
-              }
+              // Después de completar datos, mostrar el boleto
+              setShowContractView(showSaleFormDialog);
             }}
           />
         )}

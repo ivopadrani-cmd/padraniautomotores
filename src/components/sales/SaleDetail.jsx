@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import SalesContractView from "./SalesContractView";
 import DepositReceiptView from "../reservations/DepositReceiptView";
 import SaleFormDialog from "./SaleFormDialog";
+import CompleteBoletoDataForm from "./CompleteBoletoDataForm";
 
 const STATUS_CONFIG = {
   PENDIENTE: 'bg-gray-200 text-gray-700',
@@ -465,20 +466,20 @@ export default function SaleDetail({ sale, onClose }) {
       )}
 
       {showCompleteDataModal && (
-        <SaleFormDialog
+        <CompleteBoletoDataForm
           open={showCompleteDataModal}
           onOpenChange={setShowCompleteDataModal}
+          sale={currentSale}
           vehicle={vehicle}
-          existingSale={currentSale}
-          onSaleCreated={(sale) => {
-            // Actualizar la venta actual y refrescar queries
+          client={client}
+          onBoletoComplete={() => {
             queryClient.invalidateQueries({ queryKey: ['sales'] });
             queryClient.invalidateQueries({ queryKey: ['sale', currentSale.id] });
+            queryClient.invalidateQueries({ queryKey: ['vehicle', vehicle?.id] });
+            queryClient.invalidateQueries({ queryKey: ['client', client?.id] });
             setShowCompleteDataModal(false);
-            // Después de completar datos, intentar crear el boleto
-            if (hasCompleteDataForBoleto()) {
-              setShowBoleto(true);
-            }
+            // Después de completar datos, mostrar el boleto
+            setShowBoleto(true);
           }}
         />
       )}
