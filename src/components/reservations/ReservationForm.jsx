@@ -337,6 +337,10 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
               <div className="grid grid-cols-2 gap-2">
                 <div><Label className={lbl}>Nombre *</Label><Input className={inp} value={formData.client_name} onChange={(e) => handleChange('client_name', e.target.value)} required /></div>
                 <div><Label className={lbl}>Teléfono</Label><Input className={inp} value={formData.client_phone} onChange={(e) => handleChange('client_phone', e.target.value)} /></div>
+                <div><Label className={lbl}>DNI</Label><Input className={inp} value={formData.client_dni || ''} onChange={(e) => handleChange('client_dni', e.target.value)} /></div>
+                <div><Label className={lbl}>Dirección</Label><Input className={inp} value={formData.client_address || ''} onChange={(e) => handleChange('client_address', e.target.value)} /></div>
+                <div><Label className={lbl}>Ciudad</Label><Input className={inp} value={formData.client_city || ''} onChange={(e) => handleChange('client_city', e.target.value)} /></div>
+                <div><Label className={lbl}>Provincia</Label><Input className={inp} value={formData.client_province || ''} onChange={(e) => handleChange('client_province', e.target.value)} /></div>
               </div>
             )}
           </div>
@@ -373,7 +377,7 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
                 <div><Label className={lbl}>Monto</Label><Input className={inp} value={formData.deposit_amount} onChange={(e) => handleChange('deposit_amount', e.target.value)} /></div>
                 <div><Label className={lbl}>Moneda</Label><Select value={formData.deposit_currency} onValueChange={(v) => handleChange('deposit_currency', v)}><SelectTrigger className={inp}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ARS" className="text-[11px]">ARS</SelectItem><SelectItem value="USD" className="text-[11px]">USD</SelectItem></SelectContent></Select></div>
                 <div><Label className={lbl}>Cotización</Label><Input className={inp} value={formData.deposit_exchange_rate} onChange={(e) => handleChange('deposit_exchange_rate', e.target.value)} placeholder="USD" /></div>
-                <div><Label className={lbl}>Fecha</Label><Input className={inp} type="date" value={formData.deposit_date} onChange={(e) => handleChange('deposit_date', e.target.value)} /></div>
+                <div><Label className={lbl}>Fecha</Label><Input className={inp + " cursor-pointer"} type="date" value={formData.deposit_date} onChange={(e) => handleChange('deposit_date', e.target.value)} /></div>
               </div>
             )}
           </div>
@@ -401,7 +405,7 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
                   </div>
                   <div><Label className={lbl}>Valor</Label><Input className={inp} value={formData.trade_in.value} onChange={(e) => handleTradeInChange('value', e.target.value)} /></div>
                   <div><Label className={lbl}>Cotización</Label><Input className={inp} value={formData.trade_in.value_exchange_rate} onChange={(e) => handleTradeInChange('value_exchange_rate', e.target.value)} placeholder="USD" /></div>
-                  <div><Label className={lbl}>Fecha</Label><Input className={inp} type="date" value={formData.trade_in.value_date} onChange={(e) => handleTradeInChange('value_date', e.target.value)} /></div>
+                  <div><Label className={lbl}>Fecha</Label><Input className={inp + " cursor-pointer"} type="date" value={formData.trade_in.value_date} onChange={(e) => handleTradeInChange('value_date', e.target.value)} /></div>
                 </div>
                 <div className="flex items-center gap-2 mt-2 pt-2 border-t border-dashed">
                   <Checkbox 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Car, User, DollarSign, FileText, CheckCircle, Upload, Download, X, Edit, Ban, Printer, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { toast } from "sonner";
 import SalesContractView from "./SalesContractView";
 import DepositReceiptView from "../reservations/DepositReceiptView";
@@ -233,7 +234,10 @@ export default function SaleDetail({ sale, onClose }) {
     <Dialog open={true} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg flex flex-row items-center justify-between">
-          <DialogTitle className="text-sm font-semibold">Venta</DialogTitle>
+          <div>
+            <DialogTitle className="text-sm font-semibold">Venta</DialogTitle>
+            <p className="sr-only">Detalle de venta y boleto de compraventa</p>
+          </div>
           <Badge className={`${STATUS_CONFIG[currentSale.sale_status]} text-[10px]`}>{currentSale.sale_status}</Badge>
         </DialogHeader>
         
@@ -353,7 +357,7 @@ export default function SaleDetail({ sale, onClose }) {
               disabled={currentSale.sale_status === 'CANCELADA'}
             >
               <FileText className="w-3.5 h-3.5 mr-1.5" />
-              {hasContractCreated() ? 'Ver Boleto' : 'Crear Boleto Compraventa'}
+            {hasContractCreated() ? 'Ver Boleto' : (currentSale?.contract_clauses || currentSale?.observations ? 'Guardar cambios' : 'Crear Boleto Compraventa')}
             </Button>
             {currentSale.deposit_amount_ars > 0 && (
               <Button 
