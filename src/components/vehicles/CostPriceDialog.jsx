@@ -177,7 +177,10 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
       processedData.cost_value = parseFloat(processedData.cost_value) || 0;
     }
     if (processedData.cost_exchange_rate !== '' && processedData.cost_exchange_rate !== undefined) {
-      processedData.cost_exchange_rate = parseFloat(processedData.cost_exchange_rate) || 1200;
+      processedData.cost_exchange_rate = parseFloat(processedData.cost_exchange_rate) || currentBlueRate;
+    } else {
+      // Si no hay cotización definida, usar la cotización actual
+      processedData.cost_exchange_rate = currentBlueRate;
     }
     // Procesar fecha
     if (processedData.cost_date !== '' && processedData.cost_date !== undefined) {
