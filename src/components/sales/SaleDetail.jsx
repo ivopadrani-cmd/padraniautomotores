@@ -27,8 +27,51 @@ export default function SaleDetail({ sale, onClose }) {
   const [showCompleteDataModal, setShowCompleteDataModal] = useState(false);
   const queryClient = useQueryClient();
 
-  // Verificar si la venta tiene todos los datos para crear boleto
-  const hasCompleteDataForBoleto = () => {
+  // Calcular valores en ARS
+  const calculateSaleValues = (currentSale) => {
+    const salePriceArs = currentSale.sale_price_currency === 'USD'
+      ? currentSale.sale_price * (currentSale.sale_price_exchange_rate || 1200)
+      : currentSale.sale_price;
+
+    const depositArs = currentSale.deposit
+      ? (currentSale.deposit.currency === 'USD'
+          ? (currentSale.deposit.amount || 0) * (currentSale.deposit.exchange_rate || 1200)
+          : (currentSale.deposit.amount || 0))
+      : 0;
+
+    const cashPaymentArs = currentSale.cash_payment
+      ? (currentSale.cash_payment.currency === 'USD'
+          ? (currentSale.cash_payment.amount || 0) * (currentSale.cash_payment.exchange_rate || 1200)
+          : (currentSale.cash_payment.amount || 0))
+      : 0;
+
+    const tradeInArs = (currentSale.trade_ins || []).reduce((sum, ti) =>
+      sum + (ti.currency === 'USD'
+        ? (ti.value || 0) * (ti.exchange_rate || 1200)
+        : (ti.value || 0)), 0);
+
+    const financingArs = currentSale.financing
+      ? (currentSale.financing.currency === 'USD'
+          ? (currentSale.financing.amount || 0) * (currentSale.financing.exchange_rate || 1200)
+          : (currentSale.financing.amount || 0))
+      : 0;
+
+    const totalPaid = depositArs + cashPaymentArs + tradeInArs;
+    const balanceDue = salePriceArs - totalPaid - financingArs;
+
+    return {
+      salePriceArs,
+      depositArs,
+      cashPaymentArs,
+      tradeInArs,
+      financingArs,
+      totalPaid,
+      balanceDue
+    };
+  };
+
+  // Verificar si la venta tiene boleto creado (tiene todos los datos requeridos)
+  const hasContractCreated = () => {
     const hasClientData = client && client.dni && client.cuit_cuil && client.address && client.city && client.province;
     const hasVehicleData = vehicle && vehicle.brand && vehicle.model && vehicle.year && vehicle.plate &&
                           vehicle.engine_number && vehicle.chassis_number && vehicle.chassis_brand &&
@@ -44,6 +87,11 @@ export default function SaleDetail({ sale, onClose }) {
     initialData: sale,
     enabled: !!sale.id
   });
+
+  // Calcular valores usando la función
+  const saleValues = currentSale ? calculateSaleValues(currentSale) : {
+    salePriceArs: 0, depositArs: 0, cashPaymentArs: 0, tradeInArs: 0, financingArs: 0, totalPaid: 0, balanceDue: 0
+  };
 
   const { data: client } = useQuery({
     queryKey: ['client', currentSale.client_id],
@@ -202,41 +250,56 @@ export default function SaleDetail({ sale, onClose }) {
             <p className="font-semibold">{currentSale.client_name}</p>
             {client?.phone && <p className="text-[11px] text-gray-500">{client.phone}</p>}
             {currentSale.seller && <p className="text-[10px] text-gray-400 mt-1">Vendedor: {currentSale.seller}</p>}
+            {currentSale.seller_dni && <p className="text-[10px] text-gray-400">DNI: {currentSale.seller_dni}</p>}
           </div>
 
           {/* Sale Price */}
           <div className="p-4 bg-gray-100 rounded-lg">
             <div className="flex items-center gap-2 mb-1"><DollarSign className="w-4 h-4 text-gray-500" /><span className="text-[10px] font-medium text-gray-500">PRECIO DE VENTA</span></div>
-            <p className="text-2xl font-bold">${currentSale.sale_price_ars?.toLocaleString('es-AR')}</p>
+            <p className="text-2xl font-bold">${saleValues.salePriceArs?.toLocaleString('es-AR')}</p>
           </div>
 
           {/* Deposit */}
-          {currentSale.deposit_amount_ars > 0 && (
+          {saleValues.depositArs > 0 && (
             <div className="p-3 border rounded-lg">
               <div className="text-[10px] font-medium text-gray-500 mb-1">SEÑA</div>
               <div className="flex justify-between items-center">
-                <p className="font-bold">${currentSale.deposit_amount_ars?.toLocaleString('es-AR')}</p>
-                <p className="text-[11px] text-gray-500">{currentSale.deposit_date && format(new Date(currentSale.deposit_date), 'dd/MM/yy')}</p>
+                <p className="font-bold">${saleValues.depositArs?.toLocaleString('es-AR')}</p>
+                <p className="text-[11px] text-gray-500">{currentSale.deposit?.date && format(new Date(currentSale.deposit.date), 'dd/MM/yy')}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Cash Payment */}
+          {saleValues.cashPaymentArs > 0 && (
+            <div className="p-3 border rounded-lg">
+              <div className="text-[10px] font-medium text-gray-500 mb-1">PAGO DE CONTADO</div>
+              <div className="flex justify-between items-center">
+                <p className="font-bold">${saleValues.cashPaymentArs?.toLocaleString('es-AR')}</p>
+                <p className="text-[11px] text-gray-500">{currentSale.cash_payment?.date && format(new Date(currentSale.cash_payment.date), 'dd/MM/yy')}</p>
               </div>
             </div>
           )}
 
           {/* Trade Ins */}
-          {currentSale.trade_ins?.map((ti, i) => (
-            <div key={i} className="p-3 border border-dashed rounded-lg">
-              <div className="text-[10px] font-medium text-gray-500 mb-1">PERMUTA</div>
-              <p className="font-semibold">{ti.brand} {ti.model} {ti.year}</p>
-              <p className="text-[11px] text-gray-500">{ti.plate} • {ti.kilometers?.toLocaleString('es-AR')} km</p>
-              <p className="font-bold text-cyan-600 mt-1">${ti.value_ars?.toLocaleString('es-AR')}</p>
-            </div>
-          ))}
+          {currentSale.trade_ins?.map((ti, i) => {
+            const tiValueArs = ti.currency === 'USD' ? (ti.value || 0) * (ti.exchange_rate || 1200) : (ti.value || 0);
+            return (
+              <div key={i} className="p-3 border border-dashed rounded-lg">
+                <div className="text-[10px] font-medium text-gray-500 mb-1">PERMUTA</div>
+                <p className="font-semibold">{ti.brand} {ti.model} {ti.year}</p>
+                <p className="text-[11px] text-gray-500">{ti.plate} • {ti.kilometers?.toLocaleString('es-AR')} km</p>
+                <p className="font-bold text-cyan-600 mt-1">${tiValueArs?.toLocaleString('es-AR')}</p>
+              </div>
+            );
+          })}
 
           {/* Financing */}
-          {currentSale.financing_amount_ars > 0 && (
+          {saleValues.financingArs > 0 && (
             <div className="p-3 border rounded-lg">
               <div className="text-[10px] font-medium text-gray-500 mb-1">FINANCIACIÓN</div>
-              <p className="font-bold">${currentSale.financing_amount_ars?.toLocaleString('es-AR')}</p>
-              <p className="text-[11px] text-gray-500">{currentSale.financing_bank} • {currentSale.financing_installments} cuotas</p>
+              <p className="font-bold">${saleValues.financingArs?.toLocaleString('es-AR')}</p>
+              <p className="text-[11px] text-gray-500">{currentSale.financing?.bank} • {currentSale.financing?.installments} cuotas</p>
             </div>
           )}
 
@@ -273,11 +336,11 @@ export default function SaleDetail({ sale, onClose }) {
             <Button
               variant="outline"
               className="flex-1 h-8 text-[10px]"
-              onClick={() => hasCompleteDataForBoleto() ? setShowBoleto(true) : setShowCompleteDataModal(true)}
+              onClick={() => hasContractCreated() ? setShowBoleto(true) : setShowCompleteDataModal(true)}
               disabled={currentSale.sale_status === 'CANCELADA'}
             >
               <FileText className="w-3.5 h-3.5 mr-1.5" />
-              {hasCompleteDataForBoleto() ? 'Ver Boleto' : 'Crear Boleto Compraventa'}
+              {hasContractCreated() ? 'Ver Boleto' : 'Crear Boleto Compraventa'}
             </Button>
             {currentSale.deposit_amount_ars > 0 && (
               <Button 

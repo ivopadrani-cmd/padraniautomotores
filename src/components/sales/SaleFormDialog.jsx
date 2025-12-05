@@ -301,6 +301,28 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
         paymentsToUpdate.push({ parent: 'financing', date: formData.financing.date });
       }
 
+      // Verificar permutas
+      formData.trade_ins?.forEach((ti, index) => {
+        if (ti.date && ti.date !== new Date().toISOString().split('T')[0] &&
+            (!ti.exchange_rate || ti.exchange_rate === currentBlueRate.toString())) {
+          paymentsToUpdate.push({ parent: 'trade_ins', index, date: ti.date });
+        }
+      });
+
+      // Verificar precio de venta
+      if (formData.sale_date && formData.sale_date !== new Date().toISOString().split('T')[0] &&
+          (!formData.sale_price_exchange_rate || formData.sale_price_exchange_rate === currentBlueRate.toString())) {
+        paymentsToUpdate.push({ parent: 'sale_price', date: formData.sale_date });
+      }
+
+      // Verificar permutas
+      formData.trade_ins?.forEach((ti, index) => {
+        if (ti.date && ti.date !== new Date().toISOString().split('T')[0] &&
+            (!ti.exchange_rate || ti.exchange_rate === currentBlueRate.toString())) {
+          paymentsToUpdate.push({ parent: `trade_ins[${index}]`, date: ti.date, index });
+        }
+      });
+
       // Actualizar cotizaciones
       for (const payment of paymentsToUpdate) {
         try {
@@ -308,13 +330,33 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
           const historicalRate = await getHistoricalRate(payment.date);
           if (historicalRate) {
             console.log(`📊 Cotización histórica encontrada: ${historicalRate} para ${payment.parent}`);
-            setFormData(prev => ({
-              ...prev,
-              [payment.parent]: {
-                ...prev[payment.parent],
-                exchange_rate: historicalRate.toString()
-              }
-            }));
+
+            if (payment.parent === 'sale_price') {
+              // Actualizar cotización del precio de venta
+              setFormData(prev => ({
+                ...prev,
+                sale_price_exchange_rate: historicalRate.toString()
+              }));
+            } else if (payment.parent.startsWith('trade_ins[')) {
+              // Actualizar cotización de permuta específica
+              setFormData(prev => {
+                const newTradeIns = [...prev.trade_ins];
+                newTradeIns[payment.index] = {
+                  ...newTradeIns[payment.index],
+                  exchange_rate: historicalRate.toString()
+                };
+                return { ...prev, trade_ins: newTradeIns };
+              });
+            } else {
+              // Actualizar otros pagos (deposit, cash_payment, financing)
+              setFormData(prev => ({
+                ...prev,
+                [payment.parent]: {
+                  ...prev[payment.parent],
+                  exchange_rate: historicalRate.toString()
+                }
+              }));
+            }
           }
         } catch (error) {
           console.error(`Error obteniendo cotización histórica para ${payment.parent}:`, error);
@@ -323,7 +365,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
     };
 
     updatePaymentRates();
-  }, [formData.deposit?.date, formData.cash_payment?.date, formData.financing?.date, getHistoricalRate, currentBlueRate]);
+  }, [formData.deposit?.date, formData.cash_payment?.date, formData.financing?.date, formData.sale_date, formData.trade_ins, getHistoricalRate, currentBlueRate]);
   const handleClose = () => { if (hasChanges) setShowConfirm(true); else onOpenChange(false); };
 
   const handleTradeInChange = (index, field, value) => {
@@ -435,6 +477,16 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
                 <Input className="h-9 w-20 text-[11px]" defaultValue={formData.sale_price_exchange_rate} onBlur={(e) => handleChange('sale_price_exchange_rate', e.target.value)} key={`rate-${open}`} />
+              </div>
+              <div>
+                <Label className="text-[9px] text-gray-400 uppercase">Fecha</Label>
+                <Input
+                  className="h-9 w-28 text-[11px]"
+                  type="date"
+                  defaultValue={formData.sale_date}
+                  onBlur={(e) => handleChange('sale_date', e.target.value)}
+                  key={`sale-date-${open}`}
+                />
               </div>
             </div>
           </div>
@@ -659,7 +711,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               </div>
             </PaymentSection>
 
-            <PaymentSection id="tradein" label="Permuta" checked={includeTradeIn} onCheckedChange={(c) => { setIncludeTradeIn(c); if (c && formData.trade_ins.length === 0) setFormData(prev => ({ ...prev, trade_ins: [{ brand: '', model: '', year: '', plate: '', kilometers: '', color: '', engine_brand: '', engine_number: '', chassis_brand: '', chassis_number: '', registration_city: '', value: '', currency: 'ARS', exchange_rate: 1200 }] })); }}>
+            <PaymentSection id="tradein" label="Permuta" checked={includeTradeIn} onCheckedChange={(c) => { setIncludeTradeIn(c); if (c && formData.trade_ins.length === 0) setFormData(prev => ({ ...prev, trade_ins: [{ brand: '', model: '', year: '', plate: '', kilometers: '', color: '', engine_brand: '', engine_number: '', chassis_brand: '', chassis_number: '', registration_city: '', value: '', currency: 'ARS', exchange_rate: currentBlueRate, date: new Date().toISOString().split('T')[0] }] })); }}>
               {formData.trade_ins.map((ti, i) => (
                 <div key={i} className="space-y-2 p-2 bg-cyan-50 rounded border border-cyan-200">
                   <p className="text-[9px] font-medium text-cyan-700 uppercase">Datos del vehículo en permuta (obligatorios para el boleto)</p>
@@ -692,6 +744,16 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                         <SelectTrigger className="h-7 w-16 text-[10px]"><SelectValue /></SelectTrigger>
                         <SelectContent><SelectItem value="ARS" className="text-[10px]">ARS</SelectItem><SelectItem value="USD" className="text-[10px]">USD</SelectItem></SelectContent>
                       </Select>
+                    </div>
+                    <div className="flex-1">
+                      <Label className="text-[9px] text-gray-400 uppercase">Fecha</Label>
+                      <Input
+                        className="h-7 text-[10px]"
+                        type="date"
+                        defaultValue={ti.date}
+                        onBlur={(e) => handleTradeInChange(i, 'date', e.target.value)}
+                        key={`ti-date-${i}-${open}`}
+                      />
                     </div>
                     <div>
                       <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
@@ -763,23 +825,52 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
 
           {/* Price Breakdown Summary */}
           {(() => {
-            const salePrice = parseFloat(formData.sale_price) || 0;
-            const depositAmount = includeDeposit ? (parseFloat(formData.deposit.amount) || 0) : 0;
-            const cashAmount = includeCashPayment ? (parseFloat(formData.cash_payment.amount) || 0) : 0;
-            const tradeInValue = includeTradeIn ? formData.trade_ins.reduce((sum, ti) => sum + (parseFloat(ti.value) || 0), 0) : 0;
-            const financingAmount = includeFinancing ? (parseFloat(formData.financing.amount) || 0) : 0;
-            const balance = salePrice - depositAmount - cashAmount - tradeInValue - financingAmount;
-            const hasDeductions = depositAmount > 0 || cashAmount > 0 || tradeInValue > 0 || financingAmount > 0;
+            // Convertir precio de venta a ARS
+            const salePriceArs = formData.sale_price_currency === 'USD'
+              ? (parseFloat(formData.sale_price) || 0) * (parseFloat(formData.sale_price_exchange_rate) || currentBlueRate)
+              : (parseFloat(formData.sale_price) || 0);
+
+            // Convertir seña a ARS
+            const depositArs = includeDeposit && formData.deposit.amount
+              ? (formData.deposit.currency === 'USD'
+                  ? (parseFloat(formData.deposit.amount) || 0) * (parseFloat(formData.deposit.exchange_rate) || currentBlueRate)
+                  : (parseFloat(formData.deposit.amount) || 0))
+              : 0;
+
+            // Convertir pago contado a ARS
+            const cashArs = includeCashPayment && formData.cash_payment.amount
+              ? (formData.cash_payment.currency === 'USD'
+                  ? (parseFloat(formData.cash_payment.amount) || 0) * (parseFloat(formData.cash_payment.exchange_rate) || currentBlueRate)
+                  : (parseFloat(formData.cash_payment.amount) || 0))
+              : 0;
+
+            // Convertir permutas a ARS
+            const tradeInArs = includeTradeIn
+              ? formData.trade_ins.reduce((sum, ti) =>
+                  sum + (ti.currency === 'USD'
+                    ? (parseFloat(ti.value) || 0) * (parseFloat(ti.exchange_rate) || currentBlueRate)
+                    : (parseFloat(ti.value) || 0)), 0)
+              : 0;
+
+            // Convertir financiación a ARS
+            const financingArs = includeFinancing && formData.financing.amount
+              ? (formData.financing.currency === 'USD'
+                  ? (parseFloat(formData.financing.amount) || 0) * (parseFloat(formData.financing.exchange_rate) || currentBlueRate)
+                  : (parseFloat(formData.financing.amount) || 0))
+              : 0;
+
+            const balance = salePriceArs - depositArs - cashArs - tradeInArs - financingArs;
+            const hasDeductions = depositArs > 0 || cashArs > 0 || tradeInArs > 0 || financingArs > 0;
             
             return salePrice > 0 && hasDeductions ? (
               <div className="space-y-2">
                 {/* Breakdown rows */}
                 <div className="space-y-1 text-[11px]">
-                  <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Precio del vehículo</span><span className="font-semibold">${salePrice.toLocaleString('es-AR')}</span></div>
-                  {depositAmount > 0 && <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Seña</span><span className="font-semibold text-cyan-600">- ${depositAmount.toLocaleString('es-AR')}</span></div>}
-                  {cashAmount > 0 && <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Contado</span><span className="font-semibold text-cyan-600">- ${cashAmount.toLocaleString('es-AR')}</span></div>}
-                  {tradeInValue > 0 && <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Permuta</span><span className="font-semibold text-cyan-600">- ${tradeInValue.toLocaleString('es-AR')}</span></div>}
-                  {financingAmount > 0 && <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Financiación</span><span className="font-semibold text-cyan-600">- ${financingAmount.toLocaleString('es-AR')}</span></div>}
+                  <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Precio del vehículo</span><span className="font-semibold">${salePriceArs.toLocaleString('es-AR')}</span></div>
+                  {depositArs > 0 && <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Seña</span><span className="font-semibold text-cyan-600">- ${depositArs.toLocaleString('es-AR')}</span></div>}
+                  {cashArs > 0 && <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Contado</span><span className="font-semibold text-cyan-600">- ${cashArs.toLocaleString('es-AR')}</span></div>}
+                  {tradeInArs > 0 && <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Permuta</span><span className="font-semibold text-cyan-600">- ${tradeInArs.toLocaleString('es-AR')}</span></div>}
+                  {financingArs > 0 && <div className="flex justify-between py-1.5 border-b border-dotted border-gray-200"><span className="text-gray-500">Financiación</span><span className="font-semibold text-cyan-600">- ${financingArs.toLocaleString('es-AR')}</span></div>}
                 </div>
                 
                 {/* Total box */}

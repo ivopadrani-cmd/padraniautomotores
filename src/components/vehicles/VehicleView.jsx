@@ -460,7 +460,7 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
               queryClient.invalidateQueries({ queryKey: ['vehicle-sales'] });
               setShowSaleFormDialog(null);
               // Si ahora tiene datos completos, mostrar el boleto
-              const hasCompleteData = () => {
+              const hasContractData = () => {
                 const hasClientData = sale.client_name && sale.client_dni && sale.client_cuit_cuil &&
                                      sale.client_address && sale.client_city && sale.client_province;
                 const hasVehicleData = updatedVehicle.brand && updatedVehicle.model && updatedVehicle.year && updatedVehicle.plate &&
@@ -469,7 +469,7 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                 const hasSellerData = sale.seller_dni && sale.seller_dni.trim() !== '';
                 return hasClientData && hasVehicleData && hasSellerData;
               };
-              if (hasCompleteData()) {
+              if (hasContractData()) {
                 setShowContractView(sale);
               }
             }}
@@ -885,8 +885,8 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
           if (!activeSale) return null;
           const isEntregado = activeSale.sale_status === 'FINALIZADA' || updatedVehicle.status === 'ENTREGADO';
 
-          // Verificar si la venta tiene datos completos para boleto
-          const hasCompleteDataForBoleto = () => {
+          // Verificar si la venta tiene boleto creado (tiene todos los datos requeridos)
+          const hasContractCreated = () => {
             const hasClientData = activeSale.client_name && activeSale.client_dni && activeSale.client_cuit_cuil &&
                                  activeSale.client_address && activeSale.client_city && activeSale.client_province;
             const hasVehicleData = updatedVehicle.brand && updatedVehicle.model && updatedVehicle.year && updatedVehicle.plate &&
@@ -913,8 +913,8 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className={`h-8 text-[11px] bg-transparent ${isEntregado ? 'border-red-400' : 'border-gray-600'} text-white hover:bg-gray-800`} onClick={() => hasCompleteDataForBoleto() ? setShowContractView(activeSale) : setShowSaleFormDialog(activeSale)}>
-                      {hasCompleteDataForBoleto() ? 'Ver Boleto' : 'Crear Boleto'}
+                    <Button size="sm" variant="outline" className={`h-8 text-[11px] bg-transparent ${isEntregado ? 'border-red-400' : 'border-gray-600'} text-white hover:bg-gray-800`} onClick={() => hasContractCreated() ? setShowContractView(activeSale) : setShowSaleFormDialog(activeSale)}>
+                      {hasContractCreated() ? 'Ver Boleto' : 'Crear Boleto'}
                     </Button>
                     <Button size="sm" variant="outline" className={`h-8 text-[11px] bg-transparent ${isEntregado ? 'border-red-400' : 'border-gray-600'} text-white hover:bg-gray-800`} onClick={() => setShowSaleDetail(activeSale)}>
                       Ver venta

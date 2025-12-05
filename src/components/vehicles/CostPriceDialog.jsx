@@ -314,20 +314,32 @@ export default function CostPriceDialog({ open, onOpenChange, vehicle, onSubmit,
             </div>
 
             <div className="space-y-2 max-h-60 overflow-y-auto">
-              {/* Mostrar valor de toma primero */}
+              {/* Mostrar valor de toma celeste */}
               {(() => {
-                const valorTomaArs = convertValue(parseFloat(formData.cost_value) || 0, formData.cost_currency, currentBlueRate, 'ARS');
-                const valorTomaUsd = formData.cost_currency === 'USD' ? parseFloat(formData.cost_value) || 0 : valorTomaArs / currentBlueRate;
+                const valorTomaPrincipal = parseFloat(formData.cost_value) || 0;
+                const valorTomaArs = convertValue(valorTomaPrincipal, formData.cost_currency, parseFloat(formData.cost_exchange_rate) || currentBlueRate, 'ARS');
+                const valorTomaUsd = formData.cost_currency === 'ARS'
+                  ? valorTomaPrincipal / (parseFloat(formData.cost_exchange_rate) || currentBlueRate)
+                  : valorTomaPrincipal;
+
                 return (
-                  <div className="flex justify-between items-center p-2 bg-gray-100 rounded">
-                    <span className="text-[12px] text-gray-600">Valor de toma</span>
+                  <div className="flex justify-between items-center p-2 bg-blue-50 border border-blue-200 rounded">
+                    <span className="text-[12px] font-semibold text-blue-700">VALOR DE TOMA</span>
                     <div className="text-right">
-                      <span className="font-bold text-[13px] text-gray-900 block">
-                        ${valorTomaArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}
+                      <span className="font-bold text-[14px] text-blue-900 block">
+                        {formData.cost_currency === 'ARS'
+                          ? `$${valorTomaPrincipal.toLocaleString('es-AR')}`
+                          : `U$D ${valorTomaPrincipal.toLocaleString('en-US')}`
+                        }
                       </span>
-                      <span className="text-[10px] font-semibold text-cyan-500">
-                        U$D {valorTomaUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                      </span>
+                      {valorTomaPrincipal > 0 && (
+                        <span className="text-[10px] font-semibold text-blue-600">
+                          {formData.cost_currency === 'ARS'
+                            ? `U$D ${valorTomaUsd.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                            : `$${valorTomaArs.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+                          }
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
