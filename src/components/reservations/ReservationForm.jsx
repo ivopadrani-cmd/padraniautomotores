@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { Save, Car, User, Receipt, CreditCard, Search } from "lucide-react";
 import ConfirmDialog from "../ui/ConfirmDialog";
-import useDollarHistory from "@/hooks/useDollarHistory";
+import { useDollarHistory } from "@/hooks/useDollarHistory";
 
 export default function ReservationForm({ open, onOpenChange, vehicle, quote, lead, onSubmit }) {
   const [clientSearch, setClientSearch] = useState('');
@@ -24,6 +24,7 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
   const [editingClientData, setEditingClientData] = useState({});
   const [editingVehicleData, setEditingVehicleData] = useState({});
 
+  // Valores iniciales seguros (se actualizan en useEffect con currentBlueRate)
   const [formData, setFormData] = useState({
     reservation_date: new Date().toISOString().split('T')[0],
     client_name: '',
@@ -32,17 +33,17 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
     seller_name: '',
     deposit_amount: '',
     deposit_currency: 'ARS',
-    deposit_exchange_rate: currentBlueRate,
+    deposit_exchange_rate: 1200,
     deposit_date: new Date().toISOString().split('T')[0],
     deposit_description: '',
     agreed_price: '',
     agreed_price_currency: 'ARS',
-    agreed_price_exchange_rate: currentBlueRate,
+    agreed_price_exchange_rate: 1200,
     agreed_price_date: new Date().toISOString().split('T')[0],
-    trade_in: { brand: '', model: '', year: '', plate: '', kilometers: '', value: '', value_currency: 'ARS', value_exchange_rate: currentBlueRate, value_date: new Date().toISOString().split('T')[0] },
+    trade_in: { brand: '', model: '', year: '', plate: '', kilometers: '', value: '', value_currency: 'ARS', value_exchange_rate: 1200, value_date: new Date().toISOString().split('T')[0] },
     financing_amount: '',
     financing_currency: 'ARS',
-    financing_exchange_rate: currentBlueRate,
+    financing_exchange_rate: 1200,
     financing_date: new Date().toISOString().split('T')[0],
     financing_bank: '',
     financing_installments: '',

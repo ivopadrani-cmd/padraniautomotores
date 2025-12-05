@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import { Save, Car, User, CreditCard, Search, Plus, Trash2, X } from "lucide-react";
 import ConfirmDialog from "../ui/ConfirmDialog";
-import useDollarHistory from "@/hooks/useDollarHistory";
+import { useDollarHistory } from "@/hooks/useDollarHistory";
 
 export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit, editingQuote, multiVehicleMode = false }) {
   const [selectedClientId, setSelectedClientId] = useState('');
