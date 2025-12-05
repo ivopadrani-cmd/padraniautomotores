@@ -48,7 +48,6 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       sale_date: new Date().toISOString().split('T')[0],
       client_name: '',
       seller: '',
-      seller_dni: '',
       sale_price: publicPriceArs,
       sale_price_currency: 'ARS',
       sale_price_exchange_rate: rate,
@@ -240,23 +239,46 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       // Validar si hay datos suficientes para el boleto
       const clientHasData = selectedClient && selectedClient.dni && selectedClient.cuit_cuil && selectedClient.address && selectedClient.city && selectedClient.province;
       const vehicleHasData = vehicle && vehicle.brand && vehicle.model && vehicle.year && vehicle.plate && vehicle.engine_number && vehicle.chassis_number && vehicle.chassis_brand && vehicle.engine_brand && vehicle.registration_city && vehicle.registration_province;
-      const sellerHasData = formData.seller_dni && formData.seller_dni.trim() !== '';
 
-      if (!clientHasData || !vehicleHasData || !sellerHasData) {
-        // Faltan datos: mostrar advertencia y NO abrir boleto
-        const missingData = [];
-        if (!clientHasData) missingData.push('datos completos del cliente (DNI, CUIT, dirección, ciudad, provincia)');
-        if (!vehicleHasData) missingData.push('datos completos del vehículo (motor, chasis, marcas y radicación)');
-        if (!sellerHasData) missingData.push('DNI del vendedor');
+      // Verificar campos específicos faltantes para mejor feedback
+      const getMissingFields = () => {
+        const missing = [];
 
-        toast.warning(`Se guardará la venta pero no se creará el boleto de compraventa. Para crear el boleto toca el botón "Crear Boleto Compraventa". Faltan: ${missingData.join('; ')}`);
+        if (!clientHasData) {
+          const clientMissing = [];
+          if (!selectedClient?.dni) clientMissing.push('DNI');
+          if (!selectedClient?.cuit_cuil) clientMissing.push('CUIT/CUIL');
+          if (!selectedClient?.address) clientMissing.push('dirección');
+          if (!selectedClient?.city) clientMissing.push('ciudad');
+          if (!selectedClient?.province) clientMissing.push('provincia');
+          if (clientMissing.length > 0) missing.push(`cliente (${clientMissing.join(', ')})`);
+        }
+
+        if (!vehicleHasData) {
+          const vehicleMissing = [];
+          if (!vehicle?.engine_number) vehicleMissing.push('motor');
+          if (!vehicle?.chassis_number) vehicleMissing.push('chasis');
+          if (!vehicle?.chassis_brand) vehicleMissing.push('marca chasis');
+          if (!vehicle?.engine_brand) vehicleMissing.push('marca motor');
+          if (!vehicle?.registration_city) vehicleMissing.push('ciudad radicación');
+          if (!vehicle?.registration_province) vehicleMissing.push('provincia radicación');
+          if (vehicleMissing.length > 0) missing.push(`vehículo (${vehicleMissing.join(', ')})`);
+        }
+
+        return missing;
+      };
+
+      if (!clientHasData || !vehicleHasData) {
+        // Faltan datos: mostrar advertencia específica y NO abrir boleto
+        const missingFields = getMissingFields();
+        toast.warning(`No se puede crear el boleto. Faltan completar datos de: ${missingFields.join(' y ')}. Se guardarán los cambios de la venta.`);
         // Cerrar el formulario sin mostrar el boleto
         onOpenChange(false);
         // Si hay un callback onSaleCreated, llamarlo con el sale para que abra el SaleDetail
         if (onSaleCreated) onSaleCreated(saleWithId);
       } else {
         // Todos los datos están completos: mostrar boleto
-        setShowContract(true);
+      setShowContract(true);
         toast.success(existingSale ? "Venta actualizada" : "Venta creada");
         if (onSaleCreated) onSaleCreated(saleWithId);
       }
@@ -392,9 +414,20 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
     
     // Warn if contract data incomplete
     if (isContractDataIncomplete()) {
-      if (!window.confirm('Faltan datos del cliente o vehículo para generar el boleto de compraventa. La venta se guardará pero no se podrá generar el boleto hasta completar los datos. ¿Continuar?')) {
-        return;
+      const missingFields = [];
+      const clientComplete = selectedClient && selectedClient.dni && selectedClient.cuit_cuil && selectedClient.address && selectedClient.city && selectedClient.province;
+      const newClientComplete = showNewClientForm && newClientData.full_name && newClientData.phone && newClientData.dni && newClientData.cuit_cuil && newClientData.address && newClientData.city && newClientData.province;
+      const vehicleComplete = vehicle && vehicle.engine_number && vehicle.chassis_number && vehicle.color && vehicle.kilometers;
+
+      if (!clientComplete && !newClientComplete && Object.keys(editingClientData).length === 0) {
+        missingFields.push('datos del cliente (DNI, CUIT, dirección, ciudad, provincia)');
       }
+      if (!vehicleComplete && Object.keys(editingVehicleData).length === 0) {
+        missingFields.push('datos del vehículo (número de motor, chasis, color, kilometraje)');
+      }
+
+      toast.warning(`Se guardarán los cambios pero no se creará el boleto de compraventa. Faltan completar: ${missingFields.join(' y ')}.`);
+      // No pedimos confirmación, solo informamos y continuamos
     }
     
     createSaleMutation.mutate({
@@ -885,10 +918,10 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 <div className="flex gap-3 items-end">
                   <div className="flex-1">
                     <Label className="text-[9px] text-gray-400 uppercase">Fecha límite de pago del saldo</Label>
-                    <Input
-                      type="date"
-                      className="h-7 text-[11px]"
-                      value={formData.balance_due_date || ''}
+                    <Input 
+                      type="date" 
+                      className="h-7 text-[11px]" 
+                      value={formData.balance_due_date || ''} 
                       onChange={(e) => handleChange('balance_due_date', e.target.value)}
                     />
                   </div>
@@ -898,15 +931,6 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                       <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                       <SelectContent>{sellers.map(s => <SelectItem key={s.id} value={s.full_name} className="text-[10px]">{s.full_name}</SelectItem>)}</SelectContent>
                     </Select>
-                  </div>
-                  <div className="flex-1">
-                    <Label className="text-[9px] text-gray-400 uppercase">DNI Vendedor *</Label>
-                    <Input
-                      className="h-7 text-[10px]"
-                      value={formData.seller_dni}
-                      onChange={(e) => handleChange('seller_dni', e.target.value)}
-                      placeholder="12345678"
-                    />
                   </div>
                 </div>
               </div>

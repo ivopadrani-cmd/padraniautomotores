@@ -466,8 +466,7 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                 const hasVehicleData = updatedVehicle.brand && updatedVehicle.model && updatedVehicle.year && updatedVehicle.plate &&
                                       updatedVehicle.engine_number && updatedVehicle.chassis_number && updatedVehicle.chassis_brand &&
                                       updatedVehicle.engine_brand && updatedVehicle.registration_city && updatedVehicle.registration_province;
-                const hasSellerData = sale.seller_dni && sale.seller_dni.trim() !== '';
-                return hasClientData && hasVehicleData && hasSellerData;
+                return hasClientData && hasVehicleData;
               };
               if (hasContractData()) {
                 setShowContractView(sale);
@@ -892,8 +891,7 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
             const hasVehicleData = updatedVehicle.brand && updatedVehicle.model && updatedVehicle.year && updatedVehicle.plate &&
                                   updatedVehicle.engine_number && updatedVehicle.chassis_number && updatedVehicle.chassis_brand &&
                                   updatedVehicle.engine_brand && updatedVehicle.registration_city && updatedVehicle.registration_province;
-            const hasSellerData = activeSale.seller_dni && activeSale.seller_dni.trim() !== '';
-            return hasClientData && hasVehicleData && hasSellerData;
+            return hasClientData && hasVehicleData;
           };
           return (
             <Card className={`shadow-sm ${isEntregado ? 'bg-red-700' : 'bg-gray-900'} text-white`}>

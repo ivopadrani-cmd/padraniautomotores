@@ -76,8 +76,7 @@ export default function SaleDetail({ sale, onClose }) {
     const hasVehicleData = vehicle && vehicle.brand && vehicle.model && vehicle.year && vehicle.plate &&
                           vehicle.engine_number && vehicle.chassis_number && vehicle.chassis_brand &&
                           vehicle.engine_brand && vehicle.registration_city && vehicle.registration_province;
-    const hasSellerData = currentSale.seller_dni && currentSale.seller_dni.trim() !== '';
-    return hasClientData && hasVehicleData && hasSellerData;
+    return hasClientData && hasVehicleData;
   };
 
   // Query refetchable para la venta actual
@@ -300,6 +299,19 @@ export default function SaleDetail({ sale, onClose }) {
               <div className="text-[10px] font-medium text-gray-500 mb-1">FINANCIACIÓN</div>
               <p className="font-bold">${saleValues.financingArs?.toLocaleString('es-AR')}</p>
               <p className="text-[11px] text-gray-500">{currentSale.financing?.bank} • {currentSale.financing?.installments} cuotas</p>
+            </div>
+          )}
+
+          {/* Balance Due */}
+          {saleValues.balanceDue > 0 && (
+            <div className="p-3 border rounded-lg bg-amber-50 border-amber-200">
+              <div className="text-[10px] font-medium text-amber-700 mb-1">SALDO PENDIENTE</div>
+              <p className="font-bold text-amber-800">${saleValues.balanceDue?.toLocaleString('es-AR')}</p>
+              {currentSale.balance_due_date && (
+                <p className="text-[11px] text-amber-600">
+                  Fecha límite: {format(new Date(currentSale.balance_due_date), 'dd/MM/yyyy', { locale: es })}
+                </p>
+              )}
             </div>
           )}
 
