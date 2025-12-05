@@ -15,6 +15,7 @@ import { useDollarHistory } from "@/hooks/useDollarHistory";
 
 export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit, editingQuote, multiVehicleMode = false }) {
   const [selectedClientId, setSelectedClientId] = useState('');
+  const [isNewClient, setIsNewClient] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const [includeTradeIn, setIncludeTradeIn] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -29,6 +30,10 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
   const [formData, setFormData] = useState({
     client_name: '',
     client_phone: '',
+    client_dni: '',
+    client_address: '',
+    client_city: '',
+    client_province: '',
     trade_in: { brand: '', model: '', year: '', plate: '', kilometers: '', value_ars: '' },
     notes: '',
     date: new Date().toISOString().split('T')[0]
@@ -144,6 +149,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
   });
 
   const handleClientSelect = (client) => {
+    setIsNewClient(false);
     setSelectedClientId(client.id);
     setFormData(prev => ({ ...prev, client_name: client.full_name, client_phone: client.phone || '' }));
   };
@@ -358,7 +364,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
                     </div>
                     <div>
                       <Label className={lbl}>Fecha</Label>
-                      <Input className={inp} type="date" value={item.quoted_price_date || ''} onChange={(e) => handleVehicleItemChange(index, 'quoted_price_date', e.target.value)} />
+                      <Input className={inp + " cursor-pointer"} type="date" value={item.quoted_price_date || ''} onChange={(e) => handleVehicleItemChange(index, 'quoted_price_date', e.target.value)} />
                     </div>
                       <div className="flex items-end">
                         <div className="flex items-center gap-2">
@@ -389,7 +395,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
                         </div>
                         <div>
                           <Label className={lbl}>Fecha</Label>
-                          <Input className={inp} type="date" value={item.financing_date || ''} onChange={(e) => handleVehicleItemChange(index, 'financing_date', e.target.value)} />
+                          <Input className={inp + " cursor-pointer"} type="date" value={item.financing_date || ''} onChange={(e) => handleVehicleItemChange(index, 'financing_date', e.target.value)} />
                         </div>
                         <div><Label className={lbl}>Banco</Label><Input className={inp} value={item.financing_bank} onChange={(e) => handleVehicleItemChange(index, 'financing_bank', e.target.value)} /></div>
                         <div className="grid grid-cols-2 gap-2">
@@ -406,23 +412,51 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
 
           {/* Client */}
           <div>
-            <div className="flex items-center gap-2 mb-2"><User className="w-4 h-4 text-gray-600" /><span className="text-[11px] font-medium text-gray-500">CLIENTE</span></div>
-            <div className="relative mb-2">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-              <Input className={`${inp} pl-8`} placeholder="Buscar cliente..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
-              {clientSearch && filteredClients.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-40 overflow-auto">
-                  {filteredClients.slice(0, 8).map(c => (
-                    <div key={c.id} className={`p-2 hover:bg-gray-100 cursor-pointer text-[10px] border-b last:border-b-0 ${selectedClientId === c.id ? 'bg-gray-100' : ''}`} onClick={() => { handleClientSelect(c); setClientSearch(''); }}>
-                      <p className="font-medium">{c.full_name}</p><p className="text-gray-500">{c.phone}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="flex items-center gap-2 mb-2">
+              <User className="w-4 h-4 text-gray-600" />
+              <span className="text-[11px] font-medium text-gray-500">CLIENTE</span>
             </div>
+
+            <div className="flex rounded overflow-hidden mb-3">
+              <button
+                type="button"
+                className={`flex-1 h-8 text-[10px] font-medium transition-colors ${isNewClient ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                onClick={() => { setIsNewClient(true); setSelectedClientId(''); setClientSearch(''); setFormData(prev => ({ ...prev, client_name: '', client_phone: '' })); }}
+              >
+                Nuevo cliente
+              </button>
+              <button
+                type="button"
+                className={`flex-1 h-8 text-[10px] font-medium transition-colors ${!isNewClient ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                onClick={() => { setIsNewClient(false); }}
+              >
+                Cliente existente
+              </button>
+            </div>
+
+            {!isNewClient && (
+              <div className="relative mb-2">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Input className={`${inp} pl-8`} placeholder="Buscar cliente..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
+                {clientSearch && filteredClients.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-40 overflow-auto">
+                    {filteredClients.slice(0, 8).map(c => (
+                      <div key={c.id} className={`p-2 hover:bg-gray-100 cursor-pointer text-[10px] border-b last:border-b-0 ${selectedClientId === c.id ? 'bg-gray-100' : ''}`} onClick={() => { handleClientSelect(c); setClientSearch(''); }}>
+                        <p className="font-medium">{c.full_name}</p><p className="text-gray-500">{c.phone}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-2">
               <div><Label className={lbl}>Nombre *</Label><Input className={inp} value={formData.client_name} onChange={(e) => handleChange('client_name', e.target.value)} required /></div>
               <div><Label className={lbl}>Teléfono</Label><Input className={inp} value={formData.client_phone} onChange={(e) => handleChange('client_phone', e.target.value)} /></div>
+              <div><Label className={lbl}>DNI</Label><Input className={inp} value={formData.client_dni} onChange={(e) => handleChange('client_dni', e.target.value)} /></div>
+              <div><Label className={lbl}>Dirección</Label><Input className={inp} value={formData.client_address} onChange={(e) => handleChange('client_address', e.target.value)} /></div>
+              <div><Label className={lbl}>Ciudad</Label><Input className={inp} value={formData.client_city} onChange={(e) => handleChange('client_city', e.target.value)} /></div>
+              <div><Label className={lbl}>Provincia</Label><Input className={inp} value={formData.client_province} onChange={(e) => handleChange('client_province', e.target.value)} /></div>
             </div>
           </div>
 
@@ -449,7 +483,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
                 <div className="grid grid-cols-3 gap-2 col-span-3">
                   <div className="col-span-1"><Label className={lbl}>Valor</Label><Input className={inp} value={formData.trade_in.value_ars} onChange={(e) => handleTradeInChange('value_ars', e.target.value)} /></div>
                   <div className="col-span-1"><Label className={lbl}>Cotización</Label><Input className={inp} value={formData.trade_in.exchange_rate || ''} onChange={(e) => handleTradeInChange('exchange_rate', e.target.value)} placeholder={currentBlueRate.toString()} /></div>
-                  <div className="col-span-1"><Label className={lbl}>Fecha</Label><Input className={inp} type="date" value={formData.trade_in.date || ''} onChange={(e) => handleTradeInChange('date', e.target.value)} /></div>
+                  <div className="col-span-1"><Label className={lbl}>Fecha</Label><Input className={inp + " cursor-pointer"} type="date" value={formData.trade_in.date || ''} onChange={(e) => handleTradeInChange('date', e.target.value)} /></div>
                 </div>
               </div>
             )}

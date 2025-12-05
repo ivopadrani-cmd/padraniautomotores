@@ -122,8 +122,17 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
 
   const { data: updatedVehicle } = useQuery({
     queryKey: ['vehicle', vehicle.id],
-    queryFn: () => base44.entities.Vehicle.list().then(vs => vs.find(v => v.id === vehicle.id)),
+    queryFn: async () => {
+      // Usar get directo si existe, sino filtrar por id
+      if (base44.entities.Vehicle.get) {
+        return await base44.entities.Vehicle.get(vehicle.id);
+      }
+      const vs = await base44.entities.Vehicle.list();
+      return vs.find(v => v.id === vehicle.id);
+    },
     initialData: vehicle,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const { data: leads = [] } = useQuery({ queryKey: ['vehicle-leads', updatedVehicle.id], queryFn: async () => { const all = await base44.entities.Lead.list('-consultation_date'); return all.filter(l => l.interested_vehicles?.some(v => v.vehicle_id === updatedVehicle.id)); } });

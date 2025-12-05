@@ -15,6 +15,7 @@ import { useDollarHistory } from "@/hooks/useDollarHistory";
 export default function ReservationForm({ open, onOpenChange, vehicle, quote, lead, onSubmit }) {
   const [clientSearch, setClientSearch] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
+  const [isNewClient, setIsNewClient] = useState(false);
   const [includeDeposit, setIncludeDeposit] = useState(true);
   const [includeTradeIn, setIncludeTradeIn] = useState(false);
   const [includeFinancing, setIncludeFinancing] = useState(false);
@@ -118,6 +119,7 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
   );
 
   const handleClientSelect = (client) => {
+    setIsNewClient(false);
     setSelectedClientId(client.id);
     setFormData(prev => ({ ...prev, client_name: client.full_name, client_phone: client.phone || '' }));
   };
@@ -270,7 +272,41 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2"><User className="w-4 h-4 text-gray-600" /><span className="text-[11px] font-medium text-gray-500">CLIENTE (datos para el recibo)</span></div>
             </div>
-            {selectedClient ? (
+
+            <div className="flex rounded overflow-hidden mb-3">
+              <button
+                type="button"
+                className={`flex-1 h-8 text-[10px] font-medium transition-colors ${isNewClient ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                onClick={() => { setIsNewClient(true); setSelectedClientId(''); setClientSearch(''); setFormData(prev => ({ ...prev, client_name: '', client_phone: '' })); }}
+              >
+                Nuevo cliente
+              </button>
+              <button
+                type="button"
+                className={`flex-1 h-8 text-[10px] font-medium transition-colors ${!isNewClient ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                onClick={() => { setIsNewClient(false); }}
+              >
+                Cliente existente
+              </button>
+            </div>
+
+            {!isNewClient && (
+              <div className="relative mb-2">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Input className={`${inp} pl-8`} placeholder="Buscar cliente..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
+                {clientSearch && filteredClients.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-40 overflow-auto">
+                    {filteredClients.slice(0, 8).map(c => (
+                      <div key={c.id} className={`p-2 hover:bg-gray-100 cursor-pointer text-[10px] border-b last:border-b-0 ${selectedClientId === c.id ? 'bg-gray-100' : ''}`} onClick={() => { handleClientSelect(c); setClientSearch(''); }}>
+                        <p className="font-medium">{c.full_name}</p><p className="text-gray-500">{c.phone}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {selectedClient && !isNewClient ? (
               <div className="space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
@@ -298,25 +334,10 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
                 )}
               </div>
             ) : (
-              <>
-                <div className="relative mb-2">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                  <Input className={`${inp} pl-8`} placeholder="Buscar cliente..." value={clientSearch} onChange={(e) => setClientSearch(e.target.value)} />
-                  {clientSearch && filteredClients.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-40 overflow-auto">
-                      {filteredClients.slice(0, 8).map(c => (
-                        <div key={c.id} className={`p-2 hover:bg-gray-100 cursor-pointer text-[10px] border-b last:border-b-0 ${selectedClientId === c.id ? 'bg-gray-100' : ''}`} onClick={() => { handleClientSelect(c); setClientSearch(''); }}>
-                          <p className="font-medium">{c.full_name}</p><p className="text-gray-500">{c.phone}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div><Label className={lbl}>Nombre *</Label><Input className={inp} value={formData.client_name} onChange={(e) => handleChange('client_name', e.target.value)} required /></div>
-                  <div><Label className={lbl}>Teléfono</Label><Input className={inp} value={formData.client_phone} onChange={(e) => handleChange('client_phone', e.target.value)} /></div>
-                </div>
-              </>
+              <div className="grid grid-cols-2 gap-2">
+                <div><Label className={lbl}>Nombre *</Label><Input className={inp} value={formData.client_name} onChange={(e) => handleChange('client_name', e.target.value)} required /></div>
+                <div><Label className={lbl}>Teléfono</Label><Input className={inp} value={formData.client_phone} onChange={(e) => handleChange('client_phone', e.target.value)} /></div>
+              </div>
             )}
           </div>
 
