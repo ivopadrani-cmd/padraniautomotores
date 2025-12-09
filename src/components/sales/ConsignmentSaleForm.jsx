@@ -219,7 +219,7 @@ export default function ConsignmentSaleForm({ open, onOpenChange, vehicle, onSal
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-0">
           <DialogHeader className="p-0">
             {/* Vehicle Header - Full Width */}
-            <div className="bg-orange-900 text-white p-4 rounded-t-lg">
+            <div className="bg-cyan-900 text-white p-4 rounded-t-lg">
               <div className="flex items-center gap-3">
                 <Car className="w-6 h-6 text-gray-400" />
                 <div className="flex-1">
@@ -309,7 +309,7 @@ export default function ConsignmentSaleForm({ open, onOpenChange, vehicle, onSal
                   type="button"
                   className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
                     isNewClient
-                      ? 'bg-orange-900 text-white'
+                      ? 'bg-cyan-900 text-white'
                       : 'bg-white text-gray-600 hover:bg-gray-100'
                   }`}
                   onClick={() => {
@@ -326,7 +326,7 @@ export default function ConsignmentSaleForm({ open, onOpenChange, vehicle, onSal
                   type="button"
                   className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
                     !isNewClient
-                      ? 'bg-orange-900 text-white'
+                      ? 'bg-cyan-900 text-white'
                       : 'bg-white text-gray-600 hover:bg-gray-100'
                   }`}
                   onClick={() => {
@@ -340,9 +340,9 @@ export default function ConsignmentSaleForm({ open, onOpenChange, vehicle, onSal
               </div>
 
               {isNewClient ? (
-                <div className="space-y-2 p-2 bg-orange-50 rounded border border-orange-200">
+                <div className="space-y-2 p-2 bg-cyan-50 rounded border border-cyan-200">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-medium text-orange-700">Nuevo Proveedor</span>
+                    <span className="text-[10px] font-medium text-cyan-700">Nuevo Proveedor</span>
                     <Button type="button" variant="ghost" className="h-5 text-[9px] px-1" onClick={() => setShowNewClientForm(false)}>Cancelar</Button>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
@@ -358,7 +358,7 @@ export default function ConsignmentSaleForm({ open, onOpenChange, vehicle, onSal
                   </div>
                 </div>
               ) : selectedClient ? (
-                <div className="p-2 bg-orange-50 rounded border border-orange-200 space-y-2">
+                <div className="p-2 bg-cyan-50 rounded border border-cyan-200 space-y-2">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-semibold text-[11px]">{selectedClient.full_name}</p>
@@ -368,7 +368,7 @@ export default function ConsignmentSaleForm({ open, onOpenChange, vehicle, onSal
                   </div>
                   {/* Editable fields for missing supplier data */}
                   {(!selectedClient.dni || !selectedClient.cuit_cuil || !selectedClient.address || !selectedClient.city || !selectedClient.province) && (
-                    <div className="pt-2 border-t border-orange-200 space-y-1.5">
+                    <div className="pt-2 border-t border-cyan-200 space-y-1.5">
                       <p className="text-[9px] text-amber-600 font-medium">Completar datos faltantes:</p>
                       <div className="grid grid-cols-2 gap-1.5">
                         {!selectedClient.dni && (
@@ -421,7 +421,7 @@ export default function ConsignmentSaleForm({ open, onOpenChange, vehicle, onSal
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-2 border-t">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-7 text-[10px] px-3">Cancelar</Button>
-              <Button type="submit" className="h-7 text-[10px] px-4 bg-orange-900 hover:bg-orange-800" disabled={createSaleMutation.isPending}>
+              <Button type="submit" className="h-7 text-[10px] px-4 bg-cyan-900 hover:bg-cyan-800" disabled={createSaleMutation.isPending}>
                 <Save className="w-3 h-3 mr-1" />
                 {createSaleMutation.isPending ? 'Creando...' : 'Crear Boleto de Consignación'}
               </Button>

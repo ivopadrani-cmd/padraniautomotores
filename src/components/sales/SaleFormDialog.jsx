@@ -293,9 +293,10 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
         // Si hay un callback onSaleCreated, llamarlo con el sale para que abra el SaleDetail
         if (onSaleCreated) onSaleCreated(saleWithId);
       } else {
-        // Todos los datos están completos: mostrar boleto
-        setShowContract(true);
-        toast.success(existingSale ? "Venta actualizada" : "Venta creada");
+        // Todos los datos están completos: cerrar modal y mostrar mensaje de éxito
+        toast.success(existingSale ? "Venta actualizada exitosamente" : "Venta creada exitosamente");
+        onOpenChange(false);
+        // Si hay un callback onSaleCreated, llamarlo con el sale para que abra el SaleDetail
         if (onSaleCreated) onSaleCreated(saleWithId);
       }
       
@@ -310,46 +311,39 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
     setClientSearch('');
   };
 
-  const handleChange = async (field, value) => {
+  const handleChange = (field, value) => {
     // Si el campo es sale_date, actualizar también el sale_price_exchange_rate
     if (field === 'sale_date' && value) {
-      try {
-        console.log(`📅 Fecha de venta cambiada: ${value}`);
-        const historicalRate = await getHistoricalRate(value);
+      getHistoricalRate(value).then(historicalRate => {
         if (historicalRate) {
           console.log(`💱 Cotización histórica para precio de venta: ${historicalRate}`);
           setFormData(prev => ({ ...prev, sale_date: value, sale_price_exchange_rate: historicalRate.toString() }));
-          setHasChanges(true);
-          return;
         }
-      } catch (error) {
+      }).catch(error => {
         console.error(`❌ Error obteniendo cotización histórica para venta:`, error);
-      }
+      });
     }
-    
+
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
   };
-  const handleNestedChange = async (parent, field, value) => {
+
+  const handleNestedChange = (parent, field, value) => {
     // Si el campo es una fecha, actualizar también el exchange_rate
     if (field === 'date' && value) {
-      try {
-        console.log(`📅 Fecha cambiada en ${parent}: ${value}`);
-        const historicalRate = await getHistoricalRate(value);
+      getHistoricalRate(value).then(historicalRate => {
         if (historicalRate) {
           console.log(`💱 Cotización histórica obtenida: ${historicalRate}`);
           setFormData(prev => ({
             ...prev,
             [parent]: { ...prev[parent], [field]: value, exchange_rate: historicalRate.toString() }
           }));
-          setHasChanges(true);
-          return;
         }
-      } catch (error) {
+      }).catch(error => {
         console.error(`❌ Error obteniendo cotización histórica:`, error);
-      }
+      });
     }
-    
+
     setFormData(prev => ({ ...prev, [parent]: { ...prev[parent], [field]: value } }));
     setHasChanges(true);
   };
@@ -763,14 +757,14 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   <div className="grid grid-cols-4 gap-1.5">
                     <div><Label className="text-[9px] text-gray-400">KM *</Label><Input className="h-7 text-[10px]" defaultValue={ti.kilometers} onBlur={(e) => handleTradeInChange(i, 'kilometers', e.target.value)} key={`ti-km-${i}-${open}`} required /></div>
                     <div><Label className="text-[9px] text-gray-400">Color *</Label><Input className="h-7 text-[10px]" defaultValue={ti.color} onBlur={(e) => handleTradeInChange(i, 'color', e.target.value)} key={`ti-color-${i}-${open}`} required /></div>
-                    <div><Label className="text-[9px] text-gray-400">Radicación</Label><Input className="h-7 text-[10px]" defaultValue={ti.registration_city} onBlur={(e) => handleTradeInChange(i, 'registration_city', e.target.value)} key={`ti-reg-${i}-${open}`} /></div>
-                    <div><Label className="text-[9px] text-gray-400">Marca Motor</Label><Input className="h-7 text-[10px]" defaultValue={ti.engine_brand} onBlur={(e) => handleTradeInChange(i, 'engine_brand', e.target.value)} key={`ti-engbrand-${i}-${open}`} /></div>
+                    <div><Label className="text-[9px] text-gray-400">Ciudad Rad.</Label><Input className="h-7 text-[10px]" defaultValue={ti.registration_city} onBlur={(e) => handleTradeInChange(i, 'registration_city', e.target.value)} key={`ti-reg-city-${i}-${open}`} /></div>
+                    <div><Label className="text-[9px] text-gray-400">Provincia Rad.</Label><Input className="h-7 text-[10px]" defaultValue={ti.registration_province} onBlur={(e) => handleTradeInChange(i, 'registration_province', e.target.value)} key={`ti-reg-prov-${i}-${open}`} /></div>
                   </div>
                   <div className="grid grid-cols-4 gap-1.5">
+                    <div><Label className="text-[9px] text-gray-400">Marca Motor</Label><Input className="h-7 text-[10px]" defaultValue={ti.engine_brand} onBlur={(e) => handleTradeInChange(i, 'engine_brand', e.target.value)} key={`ti-engbrand-${i}-${open}`} /></div>
                     <div><Label className="text-[9px] text-gray-400">N° Motor *</Label><Input className="h-7 text-[10px]" defaultValue={ti.engine_number} onBlur={(e) => handleTradeInChange(i, 'engine_number', e.target.value)} key={`ti-engine-${i}-${open}`} required /></div>
                     <div><Label className="text-[9px] text-gray-400">Marca Chasis</Label><Input className="h-7 text-[10px]" defaultValue={ti.chassis_brand} onBlur={(e) => handleTradeInChange(i, 'chassis_brand', e.target.value)} key={`ti-chasbrand-${i}-${open}`} /></div>
                     <div><Label className="text-[9px] text-gray-400">N° Chasis *</Label><Input className="h-7 text-[10px]" defaultValue={ti.chassis_number} onBlur={(e) => handleTradeInChange(i, 'chassis_number', e.target.value)} key={`ti-chassis-${i}-${open}`} required /></div>
-                    <div></div>
                   </div>
                   <div className="flex gap-1.5 items-end pt-1 border-t border-cyan-200">
                     <div className="flex-1">
@@ -833,7 +827,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   </div>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
-                  <div><Label className="text-[9px] text-gray-400 uppercase">Banco/Entidad</Label><Input className="h-7 text-[10px]" defaultValue={formData.financing.bank} onBlur={(e) => handleNestedChange('financing', 'bank', e.target.value)} key={`fin-bank-${open}`} /></div>
+                  <div><Label className="text-[9px] text-gray-400 uppercase">Banco/Entidad</Label><Input className="h-7 text-[10px]" value={formData.financing.bank} onChange={(e) => handleNestedChange('financing', 'bank', e.target.value)} /></div>
                   <div><Label className="text-[9px] text-gray-400 uppercase">Fecha</Label>
                     <Input
                       className="h-7 text-[10px]"
@@ -842,8 +836,8 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                       onChange={(e) => handleNestedChange('financing', 'date', e.target.value)}
                     />
                   </div>
-                  <div><Label className="text-[9px] text-gray-400 uppercase">Cuotas</Label><Input className="h-7 text-[10px]" defaultValue={formData.financing.installments} onBlur={(e) => handleNestedChange('financing', 'installments', e.target.value)} key={`fin-inst-${open}`} /></div>
-                  <div><Label className="text-[9px] text-gray-400 uppercase">Valor cuota</Label><Input className="h-7 text-[10px]" defaultValue={formData.financing.installment_value} onBlur={(e) => handleNestedChange('financing', 'installment_value', e.target.value)} key={`fin-instval-${open}`} /></div>
+                  <div><Label className="text-[9px] text-gray-400 uppercase">Cuotas</Label><Input className="h-7 text-[10px]" value={formData.financing.installments} onChange={(e) => handleNestedChange('financing', 'installments', e.target.value)} /></div>
+                  <div><Label className="text-[9px] text-gray-400 uppercase">Valor cuota</Label><Input className="h-7 text-[10px]" value={formData.financing.installment_value} onChange={(e) => handleNestedChange('financing', 'installment_value', e.target.value)} /></div>
                 </div>
               </div>
             </PaymentSection>

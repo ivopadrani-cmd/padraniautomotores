@@ -828,7 +828,7 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="h-6 px-2 text-[9px] bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100"
+                            className="h-6 px-2 text-[9px] bg-cyan-50 border-cyan-300 text-cyan-700 hover:bg-cyan-100"
                             onClick={() => setShowConsignmentSaleForm(true)}
                           >
                             <FileText className="w-3 h-3 mr-1" />
