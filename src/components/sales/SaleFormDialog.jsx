@@ -294,7 +294,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
         if (onSaleCreated) onSaleCreated(saleWithId);
       } else {
         // Todos los datos están completos: mostrar boleto
-      setShowContract(true);
+        setShowContract(true);
         toast.success(existingSale ? "Venta actualizada" : "Venta creada");
         if (onSaleCreated) onSaleCreated(saleWithId);
       }

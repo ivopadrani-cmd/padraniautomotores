@@ -464,7 +464,11 @@ export default function SaleDetail({ sale, onClose }) {
             // Actualizar la venta actual y refrescar queries
             queryClient.invalidateQueries({ queryKey: ['sales'] });
             queryClient.invalidateQueries({ queryKey: ['sale', currentSale.id] });
+            queryClient.invalidateQueries({ queryKey: ['vehicle', vehicle?.id] });
+            queryClient.invalidateQueries({ queryKey: ['client', currentSale.client_id] });
             setShowEditDialog(false);
+            // Forzar refetch inmediato de la venta actual
+            queryClient.refetchQueries({ queryKey: ['sale', currentSale.id] });
           }}
         />
       )}

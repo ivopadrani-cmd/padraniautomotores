@@ -22,6 +22,7 @@ import CompleteBoletoDataForm from "../sales/CompleteBoletoDataForm";
 import StartSaleDialog from "../sales/StartSaleDialog";
 import StartReservationDialog from "../sales/StartReservationDialog";
 import SalesContractView from "../sales/SalesContractView";
+import ConsignmentSaleForm from "../sales/ConsignmentSaleForm";
 import ExpenseEditDialog from "./ExpenseEditDialog";
 import ConsignmentContractView from "./ConsignmentContractView";
 import DocumentEditDialog from "./DocumentEditDialog";
@@ -101,6 +102,7 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
 
     // Consignment contract state
     const [showConsignmentContract, setShowConsignmentContract] = useState(false);
+    const [showConsignmentSaleForm, setShowConsignmentSaleForm] = useState(false);
 
     // Document edit state
     const [editingDocument, setEditingDocument] = useState(null);
@@ -490,6 +492,16 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
           vehicle={updatedVehicle}
           client={supplier}
         />
+        <ConsignmentSaleForm
+          open={showConsignmentSaleForm}
+          onOpenChange={setShowConsignmentSaleForm}
+          vehicle={updatedVehicle}
+          onSaleCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+            queryClient.invalidateQueries({ queryKey: ['vehicle', updatedVehicle.id] });
+            queryClient.invalidateQueries({ queryKey: ['sales'] });
+          }}
+        />
         <DocumentEditDialog
           open={editingDocument !== null}
           onOpenChange={(open) => { if (!open) { setEditingDocument(null); setEditingDocumentIndex(null); } }}
@@ -802,14 +814,25 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                   </div>
                   <div className="flex items-center gap-1">
                         {isConsignment && supplier && (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="h-6 px-2 text-[9px] bg-cyan-50 border-cyan-300 text-cyan-700 hover:bg-cyan-100"
                             onClick={() => setShowConsignmentContract(true)}
                           >
                             <FileText className="w-3 h-3 mr-1" />
                             {consignmentContract ? 'Ver contrato de consignación' : 'Crear contrato de consignación'}
+                          </Button>
+                        )}
+                        {isConsignment && !supplier && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 px-2 text-[9px] bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100"
+                            onClick={() => setShowConsignmentSaleForm(true)}
+                          >
+                            <FileText className="w-3 h-3 mr-1" />
+                            Crear boleto de consignación
                           </Button>
                         )}
                         {updatedVehicle.is_supplier_owner && <span className="px-1.5 py-0.5 bg-gray-700 text-white text-[8px] font-semibold rounded">TITULAR</span>}
