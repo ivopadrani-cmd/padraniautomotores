@@ -5,9 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Trash2 } from "lucide-react";
-import { useDollarHistory } from "@/hooks/useDollarHistory";
 
-export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete, currentBlueRate }) {
+export default function ExpenseEditDialog({ open, onOpenChange, expense, index, onSave, onDelete }) {
   const [formData, setFormData] = useState({
     type: 'GESTORIA',
     value: '',
@@ -17,41 +16,18 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
     description: ''
   });
 
-  const [dateNeedsHistoricalUpdate, setDateNeedsHistoricalUpdate] = useState(false);
-
-  const { getHistoricalRate } = useDollarHistory();
-
   useEffect(() => {
     if (expense) {
       setFormData({
         type: expense.type || 'GESTORIA',
         value: expense.value?.toString() || '',
         currency: expense.currency || 'ARS',
-        exchange_rate: expense.exchange_rate?.toString() || (currentBlueRate?.toString() || '1200'),
+        exchange_rate: expense.exchange_rate?.toString() || '1200',
         date: expense.date || new Date().toISOString().split('T')[0],
         description: expense.description || ''
       });
-      setDateNeedsHistoricalUpdate(false); // Reset flag when opening modal
     }
-  }, [expense, currentBlueRate]);
-
-  // Efecto para buscar cotización histórica cuando se solicita
-  useEffect(() => {
-    const updateHistoricalRate = async () => {
-      if (formData.date && dateNeedsHistoricalUpdate) {
-        const historicalRate = await getHistoricalRate(formData.date);
-        if (historicalRate && historicalRate !== parseFloat(formData.exchange_rate)) {
-          setFormData(prev => ({ ...prev, exchange_rate: historicalRate.toString() }));
-        }
-        setDateNeedsHistoricalUpdate(false); // Reset flag after update
-      }
-    };
-
-    if (dateNeedsHistoricalUpdate) {
-      const timeoutId = setTimeout(updateHistoricalRate, 500);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [formData.date, getHistoricalRate, dateNeedsHistoricalUpdate]);
+  }, [expense]);
 
   const handleSave = () => {
     onSave(index, {
@@ -67,7 +43,7 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0" style={{ zIndex: 1500 }}>
+      <DialogContent className="max-w-md p-0">
         <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
           <DialogTitle className="text-sm font-semibold">{expense ? 'Editar' : 'Nuevo'} Gasto</DialogTitle>
         </DialogHeader>
@@ -87,12 +63,7 @@ export default function ExpenseEditDialog({ open, onOpenChange, expense, index, 
             </div>
             <div>
               <Label className={lbl}>Fecha</Label>
-              <Input className={inp} type="date" value={formData.date} onChange={(e) => {
-                setFormData({...formData, date: e.target.value});
-                if (e.target.value) {
-                  setDateNeedsHistoricalUpdate(true);
-                }
-              }} />
+              <Input className={inp} type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} />
             </div>
           </div>
 

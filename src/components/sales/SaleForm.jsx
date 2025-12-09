@@ -244,26 +244,26 @@ export default function SaleForm({ sale, clients, vehicles, onSubmit, onCancel, 
 
     setUploading(true);
     try {
-      const uploadPromises = files.map(async (file) => {
+    const uploadPromises = files.map(async (file) => {
         try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          return {
-            url: file_url,
-            name: file.name,
-            date: new Date().toISOString().split('T')[0],
-            type: file.type
-          };
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      return {
+        url: file_url,
+        name: file.name,
+        date: new Date().toISOString().split('T')[0],
+        type: file.type
+      };
         } catch (error) {
           console.error('Error subiendo archivo:', file.name, error);
           return null;
         }
-      });
+    });
 
       const uploadedFiles = (await Promise.all(uploadPromises)).filter(f => f);
       
       if (uploadedFiles.length > 0) {
-        handleChange('documents', [...(formData.documents || []), ...uploadedFiles]);
-        toast.success("Archivos subidos exitosamente.");
+      handleChange('documents', [...(formData.documents || []), ...uploadedFiles]);
+      toast.success("Archivos subidos exitosamente.");
       }
       
       if (uploadedFiles.length < files.length) {

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Users, User, Eye, Edit, Trash2, Phone, Mail, MapPin, X, ChevronDown, Calendar, Car } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -42,8 +42,7 @@ export default function CRM() {
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('leads');
-  const [showNewLeadForm, setShowNewLeadForm] = useState(false);
-  const [showEditLeadModal, setShowEditLeadModal] = useState(false);
+  const [showLeadForm, setShowLeadForm] = useState(false);
   const [showClientForm, setShowClientForm] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
   const [editingClient, setEditingClient] = useState(null);
@@ -65,7 +64,7 @@ export default function CRM() {
     client_name: '', client_phone: '', client_email: '',
     interested_vehicles: [],
     other_interests: '', budget: '', preferred_contact: 'WhatsApp',
-    trade_in: { brand: '', model: '', year: '', kilometers: '', plate: '', color: '', photos: [] },
+    trade_in: { brand: '', model: '', year: '', kilometers: '' },
     status: 'Nuevo', interest_level: 'Medio', observations: '', follow_up_date: '', follow_up_time: ''
   });
   const [vehicleSearch, setVehicleSearch] = useState('');
@@ -217,10 +216,9 @@ export default function CRM() {
   };
 
   const resetLeadForm = () => {
-    setShowNewLeadForm(false);
-    setShowEditLeadModal(false);
+    setShowLeadForm(false);
     setEditingLead(null);
-    setLeadFormData({ consultation_date: new Date().toISOString().split('T')[0], consultation_time: new Date().toTimeString().slice(0, 5), source: '', client_id: '', client_name: '', client_phone: '', client_email: '', interested_vehicles: [], other_interests: '', budget: '', preferred_contact: 'WhatsApp', trade_in: { brand: '', model: '', year: '', kilometers: '', plate: '', color: '', photos: [] }, status: 'Nuevo', interest_level: 'Medio', observations: '', follow_up_date: '', follow_up_time: '' });
+    setLeadFormData({ consultation_date: new Date().toISOString().split('T')[0], consultation_time: new Date().toTimeString().slice(0, 5), source: '', client_id: '', client_name: '', client_phone: '', client_email: '', interested_vehicles: [], other_interests: '', budget: '', preferred_contact: 'WhatsApp', trade_in: { brand: '', model: '', year: '', kilometers: '' }, status: 'Nuevo', interest_level: 'Medio', observations: '', follow_up_date: '', follow_up_time: '' });
     setVehicleSearch('');
     setShowVehicleDropdown(false);
     setClientSearch('');
@@ -252,19 +250,19 @@ export default function CRM() {
   const handleEditLead = (lead) => {
     setEditingLead(lead);
     setLeadFormData({
-      consultation_date: lead.consultation_date,
+      consultation_date: lead.consultation_date, 
       consultation_time: lead.consultation_time || '',
       source: lead.source || '',
       client_name: lead.client_name, client_phone: lead.client_phone || '',
-      client_email: lead.client_email || '',
+      client_email: lead.client_email || '', 
       interested_vehicles: lead.interested_vehicles || [],
       other_interests: lead.other_interests || '', budget: lead.budget?.toString() || '',
-      preferred_contact: lead.preferred_contact || 'WhatsApp',
-      trade_in: lead.trade_in || { brand: '', model: '', year: '', kilometers: '', plate: '', color: '', photos: [] },
+      preferred_contact: lead.preferred_contact || 'WhatsApp', 
+      trade_in: lead.trade_in || { brand: '', model: '', year: '', kilometers: '' },
       status: lead.status, interest_level: lead.interest_level || 'Medio',
       observations: lead.observations || '', follow_up_date: lead.follow_up_date || '', follow_up_time: lead.follow_up_time || ''
     });
-    setShowEditLeadModal(true);
+    setShowLeadForm(true);
   };
 
   const handleEditClient = (client) => {
@@ -354,17 +352,7 @@ export default function CRM() {
   }
 
   // Cliente ahora se maneja con navegación a /clients/:clientId
-  if (selectedLead) {
-    return (
-      <LeadDetail
-        lead={selectedLead}
-        onClose={handleCloseLead}
-        onEdit={(l) => { handleEditLead(l); }}
-        showEditModal={showEditLeadModal}
-        onCloseEditModal={() => setShowEditLeadModal(false)}
-      />
-    );
-  }
+  if (selectedLead) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} />;
 
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
@@ -402,36 +390,31 @@ export default function CRM() {
               ) : (
                 <Button variant="outline" onClick={() => setSelectionMode(true)} className="h-8 text-[11px]">Selección múltiple</Button>
               )}
-              <Button onClick={() => setShowNewLeadForm(true)} className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
+              <Button onClick={() => setShowLeadForm(true)} className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
                 <Plus className="w-3.5 h-3.5 mr-1.5" /> Nueva Consulta
               </Button>
             </div>
 
             <ConfirmDialog open={showConfirmLead} onOpenChange={setShowConfirmLead} onConfirm={resetLeadForm} />
-            <ScheduleFollowUpDialog
-              open={showScheduleDialog}
-              onOpenChange={setShowScheduleDialog}
+            <ScheduleFollowUpDialog 
+              open={showScheduleDialog} 
+              onOpenChange={setShowScheduleDialog} 
               leadData={leadFormData}
               leadId={editingLead?.id}
               clients={clients}
             />
-
-            {/* Modal de Nueva Consulta */}
-            <Dialog open={showNewLeadForm} onOpenChange={setShowNewLeadForm}>
+            <Dialog open={showLeadForm} onOpenChange={(open) => { if (!open) setShowConfirmLead(true); else setShowLeadForm(true); }}>
               <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
-                <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
-                  <DialogTitle className="text-sm font-semibold">Nueva Consulta</DialogTitle>
-                  <DialogDescription className="sr-only">Crear una nueva consulta con todos los detalles del cliente y vehículo.</DialogDescription>
-                </DialogHeader>
+                <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg"><DialogTitle className="text-sm font-semibold">{editingLead ? 'Editar' : 'Nueva'} Consulta</DialogTitle></DialogHeader>
                 <form onSubmit={handleSubmitLead} className="p-4 space-y-3">
                   <div className="grid grid-cols-3 gap-2">
                     <div><Label className={lbl}>Fecha *</Label><Input className={inp} type="date" value={leadFormData.consultation_date} onChange={(e) => setLeadFormData({ ...leadFormData, consultation_date: e.target.value })} required /></div>
                     <div><Label className={lbl}>Hora</Label>
-                      <Input
-                        className={inp}
-                        type="time"
-                        value={leadFormData.consultation_time}
-                        onChange={(e) => setLeadFormData({ ...leadFormData, consultation_time: e.target.value })}
+                      <Input 
+                        className={inp} 
+                        type="time" 
+                        value={leadFormData.consultation_time} 
+                        onChange={(e) => setLeadFormData({ ...leadFormData, consultation_time: e.target.value })} 
                       />
                     </div>
                     <div><Label className={lbl}>Fuente</Label>
@@ -441,7 +424,6 @@ export default function CRM() {
                       </Select>
                     </div>
                   </div>
-
                   {/* Sección Cliente/Prospecto */}
                   <div className="space-y-2 p-3 bg-gray-50 rounded">
                     {/* Toggle Nuevo/Existente */}
@@ -449,8 +431,8 @@ export default function CRM() {
                       <button
                         type="button"
                         className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
-                          isNewProspect
-                            ? 'bg-gray-900 text-white'
+                          isNewProspect 
+                            ? 'bg-gray-900 text-white' 
                             : 'bg-white text-gray-600 hover:bg-gray-100'
                         }`}
                         onClick={() => {
@@ -465,8 +447,8 @@ export default function CRM() {
                       <button
                         type="button"
                         className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
-                          !isNewProspect
-                            ? 'bg-gray-900 text-white'
+                          !isNewProspect 
+                            ? 'bg-gray-900 text-white' 
                             : 'bg-white text-gray-600 hover:bg-gray-100'
                         }`}
                         onClick={() => {
@@ -481,9 +463,9 @@ export default function CRM() {
                     {/* Búsqueda de Cliente (solo visible en modo existente) */}
                     {!isNewProspect && (
                       <div className="relative">
-                        <Input
-                          className={inp}
-                          placeholder="Buscar por nombre, DNI o teléfono..."
+                        <Input 
+                          className={inp} 
+                          placeholder="Buscar por nombre, DNI o teléfono..." 
                           value={clientSearch}
                           onChange={(e) => {
                             setClientSearch(e.target.value);
@@ -499,11 +481,11 @@ export default function CRM() {
                           }}
                         />
                         {showClientDropdown && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-48 overflow-auto">
+                          <div className="absolute z-10 w-full mt-1 bg-white rounded shadow-lg max-h-48 overflow-auto border">
                             {filteredClientsForLead.length > 0 ? (
                               filteredClientsForLead.slice(0, 10).map(c => (
-                                <div
-                                  key={c.id}
+                                <div 
+                                  key={c.id} 
                                   className="p-2 hover:bg-gray-50 cursor-pointer text-[11px] border-b last:border-0"
                                   onMouseDown={(e) => {
                                     e.preventDefault(); // Prevenir onBlur del input
@@ -538,39 +520,40 @@ export default function CRM() {
                         {leadFormData.client_id ? 'Datos del Cliente Seleccionado' : isNewProspect ? 'Datos del Prospecto' : 'Datos del Cliente'}
                       </Label>
                       <div className="space-y-2">
-                        <Input
-                          className={inp}
-                          placeholder="Nombre completo *"
-                          value={leadFormData.client_name}
-                          onChange={(e) => setLeadFormData({ ...leadFormData, client_name: e.target.value })}
+                        <Input 
+                          className={inp} 
+                          placeholder="Nombre completo *" 
+                          value={leadFormData.client_name} 
+                          onChange={(e) => setLeadFormData({ ...leadFormData, client_name: e.target.value })} 
                           disabled={!isNewProspect && leadFormData.client_id}
-                          required
+                          required 
                         />
                         <div className="grid grid-cols-2 gap-2">
-                          <Input
-                            className={inp}
-                            placeholder="Teléfono *"
-                            value={leadFormData.client_phone}
-                            onChange={(e) => setLeadFormData({ ...leadFormData, client_phone: e.target.value })}
+                          <Input 
+                            className={inp} 
+                            placeholder="Teléfono *" 
+                            value={leadFormData.client_phone} 
+                            onChange={(e) => setLeadFormData({ ...leadFormData, client_phone: e.target.value })} 
                             disabled={!isNewProspect && leadFormData.client_id}
-                            required
+                            required 
                           />
-                          <Input
-                            className={inp}
-                            type="email"
-                            placeholder="Email"
-                            value={leadFormData.client_email}
-                            onChange={(e) => setLeadFormData({ ...leadFormData, client_email: e.target.value })}
+                          <Input 
+                            className={inp} 
+                            placeholder="Email" 
+                            type="email" 
+                            value={leadFormData.client_email} 
+                            onChange={(e) => setLeadFormData({ ...leadFormData, client_email: e.target.value })} 
                             disabled={!isNewProspect && leadFormData.client_id}
                           />
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  <div><Label className={lbl}>Presupuesto</Label><Input className={inp} placeholder="Ej: 10000000" value={leadFormData.budget} onChange={(e) => setLeadFormData({ ...leadFormData, budget: e.target.value })} /></div>
-
-                  {/* Vehículos de interés */}
+                  <div>
+                    <Label className={lbl}>Presupuesto</Label>
+                    <Input className={inp} placeholder="Ej: 10000000" value={leadFormData.budget} onChange={(e) => setLeadFormData({ ...leadFormData, budget: e.target.value })} />
+                  </div>
+                  
                   <div>
                     <Label className={lbl}>Vehículos de interés</Label>
                     <div className="relative">
@@ -602,7 +585,6 @@ export default function CRM() {
 
                   <div><Label className={lbl}>Otros intereses</Label><Input className={inp} value={leadFormData.other_interests} onChange={(e) => setLeadFormData({ ...leadFormData, other_interests: e.target.value })} placeholder="Vehículos que no están en stock, características buscadas..." /></div>
 
-                  {/* Trade-in */}
                   <div className="p-3 bg-gray-50 rounded border">
                     <div className="flex items-center gap-2 mb-2">
                       <Car className="w-3.5 h-3.5 text-gray-500" />
@@ -614,33 +596,10 @@ export default function CRM() {
                       <Input className={inp} placeholder="Año" value={leadFormData.trade_in?.year || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, year: e.target.value } })} />
                       <Input className={inp} placeholder="Km" value={leadFormData.trade_in?.kilometers || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, kilometers: e.target.value } })} />
                     </div>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <Input className={inp} placeholder="Dominio" value={leadFormData.trade_in?.plate || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, plate: e.target.value } })} />
-                      <Input className={inp} placeholder="Color" value={leadFormData.trade_in?.color || ''} onChange={(e) => setLeadFormData({ ...leadFormData, trade_in: { ...leadFormData.trade_in, color: e.target.value } })} />
-                    </div>
-                    <div className="mt-2">
-                      <Label className={lbl}>Fotos del vehículo</Label>
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files);
-                          setLeadFormData(prev => ({
-                            ...prev,
-                            trade_in: {
-                              ...prev.trade_in,
-                              photos: files
-                            }
-                          }));
-                        }}
-                        className="text-[10px] w-full"
-                      />
-                    </div>
                   </div>
 
                   <div><Label className={lbl}>Observaciones</Label><Textarea className="text-[11px] min-h-[60px] bg-white" value={leadFormData.observations} onChange={(e) => setLeadFormData({ ...leadFormData, observations: e.target.value })} /></div>
-
+                  
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <Label className={lbl}>Estado</Label>
@@ -658,9 +617,22 @@ export default function CRM() {
                     </div>
                   </div>
 
+                  <div className="p-3 bg-gray-50 rounded border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                        <Label className="text-[10px] font-medium text-gray-600">Seguimiento</Label>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" className="h-7 text-[10px] px-3" onClick={() => setShowScheduleDialog(true)}>
+                        <Calendar className="w-3 h-3 mr-1" />
+                        Agendar seguimiento
+                      </Button>
+                    </div>
+                  </div>
+
                   <div className="flex justify-end gap-2 pt-2 border-t">
-                    <Button type="button" variant="outline" onClick={() => setShowNewLeadForm(false)} className="h-8 text-[11px]">Cancelar</Button>
-                    <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">Crear</Button>
+                    <Button type="button" variant="outline" onClick={() => setShowConfirmLead(true)} className="h-8 text-[11px]">Cancelar</Button>
+                    <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">{editingLead ? 'Guardar' : 'Crear'}</Button>
                   </div>
                 </form>
               </DialogContent>

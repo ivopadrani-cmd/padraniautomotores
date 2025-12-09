@@ -7,7 +7,7 @@ export default function PriceManualDialog({ open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-xl" style={{ zIndex: 1100 }}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white border border-gray-200 shadow-xl">
         <DialogHeader className="bg-cyan-600 text-white p-6 rounded-t-lg border-b border-cyan-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

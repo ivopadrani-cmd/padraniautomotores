@@ -504,7 +504,7 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
 
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={handleClose} className="h-8 text-[11px]" disabled={isSubmitting || isLoading}>Cancelar</Button>
-              <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800" disabled={isSubmitting || isLoading || !hasChanges}>
+              <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800" disabled={isSubmitting || isLoading}>
                 <Save className="w-3.5 h-3.5 mr-1.5" />{isSubmitting || isLoading ? 'Guardando...' : 'Guardar'}
               </Button>
             </div>

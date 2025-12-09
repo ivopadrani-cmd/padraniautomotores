@@ -2,10 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, Car, Users, ClipboardList, Building2, RefreshCw, User, ChevronDown, Settings, LogOut, HelpCircle, Bell, FileText, Calculator, Wrench, Shield } from "lucide-react";
+import { LayoutDashboard, Car, Users, ClipboardList, Building2, RefreshCw, User, ChevronDown, Settings, LogOut, HelpCircle, Bell, FileText, Calculator, Wrench } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/contexts/AuthContext";
 import LoginScreen from "@/components/auth/LoginScreen";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu,
@@ -36,8 +35,6 @@ const getNavigationItems = (userRole) => {
       { title: "CRM", pageName: "CRM", icon: Users },
       { title: "Clientes", pageName: "Clients", icon: Users, hidden: true }, // No visible en sidebar, pero permitido
       { title: "Tareas", pageName: "Tasks", icon: ClipboardList },
-      { title: "InfoAuto API", pageName: "InfoAutoTester", icon: Car },
-      { title: "Panel Admin", pageName: "AdminPanel", icon: Shield },
       { title: "Agencia", pageName: "Agency", icon: Building2 }
     ];
   }
@@ -197,13 +194,8 @@ export default function Layout({ children }) {
     return () => clearInterval(interval);
   }, []);
   
-  const { logout } = useAuth();
-
   const handleLogout = () => {
-    // Cerrar sesión del sistema base44 (Supabase)
     base44.auth.logout();
-    // Cerrar sesión del sistema de autenticación básico
-    logout();
   };
 
   const handleLogin = async (user) => {

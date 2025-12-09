@@ -246,15 +246,15 @@ export default function Tasks() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600" />
           </div>
         ) : (
-          <TaskDetailDialog 
-            open={!!selectedTask} 
+        <TaskDetailDialog 
+          open={!!selectedTask} 
             onOpenChange={handleCloseTask} 
-            task={selectedTask} 
-            onEdit={handleEdit} 
-            onComplete={toggleComplete} 
+          task={selectedTask} 
+          onEdit={handleEdit} 
+          onComplete={toggleComplete} 
             onDelete={(id) => { deleteMutation.mutate(id); handleCloseTask(); }}
-            clientPhone={selectedTask?.related_client_id ? clients.find(c => c.id === selectedTask.related_client_id)?.phone : (selectedTask?.related_lead_id ? leads.find(l => l.id === selectedTask.related_lead_id)?.client_phone : null)}
-          />
+          clientPhone={selectedTask?.related_client_id ? clients.find(c => c.id === selectedTask.related_client_id)?.phone : (selectedTask?.related_lead_id ? leads.find(l => l.id === selectedTask.related_lead_id)?.client_phone : null)}
+        />
         )}
 
         <Dialog open={showForm} onOpenChange={(open) => { if (!open) resetForm(); }}>

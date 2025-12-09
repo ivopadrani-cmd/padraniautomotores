@@ -122,12 +122,12 @@ export default function VehicleDetail({ vehicle, onClose, onEdit, onDelete }) {
     try {
       const uploadPromises = files.map(async (file) => {
         try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          return {
-            url: file_url,
-            name: file.name,
-            date: new Date().toISOString().split('T')[0]
-          };
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        return {
+          url: file_url,
+          name: file.name,
+          date: new Date().toISOString().split('T')[0]
+        };
         } catch (error) {
           console.error('Error subiendo archivo:', file.name, error);
           return null;
@@ -137,13 +137,13 @@ export default function VehicleDetail({ vehicle, onClose, onEdit, onDelete }) {
       const uploadedFiles = (await Promise.all(uploadPromises)).filter(f => f);
 
       if (uploadedFiles.length > 0) {
-        if (type === 'photos') {
-          handleChange('photos', [...(formData.photos || []), ...uploadedFiles]);
-        } else if (type === 'documents') {
-          handleChange('documents', [...(formData.documents || []), ...uploadedFiles]);
-        }
-        
-        toast.success(`${uploadedFiles.length} archivo(s) cargado(s)`);
+      if (type === 'photos') {
+        handleChange('photos', [...(formData.photos || []), ...uploadedFiles]);
+      } else if (type === 'documents') {
+        handleChange('documents', [...(formData.documents || []), ...uploadedFiles]);
+      }
+
+      toast.success(`${uploadedFiles.length} archivo(s) cargado(s)`);
       }
       
       if (uploadedFiles.length < files.length) {
@@ -181,14 +181,14 @@ export default function VehicleDetail({ vehicle, onClose, onEdit, onDelete }) {
 
     try {
       await updateMutation.mutateAsync({
-        id: formData.id,
-        data: {
-          ...formData,
-          expenses,
-          total_cost_ars: totalArs,
-          total_cost_usd: totalUsd
-        }
-      });
+      id: formData.id,
+      data: {
+        ...formData,
+        expenses,
+        total_cost_ars: totalArs,
+        total_cost_usd: totalUsd
+      }
+    });
     } catch (error) {
       console.error('Error al guardar:', error);
     }

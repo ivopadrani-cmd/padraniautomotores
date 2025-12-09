@@ -293,18 +293,18 @@ export default function Inspections() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600" />
         </div>
       ) : (
-        <InspectionView 
-          open={showInspectionView}
-          onOpenChange={(open) => {
-            if (!open) {
+      <InspectionView
+        open={showInspectionView}
+        onOpenChange={(open) => {
+          if (!open) {
               handleCloseInspectionView();
-            }
-          }}
-          inspection={selectedInspection}
-          vehicle={selectedVehicle}
-          onEdit={null}
-          onDelete={null}
-        />
+          }
+        }}
+        inspection={selectedInspection}
+        vehicle={selectedVehicle}
+        onEdit={null}
+        onDelete={null}
+      />
       )}
 
       {/* Edit Request Dialog */}

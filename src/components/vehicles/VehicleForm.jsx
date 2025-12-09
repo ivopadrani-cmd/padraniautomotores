@@ -115,15 +115,15 @@ export default function VehicleForm({ vehicle, onSubmit, onCancel, isLoading }) 
     
     setUploadingPhotos(true);
     try {
-      const uploaded = await Promise.all(files.map(async (file) => {
-        try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
+    const uploaded = await Promise.all(files.map(async (file) => {
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
         } catch (error) {
           console.error('Error subiendo foto:', file.name, error);
           return null;
         }
-      }));
+    }));
       
       const successfulUploads = uploaded.filter(f => f);
       if (successfulUploads.length > 0) {
@@ -134,8 +134,8 @@ export default function VehicleForm({ vehicle, onSubmit, onCancel, isLoading }) 
         alert(`${files.length - successfulUploads.length} foto(s) no se pudieron subir. Intenta nuevamente.`);
       }
     } finally {
-      setUploadingPhotos(false);
-      e.target.value = null;
+    setUploadingPhotos(false);
+    e.target.value = null;
     }
   };
 
@@ -154,15 +154,15 @@ export default function VehicleForm({ vehicle, onSubmit, onCancel, isLoading }) 
     
     setUploadingDocs(true);
     try {
-      const uploaded = await Promise.all(files.map(async (file) => {
-        try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
+    const uploaded = await Promise.all(files.map(async (file) => {
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        return { url: file_url, name: file.name, date: new Date().toISOString().split('T')[0] };
         } catch (error) {
           console.error('Error subiendo documento:', file.name, error);
           return null;
         }
-      }));
+    }));
       
       const successfulUploads = uploaded.filter(f => f);
       if (successfulUploads.length > 0) {
@@ -173,8 +173,8 @@ export default function VehicleForm({ vehicle, onSubmit, onCancel, isLoading }) 
         alert(`${files.length - successfulUploads.length} documento(s) no se pudieron subir. Intenta nuevamente.`);
       }
     } finally {
-      setUploadingDocs(false);
-      e.target.value = null;
+    setUploadingDocs(false);
+    e.target.value = null;
     }
   };
 

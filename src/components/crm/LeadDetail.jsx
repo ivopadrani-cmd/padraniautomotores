@@ -4,14 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload } from "lucide-react";
-import { ArrowLeft, Edit, Phone, DollarSign, Car, CheckCircle, FileText, Receipt, ShoppingCart, Trash2, MessageCircle, User, Eye, X, ChevronDown } from "lucide-react";
+import { ArrowLeft, Edit, Phone, DollarSign, Car, CheckCircle, FileText, Receipt, ShoppingCart, Trash2, MessageCircle, User, Eye, Upload, X } from "lucide-react";
 import WhatsAppButton, { QuickContactButton } from "../common/WhatsAppButton";
 import SaleFormDialog from "../sales/SaleFormDialog";
 import SaleDetail from "../sales/SaleDetail";
@@ -33,36 +32,14 @@ const STATUS_CONFIG = {
   'Perdido': 'bg-red-100 text-gray-900'
 };
 
-const SOURCE_OPTIONS = ['Salón', 'Llamada', 'Redes sociales', 'Recomendado'];
-
-const INTEREST_CONFIG = {
-  'Bajo': { bg: 'bg-gray-100 text-gray-600', icon: 'Γû╜' },
-  'Medio': { bg: 'bg-gray-200 text-gray-700', icon: 'Γùç' },
-  'Alto': { bg: 'bg-cyan-100 text-cyan-700', icon: 'Γùå' },
-  'Muy alto': { bg: 'bg-cyan-500 text-white', icon: 'Γÿà' }
-};
-
-export default function LeadDetail({ lead, onClose, onEdit, showEditModal = false, onCloseEditModal }) {
+export default function LeadDetail({ lead, onClose, onEdit, showEditModal = false }) {
   const navigate = useNavigate();
   
   const [showConvertDialog, setShowConvertDialog] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [editingFormData, setEditingFormData] = useState(null);
-  const [isNewProspect, setIsNewProspect] = useState(true);
-  const [clientSearch, setClientSearch] = useState('');
-  const [showClientDropdown, setShowClientDropdown] = useState(false);
-  const [vehicleSearch, setVehicleSearch] = useState('');
-  const [showVehicleDropdown, setShowVehicleDropdown] = useState(false);
-
-  const [selectedVehicleForQuote, setSelectedVehicleForQuote] = useState(null);
-  const [showQuotePrint, setShowQuotePrint] = useState(null);
-  const [showMultiQuotePrint, setShowMultiQuotePrint] = useState(null);
-  const [showSaleForm, setShowSaleForm] = useState(false);
-  const [selectedVehicleForSale, setSelectedVehicleForSale] = useState(null);
-  const [clientFormData, setClientFormData] = useState({ dni: '', cuit_cuil: '', address: '', city: '', province: '' });
-  const [lastCreatedQuotes, setLastCreatedQuotes] = useState([]);
-  const [lastTradeIn, setLastTradeIn] = useState(null);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
 
   // Inicializar datos del formulario cuando se abre el modal
   React.useEffect(() => {
@@ -71,7 +48,6 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
         consultation_date: lead.consultation_date,
         consultation_time: lead.consultation_time || '',
         source: lead.source || '',
-        client_id: lead.client_id || '',
         client_name: lead.client_name,
         client_phone: lead.client_phone || '',
         client_email: lead.client_email || '',
@@ -84,53 +60,28 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
         interest_level: lead.interest_level || 'Medio',
         observations: lead.observations || '',
         follow_up_date: lead.follow_up_date || '',
-        follow_up_time: lead.follow_up_time || '',
-        isNewProspect: !lead.client_id, // Si tiene client_id es cliente existente
-        clientSearch: '',
-        showClientDropdown: false,
-        vehicleSearch: '',
-        showVehicleDropdown: false
+        follow_up_time: lead.follow_up_time || ''
       });
-      setIsNewProspect(!lead.client_id);
-      setClientSearch('');
-      setShowClientDropdown(false);
-      setVehicleSearch('');
-      setShowVehicleDropdown(false);
     }
   }, [showEditModal, lead, editingFormData]);
+  const [selectedVehicleForQuote, setSelectedVehicleForQuote] = useState(null);
+  const [showQuotePrint, setShowQuotePrint] = useState(null);
+  const [showMultiQuotePrint, setShowMultiQuotePrint] = useState(null);
+  const [showSaleForm, setShowSaleForm] = useState(false);
+  const [selectedVehicleForSale, setSelectedVehicleForSale] = useState(null);
+  const [clientFormData, setClientFormData] = useState({ dni: '', cuit_cuil: '', address: '', city: '', province: '' });
+  const [lastCreatedQuotes, setLastCreatedQuotes] = useState([]);
+  const [lastTradeIn, setLastTradeIn] = useState(null);
 
-  // Función para manejar el submit del formulario de edición
+  // Funciones para manejar la edición del lead
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    if (!editingFormData) return;
-
     try {
-      // Filtrar solo los campos que existen en la base de datos
-      const dataToSave = {
-        consultation_date: editingFormData.consultation_date,
-        consultation_time: editingFormData.consultation_time,
-        source: editingFormData.source,
-        client_id: editingFormData.client_id,
-        client_name: editingFormData.client_name,
-        client_phone: editingFormData.client_phone,
-        client_email: editingFormData.client_email,
-        interested_vehicles: editingFormData.interested_vehicles,
-        other_interests: editingFormData.other_interests,
-        budget: editingFormData.budget,
-        preferred_contact: editingFormData.preferred_contact,
-        trade_in: editingFormData.trade_in,
-        status: editingFormData.status,
-        interest_level: editingFormData.interest_level,
-        observations: editingFormData.observations,
-        follow_up_date: editingFormData.follow_up_date,
-        follow_up_time: editingFormData.follow_up_time
-      };
-
-      await base44.entities.Lead.update(lead.id, dataToSave);
+      await base44.entities.Lead.update(lead.id, editingFormData);
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['lead', lead.id] });
       toast.success('Consulta actualizada correctamente');
-      onCloseEditModal && onCloseEditModal();
+      onEdit(null);
       setEditingFormData(null);
     } catch (error) {
       console.error('Error updating lead:', error);
@@ -138,6 +89,49 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
     }
   };
 
+  const handleTradeInPhotoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setUploadingPhotos(true);
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        // Simular subida de archivo (en un entorno real usarías un servicio como Cloudinary, S3, etc.)
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Por ahora, solo guardamos el archivo como base64 o URL.createObjectURL
+        const url = URL.createObjectURL(file);
+        uploadedUrls.push(url);
+      }
+
+      setEditingFormData(prev => ({
+        ...prev,
+        trade_in: {
+          ...prev.trade_in,
+          photos: [...(prev.trade_in?.photos || []), ...uploadedUrls]
+        }
+      }));
+
+      toast.success(`${files.length} foto(s) agregada(s)`);
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      toast.error('Error al subir las fotos');
+    } finally {
+      setUploadingPhotos(false);
+    }
+  };
+
+  const removeTradeInPhoto = (index) => {
+    setEditingFormData(prev => ({
+      ...prev,
+      trade_in: {
+        ...prev.trade_in,
+        photos: prev.trade_in?.photos?.filter((_, i) => i !== index) || []
+      }
+    }));
+  };
 
   const queryClient = useQueryClient();
 
@@ -147,48 +141,12 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
     enabled: !!lead.client_id
   });
 
-  const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list() });
-
   const { data: vehicles = [] } = useQuery({ queryKey: ['vehicles'], queryFn: () => base44.entities.Vehicle.list() });
 
-  // Funciones para el modal de edición
-  const addVehicleToLead = (vehicle) => {
-    if (editingFormData && !editingFormData.interested_vehicles.some(iv => iv.vehicle_id === vehicle.id)) {
-      setEditingFormData({
-        ...editingFormData,
-        interested_vehicles: [...editingFormData.interested_vehicles, {
-          vehicle_id: vehicle.id,
-          vehicle_description: `${vehicle.brand} ${vehicle.model} ${vehicle.year} • ${vehicle.plate}`
-        }]
-      });
-    }
-  };
-
-  const removeVehicleFromLead = (vehicleId) => {
-    if (editingFormData) {
-      setEditingFormData({
-        ...editingFormData,
-        interested_vehicles: editingFormData.interested_vehicles.filter(iv => iv.vehicle_id !== vehicleId)
-      });
-    }
-  };
-
-  // Filtros para el modal
-  const filteredClientsForLead = clients.filter(c =>
-    c.full_name?.toLowerCase().includes(clientSearch.toLowerCase()) ||
-    c.phone?.includes(clientSearch)
-  );
-
-  const filteredAvailableVehicles = vehicles.filter(v =>
-    v.brand?.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
-    v.model?.toLowerCase().includes(vehicleSearch.toLowerCase()) ||
-    v.plate?.toLowerCase().includes(vehicleSearch.toLowerCase())
-  );
-
-  const { data: leadQuotes = [] } = useQuery({
-    queryKey: ['lead-quotes', lead.id],
+  const { data: leadQuotes = [] } = useQuery({ 
+    queryKey: ['lead-quotes', lead.id], 
     queryFn: () => base44.entities.Quote.filter({ lead_id: lead.id }, '-quote_date'),
-    enabled: !!lead.id
+    enabled: !!lead.id 
   });
 
   const { data: rates = [] } = useQuery({
@@ -442,7 +400,7 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
         {/* Convert Dialog */}
         <Dialog open={showConvertDialog} onOpenChange={setShowConvertDialog}>
           <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle className="text-sm">Completar datos del cliente</DialogTitle><DialogDescription className="sr-only">Complete los datos adicionales para convertir el prospecto en cliente registrado.</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle className="text-sm">Completar datos del cliente</DialogTitle></DialogHeader>
             <form onSubmit={(e) => { e.preventDefault(); convertToClientMutation.mutate(clientFormData); }} className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <div><Label className={lbl}>DNI</Label><Input className={inp} value={clientFormData.dni} onChange={(e) => setClientFormData({ ...clientFormData, dni: e.target.value })} /></div>
@@ -745,242 +703,327 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
       )}
 
       {/* Modal de edición */}
-      <Dialog open={showEditModal} onOpenChange={(open) => { if (!open && onCloseEditModal) onCloseEditModal(); }}>
+      <Dialog open={showEditModal} onOpenChange={() => onEdit(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
           <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg">
             <DialogTitle className="text-sm font-semibold">Editar Consulta</DialogTitle>
-            <DialogDescription className="sr-only">Edite los detalles de la consulta incluyendo datos del cliente, vehículos de interés y configuración de seguimiento.</DialogDescription>
           </DialogHeader>
           {editingFormData && (
             <form onSubmit={handleEditSubmit} className="p-4 space-y-3">
               <div className="grid grid-cols-3 gap-2">
-                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Fecha *</Label><Input className="h-8 text-[11px] bg-white" type="date" value={editingFormData.consultation_date} onChange={(e) => setEditingFormData({ ...editingFormData, consultation_date: e.target.value })} required /></div>
-                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Hora</Label><Input className="h-8 text-[11px] bg-white" type="time" value={editingFormData.consultation_time} onChange={(e) => setEditingFormData({ ...editingFormData, consultation_time: e.target.value })} /></div>
-                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Fuente</Label>
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Fecha *</Label>
+                  <Input
+                    className="h-8 text-[11px] bg-white"
+                    type="date"
+                    value={editingFormData.consultation_date}
+                    onChange={(e) => setEditingFormData({ ...editingFormData, consultation_date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Hora</Label>
+                  <Input
+                    className="h-8 text-[11px] bg-white"
+                    type="time"
+                    value={editingFormData.consultation_time}
+                    onChange={(e) => setEditingFormData({ ...editingFormData, consultation_time: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Fuente</Label>
                   <Select value={editingFormData.source} onValueChange={(value) => setEditingFormData({ ...editingFormData, source: value })}>
-                    <SelectTrigger className="h-8 text-[11px] bg-white"><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                    <SelectContent>{SOURCE_OPTIONS.map(s => <SelectItem key={s} value={s} className="text-[11px]">{s}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-8 text-[11px] bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Salón" className="text-[11px]">Salón</SelectItem>
+                      <SelectItem value="Llamada" className="text-[11px]">Llamada</SelectItem>
+                      <SelectItem value="Redes sociales" className="text-[11px]">Redes sociales</SelectItem>
+                      <SelectItem value="Recomendado" className="text-[11px]">Recomendado</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              {/* Sección Cliente/Prospecto */}
-              <div className="space-y-2 p-3 bg-gray-50 rounded">
-                {/* Toggle Nuevo/Existente */}
-                <div className="flex rounded overflow-hidden">
-                  <button
-                    type="button"
-                    className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
-                      editingFormData.isNewProspect
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-100'
-                    }`}
-                    onClick={() => setEditingFormData({ ...editingFormData, isNewProspect: true, client_id: '', client_name: '', client_phone: '', client_email: '' })}
-                  >
-                    Nuevo Prospecto
-                  </button>
-                  <button
-                    type="button"
-                    className={`flex-1 h-8 text-[10px] font-medium transition-colors ${
-                      !editingFormData.isNewProspect
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-100'
-                    }`}
-                    onClick={() => setEditingFormData({ ...editingFormData, isNewProspect: false })}
-                  >
-                    Cliente Existente
-                  </button>
-                </div>
-
-                {/* Búsqueda de Cliente (solo visible en modo existente) */}
-                {!editingFormData.isNewProspect && (
-                  <div className="relative">
-                    <Input
-                      className="h-8 text-[11px] bg-white"
-                      placeholder="Buscar por nombre, DNI o teléfono..."
-                      value={clientSearch}
-                      onChange={(e) => setClientSearch(e.target.value)}
-                      onClick={() => setShowClientDropdown(!showClientDropdown)}
-                      onBlur={() => setTimeout(() => setShowClientDropdown(false), 200)}
-                    />
-                    {showClientDropdown && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-48 overflow-auto">
-                        {clients.filter(c =>
-                          c.full_name?.toLowerCase().includes((editingFormData.clientSearch || '').toLowerCase()) ||
-                          c.phone?.includes(editingFormData.clientSearch || '')
-                        ).slice(0, 10).map(c => (
-                          <div
-                            key={c.id}
-                            className="p-2 hover:bg-gray-50 cursor-pointer text-[11px] border-b last:border-0"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setEditingFormData({
-                                ...editingFormData,
-                                client_id: c.id,
-                                client_name: c.full_name,
-                                client_phone: c.phone || '',
-                                client_email: c.email || '',
-                                isNewProspect: false
-                              });
-                              setClientSearch('');
-                              setShowClientDropdown(false);
-                            }}
-                          >
-                            <p className="font-medium">{c.full_name}</p>
-                            <p className="text-gray-400 text-[9px]">{c.phone} {c.client_status && `• ${c.client_status}`}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Formulario de Datos (siempre visible) */}
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">
-                    {editingFormData.client_id ? 'Datos del Cliente Seleccionado' : editingFormData.isNewProspect ? 'Datos del Prospecto' : 'Datos del Cliente'}
-                  </Label>
-                  <div className="space-y-2">
-                    <Input
-                      className="h-8 text-[11px] bg-white"
-                      placeholder="Nombre completo *"
-                      value={editingFormData.client_name}
-                      onChange={(e) => setEditingFormData({ ...editingFormData, client_name: e.target.value })}
-                      disabled={!editingFormData.isNewProspect && editingFormData.client_id}
-                      required
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        className="h-8 text-[11px] bg-white"
-                        placeholder="Teléfono *"
-                        value={editingFormData.client_phone}
-                        onChange={(e) => setEditingFormData({ ...editingFormData, client_phone: e.target.value })}
-                        disabled={!editingFormData.isNewProspect && editingFormData.client_id}
-                        required
-                      />
-                      <Input
-                        className="h-8 text-[11px] bg-white"
-                        type="email"
-                        placeholder="Email"
-                        value={editingFormData.client_email}
-                        onChange={(e) => setEditingFormData({ ...editingFormData, client_email: e.target.value })}
-                        disabled={!editingFormData.isNewProspect && editingFormData.client_id}
-                      />
-                    </div>
-                  </div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Nombre *</Label>
+                  <Input
+                    className="h-8 text-[11px] bg-white"
+                    value={editingFormData.client_name}
+                    onChange={(e) => setEditingFormData({ ...editingFormData, client_name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Teléfono</Label>
+                  <Input
+                    className="h-8 text-[11px] bg-white"
+                    value={editingFormData.client_phone}
+                    onChange={(e) => setEditingFormData({ ...editingFormData, client_phone: e.target.value })}
+                  />
                 </div>
               </div>
 
-              <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Presupuesto</Label><Input className="h-8 text-[11px] bg-white" value={editingFormData.budget} onChange={(e) => setEditingFormData({ ...editingFormData, budget: e.target.value })} placeholder="Ej: 15.000.000 - 18.000.000" /></div>
+              <div>
+                <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Email</Label>
+                <Input
+                  className="h-8 text-[11px] bg-white"
+                  type="email"
+                  value={editingFormData.client_email}
+                  onChange={(e) => setEditingFormData({ ...editingFormData, client_email: e.target.value })}
+                />
+              </div>
 
               {/* Vehículos de interés */}
               <div>
                 <Label className="text-[10px] font-medium text-gray-500 mb-1">Vehículos de interés</Label>
-                <div className="relative">
-                  <div className="flex gap-1">
-                    <Input className="h-8 text-[11px] bg-white flex-1" placeholder="Buscar por marca, modelo, año o dominio..." value={vehicleSearch} onChange={(e) => setVehicleSearch(e.target.value)} onFocus={() => setShowVehicleDropdown(true)} />
-                    <Button type="button" variant="outline" className="h-8 px-2" onClick={() => setShowVehicleDropdown(!showVehicleDropdown)}><ChevronDown className="w-3.5 h-3.5" /></Button>
+                <div className="space-y-1 max-h-20 overflow-y-auto">
+                  {vehicles.map(v => (
+                    <div key={v.id} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={editingFormData.interested_vehicles?.includes(v.id)}
+                        onCheckedChange={(checked) => {
+                          const current = editingFormData.interested_vehicles || [];
+                          const updated = checked
+                            ? [...current, v.id]
+                            : current.filter(id => id !== v.id);
+                          setEditingFormData({ ...editingFormData, interested_vehicles: updated });
+                        }}
+                        className="h-3 w-3"
+                      />
+                      <span className="text-[10px]">{v.brand} {v.model} {v.year}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Trade-in */}
+              <div className="border-t pt-3">
+                <Label className="text-[10px] font-medium text-gray-700 mb-2 block">Vehículo usado para entrega (Trade-in)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[9px] font-medium text-gray-500 mb-0.5">Marca</Label>
+                    <Input
+                      className="h-7 text-[10px] bg-white"
+                      value={editingFormData.trade_in?.brand || ''}
+                      onChange={(e) => setEditingFormData({
+                        ...editingFormData,
+                        trade_in: { ...editingFormData.trade_in, brand: e.target.value }
+                      })}
+                      placeholder="Ej: Toyota"
+                    />
                   </div>
-                  {showVehicleDropdown && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-32 overflow-auto">
-                      {vehicles.filter(v =>
-                        v.brand?.toLowerCase().includes((editingFormData.vehicleSearch || '').toLowerCase()) ||
-                        v.model?.toLowerCase().includes((editingFormData.vehicleSearch || '').toLowerCase()) ||
-                        v.plate?.toLowerCase().includes((editingFormData.vehicleSearch || '').toLowerCase())
-                      ).slice(0, 8).map(v => (
-                        <div key={v.id} className="p-2 hover:bg-gray-50 cursor-pointer text-[11px] border-b last:border-0" onClick={() => {
-                          addVehicleToLead(v);
-                          setShowVehicleDropdown(false);
-                        }}>
-                          <span className="font-medium uppercase">{v.brand} {v.model}</span> <span className="text-gray-500">{v.year} • {v.plate}</span>
+                  <div>
+                    <Label className="text-[9px] font-medium text-gray-500 mb-0.5">Modelo</Label>
+                    <Input
+                      className="h-7 text-[10px] bg-white"
+                      value={editingFormData.trade_in?.model || ''}
+                      onChange={(e) => setEditingFormData({
+                        ...editingFormData,
+                        trade_in: { ...editingFormData.trade_in, model: e.target.value }
+                      })}
+                      placeholder="Ej: Corolla"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  <div>
+                    <Label className="text-[9px] font-medium text-gray-500 mb-0.5">Año</Label>
+                    <Input
+                      className="h-7 text-[10px] bg-white"
+                      type="number"
+                      value={editingFormData.trade_in?.year || ''}
+                      onChange={(e) => setEditingFormData({
+                        ...editingFormData,
+                        trade_in: { ...editingFormData.trade_in, year: e.target.value }
+                      })}
+                      placeholder="2020"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[9px] font-medium text-gray-500 mb-0.5">Kilometraje</Label>
+                    <Input
+                      className="h-7 text-[10px] bg-white"
+                      type="number"
+                      value={editingFormData.trade_in?.kilometers || ''}
+                      onChange={(e) => setEditingFormData({
+                        ...editingFormData,
+                        trade_in: { ...editingFormData.trade_in, kilometers: e.target.value }
+                      })}
+                      placeholder="150000"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[9px] font-medium text-gray-500 mb-0.5">Dominio</Label>
+                    <Input
+                      className="h-7 text-[10px] bg-white"
+                      value={editingFormData.trade_in?.plate || ''}
+                      onChange={(e) => setEditingFormData({
+                        ...editingFormData,
+                        trade_in: { ...editingFormData.trade_in, plate: e.target.value }
+                      })}
+                      placeholder="ABC123"
+                    />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <Label className="text-[9px] font-medium text-gray-500 mb-0.5">Color</Label>
+                  <Input
+                    className="h-7 text-[10px] bg-white"
+                    value={editingFormData.trade_in?.color || ''}
+                    onChange={(e) => setEditingFormData({
+                      ...editingFormData,
+                      trade_in: { ...editingFormData.trade_in, color: e.target.value }
+                    })}
+                    placeholder="Ej: Blanco"
+                  />
+                </div>
+
+                {/* Fotos del trade-in */}
+                <div className="mt-2">
+                  <Label className="text-[9px] font-medium text-gray-500 mb-1 block">Fotos del vehículo usado</Label>
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleTradeInPhotoUpload}
+                      className="hidden"
+                      id="tradein-photos"
+                    />
+                    <label htmlFor="tradein-photos" className="flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded cursor-pointer text-[9px]">
+                      <Upload className="w-3 h-3" />
+                      {uploadingPhotos ? 'Subiendo...' : 'Agregar fotos'}
+                    </label>
+                  </div>
+
+                  {/* Preview de fotos */}
+                  {editingFormData.trade_in?.photos && editingFormData.trade_in.photos.length > 0 && (
+                    <div className="flex gap-1 mt-2 flex-wrap">
+                      {editingFormData.trade_in.photos.map((photo, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={typeof photo === 'string' ? photo : URL.createObjectURL(photo)}
+                            alt={`Foto ${index + 1}`}
+                            className="w-12 h-12 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeTradeInPhoto(index)}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px]"
+                          >
+                            ×
+                          </button>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-                {editingFormData.interested_vehicles && editingFormData.interested_vehicles.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {editingFormData.interested_vehicles.map(iv => (
-                      <Badge key={iv.vehicle_id} variant="secondary" className="text-[10px] pr-1 flex items-center gap-1">
-                        {iv.vehicle_description}
-                        <button type="button" onClick={() => setEditingFormData({
-                          ...editingFormData,
-                          interested_vehicles: editingFormData.interested_vehicles.filter(v => v.vehicle_id !== iv.vehicle_id)
-                        })} className="ml-1 hover:text-red-500"><X className="w-3 h-3" /></button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Otros intereses</Label><Input className="h-8 text-[11px] bg-white" value={editingFormData.other_interests} onChange={(e) => setEditingFormData({ ...editingFormData, other_interests: e.target.value })} placeholder="Vehículos que no están en stock, características buscadas..." /></div>
-
-              {/* Trade-in */}
-              <div className="p-3 bg-gray-50 rounded border">
-                <div className="flex items-center gap-2 mb-2">
-                  <Car className="w-3.5 h-3.5 text-gray-500" />
-                  <Label className="text-[10px] font-medium text-gray-600">Permuta (opcional)</Label>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <Input className="h-7 text-[10px] bg-white" placeholder="Marca" value={editingFormData.trade_in?.brand || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, brand: e.target.value } })} />
-                  <Input className="h-7 text-[10px] bg-white" placeholder="Modelo" value={editingFormData.trade_in?.model || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, model: e.target.value } })} />
-                  <Input className="h-7 text-[10px] bg-white" placeholder="Año" value={editingFormData.trade_in?.year || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, year: e.target.value } })} />
-                  <Input className="h-7 text-[10px] bg-white" placeholder="Km" value={editingFormData.trade_in?.kilometers || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, kilometers: e.target.value } })} />
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <Input className="h-7 text-[10px] bg-white" placeholder="Dominio" value={editingFormData.trade_in?.plate || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, plate: e.target.value } })} />
-                  <Input className="h-7 text-[10px] bg-white" placeholder="Color" value={editingFormData.trade_in?.color || ''} onChange={(e) => setEditingFormData({ ...editingFormData, trade_in: { ...editingFormData.trade_in, color: e.target.value } })} />
-                </div>
-              </div>
-
-              <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Observaciones</Label><Textarea className="text-[11px] min-h-[60px] bg-white" value={editingFormData.observations} onChange={(e) => setEditingFormData({ ...editingFormData, observations: e.target.value })} /></div>
-
-              <div>
-                <Label className="text-[10px] font-medium text-gray-500 mb-1">Archivos adjuntos</Label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files);
-                    setEditingFormData({
-                      ...editingFormData,
-                      attachments: files
-                    });
-                  }}
-                  className="text-[10px] w-full"
-                />
-                {editingFormData.attachments && editingFormData.attachments.length > 0 && (
-                  <div className="text-[9px] text-gray-500 mt-1">
-                    {editingFormData.attachments.length} archivo(s) seleccionado(s)
-                  </div>
-                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Estado</Label>
-                  <Select value={editingFormData.status} onValueChange={(value) => setEditingFormData({ ...editingFormData, status: value })}>
-                    <SelectTrigger className="h-8 text-[11px] bg-white"><SelectValue /></SelectTrigger>
-                    <SelectContent>{Object.keys(STATUS_CONFIG).map(s => <SelectItem key={s} value={s} className="text-[11px]">{STATUS_CONFIG[s].icon} {s}</SelectItem>)}</SelectContent>
-                  </Select>
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Presupuesto</Label>
+                  <Input
+                    className="h-8 text-[11px] bg-white"
+                    value={editingFormData.budget}
+                    onChange={(e) => setEditingFormData({ ...editingFormData, budget: e.target.value })}
+                    placeholder="Ej: 15.000.000 - 18.000.000"
+                  />
                 </div>
-                <div><Label className="text-[10px] font-medium text-gray-500 mb-0.5">Interés</Label>
-                  <Select value={editingFormData.interest_level} onValueChange={(value) => setEditingFormData({ ...editingFormData, interest_level: value })}>
-                    <SelectTrigger className="h-8 text-[11px] bg-white"><SelectValue /></SelectTrigger>
-                    <SelectContent>{Object.keys(INTEREST_CONFIG).map(i => <SelectItem key={i} value={i} className="text-[11px]">{INTEREST_CONFIG[i].icon} {i}</SelectItem>)}</SelectContent>
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Contacto preferido</Label>
+                  <Select value={editingFormData.preferred_contact} onValueChange={(value) => setEditingFormData({ ...editingFormData, preferred_contact: value })}>
+                    <SelectTrigger className="h-8 text-[11px] bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="WhatsApp" className="text-[11px]">WhatsApp</SelectItem>
+                      <SelectItem value="Llamada" className="text-[11px]">Llamada</SelectItem>
+                      <SelectItem value="Email" className="text-[11px]">Email</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t">
-                <Button type="button" variant="outline" onClick={() => { onCloseEditModal && onCloseEditModal(); setEditingFormData(null); }} className="h-8 text-[11px]">Cancelar</Button>
-                <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">Guardar</Button>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Estado</Label>
+                  <Select value={editingFormData.status} onValueChange={(value) => setEditingFormData({ ...editingFormData, status: value })}>
+                    <SelectTrigger className="h-8 text-[11px] bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Nuevo" className="text-[11px]">Nuevo</SelectItem>
+                      <SelectItem value="Contactado" className="text-[11px]">Contactado</SelectItem>
+                      <SelectItem value="En negociación" className="text-[11px]">En negociación</SelectItem>
+                      <SelectItem value="Concretado" className="text-[11px]">Concretado</SelectItem>
+                      <SelectItem value="Perdido" className="text-[11px]">Perdido</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Interés</Label>
+                  <Select value={editingFormData.interest_level} onValueChange={(value) => setEditingFormData({ ...editingFormData, interest_level: value })}>
+                    <SelectTrigger className="h-8 text-[11px] bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Bajo" className="text-[11px]">Bajo</SelectItem>
+                      <SelectItem value="Medio" className="text-[11px]">Medio</SelectItem>
+                      <SelectItem value="Alto" className="text-[11px]">Alto</SelectItem>
+                      <SelectItem value="Muy alto" className="text-[11px]">Muy alto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Seguimiento</Label>
+                  <Input
+                    className="h-8 text-[11px] bg-white"
+                    type="date"
+                    value={editingFormData.follow_up_date}
+                    onChange={(e) => setEditingFormData({ ...editingFormData, follow_up_date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Hora</Label>
+                  <Input
+                    className="h-8 text-[11px] bg-white"
+                    type="time"
+                    value={editingFormData.follow_up_time}
+                    onChange={(e) => setEditingFormData({ ...editingFormData, follow_up_time: e.target.value })}
+                  />
+                </div>
+
+              </div>
+
+              <div>
+                <Label className="text-[10px] font-medium text-gray-500 mb-0.5">Observaciones</Label>
+                <Textarea
+                  className="h-16 text-[11px] bg-white"
+                  value={editingFormData.observations}
+                  onChange={(e) => setEditingFormData({ ...editingFormData, observations: e.target.value })}
+                  placeholder="Observaciones adicionales..."
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button type="button" variant="outline" onClick={() => onEdit(null)} className="flex-1 h-8 text-[11px]">
+                  Cancelar
+                </Button>
+                <Button type="submit" className="flex-1 h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
+                  Guardar
+                </Button>
               </div>
             </form>
           )}
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }
