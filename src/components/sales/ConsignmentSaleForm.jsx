@@ -57,9 +57,6 @@ export default function ConsignmentSaleForm({ open, onOpenChange, vehicle, onSal
 
   const [formData, setFormData] = useState(getInitialFormData());
 
-  // Client editing state for missing data
-  const [editingClientData, setEditingClientData] = useState({});
-
   useEffect(() => {
     if (!open) return;
 
