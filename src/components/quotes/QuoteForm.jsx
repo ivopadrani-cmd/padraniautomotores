@@ -273,49 +273,68 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
-    
+
+    console.log('🚀 Iniciando submit de presupuesto');
+    console.log('📊 vehicleItems:', vehicleItems);
+    console.log('📋 formData:', formData);
+
     const tradeInData = includeTradeIn ? formData.trade_in : null;
     
     const isMultiQuote = vehicleItems.length > 1;
     const multiQuoteGroupId = isMultiQuote ? `multi_${Date.now()}` : null;
 
     // Submit each vehicle as a separate quote
-    const quotes = vehicleItems.map(item => ({
-      ...formData,
-      id: editingQuote?.id,
-      vehicle_id: item.vehicle_id,
-      vehicle_description: `${item.vehicle?.brand} ${item.vehicle?.model} ${item.vehicle?.year}`,
-      client_id: selectedClientId || null,
-      quoted_price_ars: parseFloat(item.quoted_price) || 0,
-      quoted_price_currency: item.quoted_price_currency || 'ARS',
-      quoted_price_exchange_rate: item.quoted_price_exchange_rate || currentBlueRate,
-      quoted_price_date: item.quoted_price_date || formData.date,
-      trade_in: tradeInData ? { ...tradeInData, currency: tradeInData.currency || 'ARS', exchange_rate: tradeInData.exchange_rate || currentBlueRate, date: tradeInData.date || formData.date } : null,
-      financing_amount: item.includeFinancing ? (parseFloat(item.financing_amount) || 0) : 0,
-      financing_currency: item.financing_currency || 'ARS',
-      financing_exchange_rate: item.financing_exchange_rate || currentBlueRate,
-      financing_date: item.financing_date || formData.date,
-      financing_bank: item.includeFinancing ? item.financing_bank : '',
-      financing_installments: item.includeFinancing ? item.financing_installments : '',
-      financing_installment_value: item.includeFinancing ? item.financing_installment_value : '',
-      is_multi_quote: isMultiQuote,
-      multi_quote_group_id: multiQuoteGroupId
-    }));
+    const quotes = vehicleItems.map(item => {
+      const quoteData = {
+        ...formData,
+        id: editingQuote?.id,
+        vehicle_id: item.vehicle_id,
+        vehicle_description: `${item.vehicle?.brand} ${item.vehicle?.model} ${item.vehicle?.year}`,
+        client_id: selectedClientId || null,
+        quoted_price_ars: parseFloat(item.quoted_price) || 0,
+        quoted_price_currency: item.quoted_price_currency || 'ARS',
+        quoted_price_exchange_rate: item.quoted_price_exchange_rate || currentBlueRate,
+        quoted_price_date: item.quoted_price_date || formData.date,
+        trade_in: tradeInData ? { ...tradeInData, currency: tradeInData.currency || 'ARS', exchange_rate: tradeInData.exchange_rate || currentBlueRate, date: tradeInData.date || formData.date } : null,
+        financing_amount: item.includeFinancing ? (parseFloat(item.financing_amount) || 0) : 0,
+        financing_currency: item.financing_currency || 'ARS',
+        financing_exchange_rate: item.financing_exchange_rate || currentBlueRate,
+        financing_date: item.financing_date || formData.date,
+        financing_bank: item.includeFinancing ? item.financing_bank : '',
+        financing_installments: item.includeFinancing ? item.financing_installments : '',
+        financing_installment_value: item.includeFinancing ? item.financing_installment_value : '',
+        is_multi_quote: isMultiQuote,
+        multi_quote_group_id: multiQuoteGroupId
+      };
+      console.log('📋 Quote data preparado:', quoteData);
+      return quoteData;
+    });
 
     try {
+      console.log('📤 Llamando a onSubmit con quotes:', quotes);
       // For multiple quotes, submit them one by one and return the results
       if (quotes.length > 1) {
+        console.log('📦 Procesando múltiples presupuestos:', quotes.length);
         const results = [];
         for (const quote of quotes) {
+          console.log('📋 Procesando quote individual:', quote);
           const result = await onSubmit(quote);
+          console.log('✅ Resultado del quote:', result);
           results.push(result);
         }
+        console.log('📦 Todos los resultados:', results);
         // Return the array of results for multi-quotes
         return results;
       } else {
+        console.log('📋 Procesando presupuesto único:', quotes[0]);
         // Single quote - return the result directly
-        return await onSubmit(quotes[0]);
+        const result = await onSubmit(quotes[0]);
+        console.log('✅ Resultado del presupuesto único:', result);
+        return result;
       }
+    } catch (error) {
+      console.error('❌ Error en handleSubmit:', error);
+      throw error;
     } finally {
       setIsSubmitting(false);
     }

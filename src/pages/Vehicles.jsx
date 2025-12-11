@@ -324,6 +324,17 @@ export default function Vehicles() {
       const targetArs = convertValue(v.target_price_value, v.target_price_currency, targetRate, 'ARS');
       const publicArs = convertValue(v.public_price_value, v.public_price_currency, publicRate, 'ARS');
 
+      console.log('🔍 Vehicles list - Datos del vehículo:', v.id, {
+        infoauto_value: v.infoauto_value,
+        infoauto_currency: v.infoauto_currency,
+        target_price_value: v.target_price_value,
+        target_price_currency: v.target_price_currency,
+        public_price_value: v.public_price_value,
+        public_price_currency: v.public_price_currency,
+        rates: { infoautoRate, targetRate, publicRate },
+        converted: { infoautoArs, targetArs, publicArs }
+      });
+
       // Costo USD ya calculado arriba
       const infoautoUsd = infoautoArs ? infoautoArs / currentBlueRate : null;
       const targetUsd = targetArs ? targetArs / currentBlueRate : null;
