@@ -267,6 +267,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
     });
 
     console.log('📦 Todos los presupuestos preparados:', quotes);
+    console.log('🔍 Campos enviados por presupuesto:', Object.keys(quotes[0] || {}));
 
     try {
       // For multiple quotes, submit them one by one and return the results
