@@ -5,9 +5,7 @@ import { createPageUrl } from "@/utils";
 import { LayoutDashboard, Car, Users, ClipboardList, Building2, RefreshCw, User, ChevronDown, Settings, LogOut, HelpCircle, Bell, FileText, Calculator, Wrench } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useIsMobile } from "@/hooks/use-mobile";
 import LoginScreen from "@/components/auth/LoginScreen";
-import MobileLayout from "@/components/ui/MobileLayout";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarProvider, SidebarTrigger,
@@ -68,7 +66,6 @@ const canAccessSettings = (userRole) => {
 export default function Layout({ children }) {
   const location = useLocation();
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
   const [isUpdatingRate, setIsUpdatingRate] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isInitializing, setIsInitializing] = useState(true);

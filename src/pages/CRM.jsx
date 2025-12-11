@@ -12,14 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Users, User, Eye, Edit, Trash2, Phone, Mail, MapPin, X, ChevronDown, Calendar, Car } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useIsMobile } from "@/hooks/use-mobile";
 import ClientDetail from "../components/clients/ClientDetail";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import LeadDetail from "../components/crm/LeadDetail";
 import ScheduleFollowUpDialog from "../components/crm/ScheduleFollowUpDialog";
-import MobileCRM from "../components/ui/MobileCRM";
 import { useParams, useNavigate } from "react-router-dom";
 
 const STATUS_CONFIG = {
@@ -42,7 +40,6 @@ const SOURCE_OPTIONS = ['Salón', 'Llamada', 'Redes sociales', 'Recomendado'];
 export default function CRM() {
   const { leadId } = useParams();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   
   const [activeTab, setActiveTab] = useState('leads');
   const [showLeadForm, setShowLeadForm] = useState(false);

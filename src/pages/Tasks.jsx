@@ -12,9 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Calendar as CalendarIcon, List, ChevronLeft, ChevronRight, Check, X, Edit, Eye, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useIsMobile } from "@/hooks/use-mobile";
 import TaskDetailDialog from "../components/tasks/TaskDetailDialog";
-import MobileTasks from "../components/ui/MobileTasks";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, isToday } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -39,7 +37,6 @@ const STATUS_CONFIG = {
 export default function Tasks() {
   const { taskId } = useParams();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
   // Reset to list when clicking module in sidebar
   React.useEffect(() => {
