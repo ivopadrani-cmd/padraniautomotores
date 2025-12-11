@@ -65,18 +65,11 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
         quoted_price: publicPriceArs || '0',
         quoted_price_currency: 'ARS',
         quoted_price_exchange_rate: currentBlueRate,
-        quoted_price_date: new Date().toISOString().split('T')[0],
         includeFinancing: false,
         financing_amount: '',
         financing_bank: '',
         financing_installments: '',
-        financing_installment_value: '',
-        financing_currency: 'ARS',
-        financing_exchange_rate: currentBlueRate,
-        financing_date: new Date().toISOString().split('T')[0],
-        trade_in_date: new Date().toISOString().split('T')[0],
-        trade_in_currency: 'ARS',
-        trade_in_exchange_rate: currentBlueRate
+        financing_installment_value: ''
       };
       setVehicleItems([vehicleItem]);
     }
@@ -112,18 +105,11 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
           quoted_price: publicPriceArs || '0',
           quoted_price_currency: 'ARS',
           quoted_price_exchange_rate: currentBlueRate,
-          quoted_price_date: new Date().toISOString().split('T')[0],
           includeFinancing: false,
           financing_amount: '',
           financing_bank: '',
           financing_installments: '',
-          financing_installment_value: '',
-          financing_currency: 'ARS',
-          financing_exchange_rate: currentBlueRate,
-          financing_date: new Date().toISOString().split('T')[0],
-          trade_in_date: new Date().toISOString().split('T')[0],
-          trade_in_currency: 'ARS',
-          trade_in_exchange_rate: currentBlueRate
+          financing_installment_value: ''
         };
         setVehicleItems([vehicleItem]);
       } else if (multiVehicleMode && interestVehicles.length > 0) {
@@ -210,31 +196,6 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
   };
 
   const handleVehicleItemChange = async (index, field, value) => {
-    // Si cambia la fecha, buscar cotización histórica
-    if (field === 'quoted_price_date' && value) {
-      try {
-        const rate = await getHistoricalRate(value);
-        if (rate) {
-          setVehicleItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value, quoted_price_exchange_rate: rate.toString() } : item));
-          setHasChanges(true);
-          return;
-        }
-      } catch (err) {
-        console.error('Error obteniendo cotización histórica en presupuesto:', err);
-      }
-    }
-    if (field === 'financing_date' && value) {
-      try {
-        const rate = await getHistoricalRate(value);
-        if (rate) {
-          setVehicleItems(prev => prev.map((item, i) => i === index ? { ...item, financing_date: value, financing_exchange_rate: rate.toString() } : item));
-          setHasChanges(true);
-          return;
-        }
-      } catch (err) {
-        console.error('Error obteniendo cotización histórica financiación presupuesto:', err);
-      }
-    }
     setVehicleItems(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
     setHasChanges(true);
   };
@@ -412,13 +373,9 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
                           </SelectContent>
                         </Select>
                       </div>
-                      <div>
-                        <Label className={lbl}>Cotización</Label>
-                        <Input className={inp} value={item.quoted_price_exchange_rate || ''} onChange={(e) => handleVehicleItemChange(index, 'quoted_price_exchange_rate', e.target.value)} placeholder={currentBlueRate.toString()} />
-                    </div>
                     <div>
-                      <Label className={lbl}>Fecha</Label>
-                      <Input className={inp + " cursor-pointer"} type="date" value={item.quoted_price_date || ''} onChange={(e) => handleVehicleItemChange(index, 'quoted_price_date', e.target.value)} />
+                      <Label className={lbl}>Cotización</Label>
+                      <Input className={inp} value={item.quoted_price_exchange_rate || ''} onChange={(e) => handleVehicleItemChange(index, 'quoted_price_exchange_rate', e.target.value)} placeholder={currentBlueRate.toString()} />
                     </div>
                       <div className="flex items-end">
                         <div className="flex items-center gap-2">
@@ -434,23 +391,8 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
                     </div>
 
                     {item.includeFinancing && (
-                      <div className="grid grid-cols-6 gap-2 pt-2 border-t">
+                      <div className="grid grid-cols-3 gap-2 pt-2 border-t">
                         <div><Label className={lbl}>Monto</Label><Input className={inp} value={item.financing_amount} onChange={(e) => handleVehicleItemChange(index, 'financing_amount', e.target.value)} /></div>
-                        <div>
-                          <Label className={lbl}>Moneda</Label>
-                          <Select value={item.financing_currency || 'ARS'} onValueChange={(v) => handleVehicleItemChange(index, 'financing_currency', v)}>
-                            <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="ARS" className="text-[11px]">ARS</SelectItem><SelectItem value="USD" className="text-[11px]">USD</SelectItem></SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className={lbl}>Cotización</Label>
-                          <Input className={inp} value={item.financing_exchange_rate || ''} onChange={(e) => handleVehicleItemChange(index, 'financing_exchange_rate', e.target.value)} placeholder={currentBlueRate.toString()} />
-                        </div>
-                        <div>
-                          <Label className={lbl}>Fecha</Label>
-                          <Input className={inp + " cursor-pointer"} type="date" value={item.financing_date || ''} onChange={(e) => handleVehicleItemChange(index, 'financing_date', e.target.value)} />
-                        </div>
                         <div><Label className={lbl}>Banco</Label><Input className={inp} value={item.financing_bank} onChange={(e) => handleVehicleItemChange(index, 'financing_bank', e.target.value)} /></div>
                         <div className="grid grid-cols-2 gap-2">
                           <div><Label className={lbl}>Cuotas</Label><Input className={inp} value={item.financing_installments} onChange={(e) => handleVehicleItemChange(index, 'financing_installments', e.target.value)} /></div>
