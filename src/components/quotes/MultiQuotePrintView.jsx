@@ -79,7 +79,14 @@ export default function MultiQuotePrintView({ open, onOpenChange, quotes, client
       .vehicle-total { background: #1e3a5f; color: white; padding: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
       .total-label { font-size: 9px; opacity: 0.8; }
       .total-value { font-size: 16px; font-weight: bold; }
-      .footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid #ddd; text-align: center; font-size: 9px; color: #888; }
+      .footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid #ddd; }
+      .conditions { text-align: left; margin-bottom: 10px; }
+      .conditions-title { font-size: 11px; font-weight: bold; color: #333; margin-bottom: 8px; text-align: center; }
+      .conditions-list { font-size: 8px; color: #555; line-height: 1.3; margin-bottom: 10px; }
+      .conditions-list div { margin-bottom: 3px; }
+      .disclaimer { font-size: 9px; color: #666; text-align: center; margin-bottom: 8px; font-style: italic; }
+      .validity-box { font-size: 10px; font-weight: bold; color: #d32f2f; text-align: center; padding: 4px; border: 1px solid #d32f2f; border-radius: 3px; }
+      .contact { text-align: center; font-size: 9px; color: #999; margin-top: 8px; }
     </style></head>
     <body>
       <div class="header">
@@ -101,7 +108,24 @@ export default function MultiQuotePrintView({ open, onOpenChange, quotes, client
         <div class="section-title">Opciones Disponibles</div>
         <div class="vehicles-grid">${vehicleRows}</div>
       </div>
-      <div class="footer">Presupuesto válido por 48hs • Precios sujetos a cambios sin previo aviso<br/>Padrani Automotores • Comodoro Rivadavia</div>
+      <div class="footer">
+        <div class="conditions">
+          <div class="conditions-title">CONDICIONES COMERCIALES</div>
+          <div class="conditions-list">
+            <div>• Las reservas se concretan únicamente mediante seña mínima.</div>
+            <div>• El vehículo ofrecido por Padrani Automotores se entrega únicamente una vez finalizada y asentada la transferencia del dominio, sin excepción.</div>
+            <div>• Para concretar la operación y comenzar con la gestión de transferencia del dominio, primero se debe abonar el vehículo en su totalidad.</div>
+            <div>• En caso de que la verificación policial esté pendiente, los plazos de entrega pueden extenderse hasta su finalización.</div>
+            <div>• En el caso de permutas, la unidad será sometida a peritaje mecánico antes de aceptar su toma y pactar un precio definitivo. La seña previa es obligatoria, y en caso de resultar rechazada la toma, se devolverá la seña descontando el costo de dicho peritaje.</div>
+          </div>
+          <div class="disclaimer">
+            Este presupuesto no representa una obligación de compraventa.<br/>
+            Está sujeto a revisión técnica, disponibilidad y confirmación formal.
+          </div>
+          <div class="validity-box">VALIDEZ DEL PRESUPUESTO - 48 HORAS</div>
+        </div>
+        <div class="contact">Padrani Automotores • Comodoro Rivadavia</div>
+      </div>
     </body></html>`;
 
     const printWindow = window.open('', '_blank');

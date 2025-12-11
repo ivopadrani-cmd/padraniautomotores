@@ -72,9 +72,14 @@ export default function QuotePrintView({ open, onOpenChange, quote, vehicle, cli
           .total-box { background: #0891b2; color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
           .total-label { font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
           .total-value { font-size: 24px; font-weight: bold; }
-          .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 15px 18mm; border-top: 1px solid #ddd; background: white; }
-          .validity { font-size: 10px; color: #666; }
-          .contact { font-size: 9px; color: #999; margin-top: 6px; }
+          .footer { position: fixed; bottom: 0; left: 0; right: 0; padding: 15px 18mm; border-top: 1px solid #ddd; background: white; }
+          .conditions { text-align: left; margin-bottom: 10px; }
+          .conditions-title { font-size: 11px; font-weight: bold; color: #333; margin-bottom: 8px; text-align: center; }
+          .conditions-list { font-size: 8px; color: #555; line-height: 1.3; margin-bottom: 10px; }
+          .conditions-list div { margin-bottom: 3px; }
+          .disclaimer { font-size: 9px; color: #666; text-align: center; margin-bottom: 8px; font-style: italic; }
+          .validity-box { font-size: 10px; font-weight: bold; color: #d32f2f; text-align: center; padding: 4px; border: 1px solid #d32f2f; border-radius: 3px; }
+          .contact { font-size: 9px; color: #999; text-align: center; margin-top: 8px; }
         </style>
       </head>
       <body>
@@ -149,7 +154,21 @@ export default function QuotePrintView({ open, onOpenChange, quote, vehicle, cli
           <div class="total-value">$${difference.toLocaleString('es-AR')}</div>
         </div>
         <div class="footer">
-          <div class="validity">Presupuesto válido por 48 horas • Precios sujetos a cambios sin previo aviso</div>
+          <div class="conditions">
+            <div class="conditions-title">CONDICIONES COMERCIALES</div>
+            <div class="conditions-list">
+              <div>• Las reservas se concretan únicamente mediante seña mínima.</div>
+              <div>• El vehículo ofrecido por Padrani Automotores se entrega únicamente una vez finalizada y asentada la transferencia del dominio, sin excepción.</div>
+              <div>• Para concretar la operación y comenzar con la gestión de transferencia del dominio, primero se debe abonar el vehículo en su totalidad.</div>
+              <div>• En caso de que la verificación policial esté pendiente, los plazos de entrega pueden extenderse hasta su finalización.</div>
+              <div>• En el caso de permutas, la unidad será sometida a peritaje mecánico antes de aceptar su toma y pactar un precio definitivo. La seña previa es obligatoria, y en caso de resultar rechazada la toma, se devolverá la seña descontando el costo de dicho peritaje.</div>
+            </div>
+            <div class="disclaimer">
+              Este presupuesto no representa una obligación de compraventa.<br/>
+              Está sujeto a revisión técnica, disponibilidad y confirmación formal.
+            </div>
+            <div class="validity-box">VALIDEZ DEL PRESUPUESTO - 48 HORAS</div>
+          </div>
           <div class="contact">Padrani Automotores • Comodoro Rivadavia</div>
         </div>
       </body>

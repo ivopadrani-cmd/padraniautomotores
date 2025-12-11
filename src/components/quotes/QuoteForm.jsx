@@ -262,25 +262,32 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
           financing_installment_value: parseFloat(item.financing_installment_value) || 0
         } : {})
       };
-      console.log('📋 Datos finales del presupuesto:', quoteData);
       return quoteData;
     });
 
-    console.log('📦 Todos los presupuestos preparados:', quotes);
-    console.log('🔍 Campos enviados por presupuesto:', Object.keys(quotes[0] || {}));
-
     try {
-      // For multiple quotes, submit them one by one and return the results
+      // If editing existing quote, update it directly
+      if (editingQuote) {
+        const updatedQuote = {
+          ...quotes[0],
+          id: editingQuote.id
+        };
+        return await onSubmit(updatedQuote);
+      }
+
+      // For new quotes
       if (quotes.length > 1) {
         const results = [];
+
+        // Create individual quotes for each vehicle
+        // Each quote will have the same client and date, but different vehicles
         for (const quote of quotes) {
           const result = await onSubmit(quote);
           results.push(result);
         }
-        // Return the array of results for multi-quotes
+
         return results;
       } else {
-        // Single quote - return the result directly
         return await onSubmit(quotes[0]);
       }
     } catch (error) {
@@ -528,7 +535,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
             <Button type="button" variant="outline" onClick={handleClose} className="h-8 text-[11px]" disabled={isSubmitting}>Cancelar</Button>
             <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800" disabled={vehicleItems.length === 0 || isSubmitting}>
               <Save className="w-3.5 h-3.5 mr-1.5" />
-              {isSubmitting ? 'Guardando...' : editingQuote ? 'Guardar' : vehicleItems.length > 1 ? `Generar ${vehicleItems.length} Presupuestos` : 'Generar Presupuesto'}
+              {isSubmitting ? 'Guardando...' : editingQuote ? 'Guardar Cambios' : vehicleItems.length > 1 ? `Crear ${vehicleItems.length} Presupuestos` : 'Crear Presupuesto'}
             </Button>
           </div>
         </form>
