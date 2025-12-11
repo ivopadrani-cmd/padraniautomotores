@@ -190,10 +190,7 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
 
   const createQuoteMutation = useMutation({
     mutationFn: (data) => {
-      // Mapear 'date' a 'quote_date' y remover 'date'
-      const { date, ...restData } = data;
-      const quoteData = { ...restData, quote_date: date };
-      return data.id ? base44.entities.Quote.update(data.id, quoteData) : base44.entities.Quote.create(quoteData);
+      return data.id ? base44.entities.Quote.update(data.id, data) : base44.entities.Quote.create(data);
     },
     onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
@@ -339,8 +336,7 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
           if (Array.isArray(data)) {
             const createdQuotes = [];
             for (const q of data) {
-              const { date, ...restQ } = q;
-              const result = await base44.entities.Quote.create({ ...restQ, quote_date: date, lead_id: lead.id, client_id: lead.client_id });
+              const result = await base44.entities.Quote.create({ ...q, lead_id: lead.id, client_id: lead.client_id });
               createdQuotes.push({ ...q, id: result.id });
             }
             queryClient.invalidateQueries({ queryKey: ['quotes'] });

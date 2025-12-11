@@ -283,31 +283,23 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
     // Submit each vehicle as a separate quote
     const quotes = vehicleItems.map(item => {
       const quoteData = {
-        ...formData,
-        id: editingQuote?.id,
-        vehicle_id: item.vehicle_id,
-        vehicle_description: `${item.vehicle?.brand} ${item.vehicle?.model} ${item.vehicle?.year}`,
+        quote_date: formData.date,
         client_id: selectedClientId || null,
+        vehicle_id: item.vehicle_id,
         quoted_price_ars: parseFloat(item.quoted_price) || 0,
-        quoted_price_currency: item.quoted_price_currency || 'ARS',
-        quoted_price_exchange_rate: item.quoted_price_exchange_rate || currentBlueRate,
-        quoted_price_date: item.quoted_price_date || formData.date,
-        // Solo incluir trade_in si está habilitado y tiene datos
+        // Solo incluir campos básicos que sabemos que existen
         ...(includeTradeIn && formData.trade_in?.brand ? {
           trade_in_brand: formData.trade_in.brand,
           trade_in_model: formData.trade_in.model,
           trade_in_year: formData.trade_in.year,
           trade_in_value_ars: parseFloat(formData.trade_in.value_ars) || 0
         } : {}),
-        // Campos de financiamiento básicos (sin las columnas que no existen)
         ...(item.includeFinancing ? {
           financing_amount: parseFloat(item.financing_amount) || 0,
           financing_bank: item.financing_bank || '',
           financing_installments: item.financing_installments || '',
           financing_installment_value: parseFloat(item.financing_installment_value) || 0
-        } : {}),
-        is_multi_quote: isMultiQuote,
-        multi_quote_group_id: multiQuoteGroupId
+        } : {})
       };
       return quoteData;
     });

@@ -185,11 +185,7 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
 
   const createQuoteMutation = useMutation({
     mutationFn: async (data) => {
-      // Mapear 'date' a 'quote_date' y remover 'date'
-      const { date, ...restData } = data;
-      const quoteData = { ...restData, quote_date: date };
-
-      const result = data.id ? await base44.entities.Quote.update(data.id, quoteData) : await base44.entities.Quote.create(quoteData);
+      const result = data.id ? await base44.entities.Quote.update(data.id, data) : await base44.entities.Quote.create(data);
       return result;
     },
     onSuccess: (result, variables) => {
