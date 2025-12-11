@@ -814,9 +814,9 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                   </div>
                   <div className="flex items-center gap-1">
                         {isConsignment && supplier && (
-                          <Button
-                            variant="outline"
-                            size="sm"
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
                             className="h-6 px-2 text-[9px] bg-cyan-50 border-cyan-300 text-cyan-700 hover:bg-cyan-100"
                             onClick={() => setShowConsignmentContract(true)}
                           >
@@ -1033,18 +1033,6 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
               const targetArs = convertValue(updatedVehicle.target_price_value, updatedVehicle.target_price_currency, updatedVehicle.target_price_exchange_rate, 'ARS');
               const publicArs = convertValue(updatedVehicle.public_price_value, updatedVehicle.public_price_currency, updatedVehicle.public_price_exchange_rate, 'ARS');
               const infoautoArs = convertValue(updatedVehicle.infoauto_value, updatedVehicle.infoauto_currency, updatedVehicle.infoauto_exchange_rate, 'ARS');
-
-              console.log('🔍 Debug precios en VehicleView:', {
-                target_price_value: updatedVehicle.target_price_value,
-                target_price_currency: updatedVehicle.target_price_currency,
-                targetArs,
-                public_price_value: updatedVehicle.public_price_value,
-                public_price_currency: updatedVehicle.public_price_currency,
-                publicArs,
-                infoauto_value: updatedVehicle.infoauto_value,
-                infoauto_currency: updatedVehicle.infoauto_currency,
-                infoautoArs
-              });
 
               return (
                 <>
