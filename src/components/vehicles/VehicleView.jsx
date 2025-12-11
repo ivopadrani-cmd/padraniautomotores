@@ -1034,6 +1034,18 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
               const publicArs = convertValue(updatedVehicle.public_price_value, updatedVehicle.public_price_currency, updatedVehicle.public_price_exchange_rate, 'ARS');
               const infoautoArs = convertValue(updatedVehicle.infoauto_value, updatedVehicle.infoauto_currency, updatedVehicle.infoauto_exchange_rate, 'ARS');
 
+              console.log('🔍 Debug precios en VehicleView:', {
+                target_price_value: updatedVehicle.target_price_value,
+                target_price_currency: updatedVehicle.target_price_currency,
+                targetArs,
+                public_price_value: updatedVehicle.public_price_value,
+                public_price_currency: updatedVehicle.public_price_currency,
+                publicArs,
+                infoauto_value: updatedVehicle.infoauto_value,
+                infoauto_currency: updatedVehicle.infoauto_currency,
+                infoautoArs
+              });
+
               return (
                 <>
                   <div className="grid grid-cols-4 gap-3 text-[11px]">

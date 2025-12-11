@@ -50,6 +50,38 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
   const interestVehicleIds = lead?.interested_vehicles?.map(iv => iv.vehicle_id) || [];
   const interestVehicles = allVehicles.filter(v => interestVehicleIds.includes(v.id));
 
+  // Ensure vehicleItems has at least one item when vehicle is provided
+  useEffect(() => {
+    if (open && vehicle && vehicleItems.length === 0 && !editingQuote) {
+      // Convert public price to ARS if needed
+      let publicPriceArs = vehicle.public_price_value || '';
+      if (vehicle.public_price_currency === 'USD' && vehicle.public_price_value) {
+        const rate = vehicle.public_price_exchange_rate || currentBlueRate;
+        publicPriceArs = Math.round(vehicle.public_price_value * rate);
+      }
+      const vehicleItem = {
+        vehicle_id: vehicle.id,
+        vehicle: vehicle,
+        quoted_price: publicPriceArs || '0',
+        quoted_price_currency: 'ARS',
+        quoted_price_exchange_rate: currentBlueRate,
+        quoted_price_date: new Date().toISOString().split('T')[0],
+        includeFinancing: false,
+        financing_amount: '',
+        financing_bank: '',
+        financing_installments: '',
+        financing_installment_value: '',
+        financing_currency: 'ARS',
+        financing_exchange_rate: currentBlueRate,
+        financing_date: new Date().toISOString().split('T')[0],
+        trade_in_date: new Date().toISOString().split('T')[0],
+        trade_in_currency: 'ARS',
+        trade_in_exchange_rate: currentBlueRate
+      };
+      setVehicleItems([vehicleItem]);
+    }
+  }, [open, vehicle, vehicleItems.length, editingQuote, currentBlueRate]);
+
   useEffect(() => {
     if (open) {
       setSelectedClientId(editingQuote?.client_id || lead?.client_id || '');
@@ -74,10 +106,10 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
           const rate = vehicle.public_price_exchange_rate || currentBlueRate;
           publicPriceArs = Math.round(vehicle.public_price_value * rate);
         }
-        setVehicleItems([{
+        const vehicleItem = {
           vehicle_id: vehicle.id,
           vehicle: vehicle,
-          quoted_price: publicPriceArs,
+          quoted_price: publicPriceArs || '0',
           quoted_price_currency: 'ARS',
           quoted_price_exchange_rate: currentBlueRate,
           quoted_price_date: new Date().toISOString().split('T')[0],
@@ -92,7 +124,8 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
           trade_in_date: new Date().toISOString().split('T')[0],
           trade_in_currency: 'ARS',
           trade_in_exchange_rate: currentBlueRate
-        }]);
+        };
+        setVehicleItems([vehicleItem]);
       } else if (multiVehicleMode && interestVehicles.length > 0) {
         // Pre-load interest vehicles with proper price conversion
         setVehicleItems(interestVehicles.map(v => {
@@ -114,7 +147,11 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
             financing_installment_value: ''
           };
         }));
+      } else if (multiVehicleMode) {
+        // For multi-vehicle mode without pre-selected vehicles, start empty
+        setVehicleItems([]);
       } else {
+        // For new quotes without vehicle, allow manual vehicle selection
         setVehicleItems([]);
       }
 
@@ -250,23 +287,35 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
       vehicle_description: `${item.vehicle?.brand} ${item.vehicle?.model} ${item.vehicle?.year}`,
       client_id: selectedClientId || null,
       quoted_price_ars: parseFloat(item.quoted_price) || 0,
-          quoted_price_currency: item.quoted_price_currency || 'ARS',
-          quoted_price_exchange_rate: item.quoted_price_exchange_rate || currentBlueRate,
-          quoted_price_date: item.quoted_price_date || formData.date,
-          trade_in: tradeInData ? { ...tradeInData, currency: tradeInData.currency || 'ARS', exchange_rate: tradeInData.exchange_rate || currentBlueRate, date: tradeInData.date || formData.date } : null,
-          financing_amount: item.includeFinancing ? (parseFloat(item.financing_amount) || 0) : 0,
-          financing_currency: item.financing_currency || 'ARS',
-          financing_exchange_rate: item.financing_exchange_rate || currentBlueRate,
-          financing_date: item.financing_date || formData.date,
-          financing_bank: item.includeFinancing ? item.financing_bank : '',
-          financing_installments: item.includeFinancing ? item.financing_installments : '',
-          financing_installment_value: item.includeFinancing ? item.financing_installment_value : '',
+      quoted_price_currency: item.quoted_price_currency || 'ARS',
+      quoted_price_exchange_rate: item.quoted_price_exchange_rate || currentBlueRate,
+      quoted_price_date: item.quoted_price_date || formData.date,
+      trade_in: tradeInData ? { ...tradeInData, currency: tradeInData.currency || 'ARS', exchange_rate: tradeInData.exchange_rate || currentBlueRate, date: tradeInData.date || formData.date } : null,
+      financing_amount: item.includeFinancing ? (parseFloat(item.financing_amount) || 0) : 0,
+      financing_currency: item.financing_currency || 'ARS',
+      financing_exchange_rate: item.financing_exchange_rate || currentBlueRate,
+      financing_date: item.financing_date || formData.date,
+      financing_bank: item.includeFinancing ? item.financing_bank : '',
+      financing_installments: item.includeFinancing ? item.financing_installments : '',
+      financing_installment_value: item.includeFinancing ? item.financing_installment_value : '',
       is_multi_quote: isMultiQuote,
       multi_quote_group_id: multiQuoteGroupId
     }));
 
     try {
-      await onSubmit(quotes.length === 1 ? quotes[0] : quotes);
+      // For multiple quotes, submit them one by one and return the results
+      if (quotes.length > 1) {
+        const results = [];
+        for (const quote of quotes) {
+          const result = await onSubmit(quote);
+          results.push(result);
+        }
+        // Return the array of results for multi-quotes
+        return results;
+      } else {
+        // Single quote - return the result directly
+        return await onSubmit(quotes[0]);
+      }
     } finally {
       setIsSubmitting(false);
     }
