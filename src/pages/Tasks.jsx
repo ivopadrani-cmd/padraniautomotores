@@ -222,13 +222,8 @@ export default function Tasks() {
   const inp = "h-8 text-[11px] bg-white";
   const lbl = "text-[10px] font-medium text-gray-500 mb-0.5";
 
-  // Si está en móvil, mostrar versión móvil
-  if (isMobile) {
-    return <MobileTasks />;
-  }
-
   return (
-    <div className="p-3 md:p-4 bg-gray-100 min-h-screen">
+    <div className="p-4 md:p-4 bg-gray-100 min-h-screen">
       <div className="max-w-5xl mx-auto space-y-3">
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-bold text-gray-900">Tareas</h1>

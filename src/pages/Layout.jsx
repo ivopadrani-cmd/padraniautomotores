@@ -220,10 +220,10 @@ export default function Layout({ children }) {
     );
   }
 
-  // Usar MobileLayout para dispositivos móviles
-  if (isMobile) {
-    return <MobileLayout>{children}</MobileLayout>;
-  }
+  // Mantener el mismo layout pero con mejor responsive design
+  // if (isMobile) {
+  //   return <MobileLayout>{children}</MobileLayout>;
+  // }
 
   // Layout de escritorio con sidebar
   return (
@@ -371,13 +371,13 @@ export default function Layout({ children }) {
         </Sidebar>
 
         <main className="flex-1 flex flex-col min-w-0">
-          <header className="bg-white border-b border-gray-200 px-3 py-2 lg:hidden">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="p-1" />
-              <span className="text-xs font-medium">Padrani</span>
+          <header className="bg-white border-b border-gray-200 px-4 py-3 lg:hidden md:px-3 md:py-2">
+            <div className="flex items-center gap-3 md:gap-2">
+              <SidebarTrigger className="p-2 md:p-1" />
+              <span className="text-lg md:text-xs font-medium">Padrani</span>
             </div>
           </header>
-          <div className="flex-1 overflow-auto bg-gray-100">
+          <div className="flex-1 overflow-auto bg-gray-100 p-0 md:p-0">
             {userRole === null ? (
               <div className="flex items-center justify-center h-full">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>

@@ -357,13 +357,8 @@ export default function CRM() {
   // Cliente ahora se maneja con navegación a /clients/:clientId
   if (selectedLead) return <LeadDetail lead={selectedLead} onClose={handleCloseLead} onEdit={(l) => { handleEditLead(l); }} />;
 
-  // Si está en móvil, mostrar versión móvil
-  if (isMobile) {
-    return <MobileCRM />;
-  }
-
   return (
-    <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
+    <div className="p-4 md:p-4 bg-gray-100 min-h-screen">
       <div className="max-w-6xl mx-auto space-y-3">
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-bold text-gray-900">CRM</h1>

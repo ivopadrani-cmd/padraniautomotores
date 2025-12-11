@@ -509,11 +509,6 @@ export default function Vehicles() {
     </>
   );
 
-  // Si está en móvil, mostrar versión móvil
-  if (isMobile) {
-    return <MobileVehicles />;
-  }
-
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
       <div className="space-y-2">
@@ -523,25 +518,25 @@ export default function Vehicles() {
             <h1 className="text-lg font-bold text-gray-900">Vehículos</h1>
             <p className="text-[10px] text-gray-500">{filteredVehicles.length} unidades</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {selectedVehicles.length > 0 && (
-              <Button variant="outline" onClick={handleBulkDelete} className="h-8 text-[11px] border-red-300 text-red-600 hover:bg-red-50">
+              <Button variant="outline" onClick={handleBulkDelete} className="h-8 md:h-8 text-[11px] md:text-[11px] border-red-300 text-red-600 hover:bg-red-50">
                 <Trash2 className="w-3.5 h-3.5 mr-1" /> Eliminar ({selectedVehicles.length})
               </Button>
             )}
             {selectionMode ? (
-              <Button variant="outline" onClick={() => { setSelectionMode(false); setSelectedVehicles([]); }} className="h-8 text-[11px] border-red-300 text-red-600 hover:bg-red-50">
+              <Button variant="outline" onClick={() => { setSelectionMode(false); setSelectedVehicles([]); }} className="h-8 md:h-8 text-[11px] md:text-[11px] border-red-300 text-red-600 hover:bg-red-50">
                 Cancelar selección
               </Button>
             ) : (
-              <Button variant="outline" onClick={() => setSelectionMode(true)} className="h-8 text-[11px]">
+              <Button variant="outline" onClick={() => setSelectionMode(true)} className="h-8 md:h-8 text-[11px] md:text-[11px]">
                 Selección múltiple
               </Button>
             )}
-            <Button variant="outline" onClick={() => handlePrintStock()} className="h-8 text-[11px]">
+            <Button variant="outline" onClick={() => handlePrintStock()} className="h-8 md:h-8 text-[11px] md:text-[11px]">
               Imprimir Stock
             </Button>
-            <Button onClick={() => setEditingVehicle({})} className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
+            <Button onClick={() => setEditingVehicle({})} className="h-8 md:h-8 text-[11px] md:text-[11px] bg-gray-900 hover:bg-gray-800">
               <Plus className="w-3.5 h-3.5 mr-1" /> Agregar
             </Button>
           </div>
@@ -611,31 +606,31 @@ export default function Vehicles() {
             ) : filteredVehicles.length > 0 ? (
               viewMode === 'table' ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[11px]">
-                    <thead className="border-b">
+                  <table className="w-full min-w-[1200px] text-[13px] md:text-[11px]">
+                    <thead className="border-b bg-gray-50">
                       <tr>
                         {selectionMode && (
-                          <th className="px-2 py-2 w-8">
-                            <Checkbox 
+                          <th className="px-3 py-3 w-8">
+                            <Checkbox
                               checked={selectedVehicles.length === paginatedVehicles.length && paginatedVehicles.length > 0}
                               onCheckedChange={toggleSelectAll}
-                              className="h-3.5 w-3.5"
+                              className="h-4 w-4 md:h-3.5 md:w-3.5"
                             />
                           </th>
                         )}
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px]">Propiedad</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px]">Marca</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px]">Modelo</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px]">Año</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px]">Dominio</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px]">KM</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px]">Color</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px] w-28">Costo Total</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px] w-28">InfoAuto</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px] w-28">Precio Objetivo</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px] w-28">Precio Público</th>
-                        <th className="text-left px-2 py-2 font-semibold text-gray-900 text-[11px]">Estado</th>
-                        <th className="px-2 py-2 w-16"></th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px]">Propiedad</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px]">Marca</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px]">Modelo</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px]">Año</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px]">Dominio</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px]">KM</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px]">Color</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px] min-w-[130px]">Costo Total</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px] min-w-[130px]">InfoAuto</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px] min-w-[130px]">Precio Objetivo</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px] min-w-[130px]">Precio Público</th>
+                        <th className="text-left px-3 py-3 font-semibold text-gray-900 text-[13px] md:text-[11px] min-w-[140px]">Estado</th>
+                        <th className="px-3 py-3 w-20"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -646,14 +641,14 @@ export default function Vehicles() {
                         return (
                           <tr key={v.id} className={`border-b hover:bg-gray-50 cursor-pointer ${rowClass} ${selectedVehicles.includes(v.id) ? 'bg-cyan-50' : v.status === 'VENDIDO' ? 'bg-yellow-50' : ''}`} onClick={() => selectionMode ? toggleSelectVehicle(v.id, { stopPropagation: () => {} }) : selectVehicle(v)}>
                             {selectionMode && (
-                              <td className="px-2 py-2" onClick={(e) => toggleSelectVehicle(v.id, e)}>
-                                <Checkbox 
+                              <td className="px-3 py-3" onClick={(e) => toggleSelectVehicle(v.id, e)}>
+                                <Checkbox
                                   checked={selectedVehicles.includes(v.id)}
-                                  className="h-3.5 w-3.5"
+                                  className="h-4 w-4 md:h-3.5 md:w-3.5"
                                 />
                               </td>
                             )}
-                            <td className="px-2 py-2">
+                            <td className="px-3 py-3">
                               {(isCons || v.is_consignment) ? (
                                 <span className="px-1.5 py-0.5 bg-cyan-100 text-cyan-700 text-[9px] rounded font-medium">CONSIG.</span>
                               ) : (
@@ -672,61 +667,61 @@ export default function Vehicles() {
                                     );
                                   })()}
                                 </td>
-                            <td className="px-2 py-2 uppercase">{v.model}</td>
-                            <td className="px-2 py-2">{v.year}</td>
-                            <td className="px-2 py-2 font-mono uppercase">{v.plate || '-'}</td>
-                            <td className="px-2 py-2">{v.kilometers?.toLocaleString('es-AR') || '-'}</td>
-                            <td className="px-2 py-2 uppercase">{v.color || '-'}</td>
-                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handleCostEdit(v); }}>
+                            <td className="px-3 py-3 uppercase text-[13px] md:text-[11px]">{v.model}</td>
+                            <td className="px-3 py-3 text-[13px] md:text-[11px]">{v.year}</td>
+                            <td className="px-3 py-3 font-mono uppercase text-[13px] md:text-[11px]">{v.plate || '-'}</td>
+                            <td className="px-3 py-3 text-[13px] md:text-[11px]">{v.kilometers?.toLocaleString('es-AR') || '-'}</td>
+                            <td className="px-3 py-3 uppercase text-[13px] md:text-[11px]">{v.color || '-'}</td>
+                            <td className="px-3 py-4 min-w-[130px] cursor-pointer hover:bg-gray-100 rounded text-right" onClick={(e) => { e.stopPropagation(); handleCostEdit(v); }}>
                               {(() => {
                                 const p = getPriceDisplay(v, 'cost');
                                 const hasHistorical = p.historical;
                                 return (
                                   <div className="flex flex-col relative">
-                                    <div className="font-semibold text-[11px] text-right">{p.ars}</div>
+                                    <div className="font-semibold text-[13px] md:text-[11px]">{p.ars}</div>
                                     <div className="flex items-center justify-end gap-1">
-                                      {p.usd && <div className="text-[10px] font-semibold text-cyan-600">{p.usd}</div>}
+                                      {p.usd && <div className="text-[12px] md:text-[10px] font-semibold text-cyan-600">{p.usd}</div>}
                                     </div>
                                   </div>
                                 );
                               })()}
                             </td>
-                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handleInfoAutoEdit(v); }}>
-                              {(() => { const p = getPriceDisplay(v, 'infoauto'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
+                            <td className="px-3 py-4 min-w-[130px] cursor-pointer hover:bg-gray-100 rounded text-right" onClick={(e) => { e.stopPropagation(); handleInfoAutoEdit(v); }}>
+                              {(() => { const p = getPriceDisplay(v, 'infoauto'); return (<div className="flex flex-col"><div className="font-semibold text-[13px] md:text-[11px]">{p.ars}</div>{p.usd && <div className="text-[12px] md:text-[10px] font-semibold text-cyan-600">{p.usd}</div>}</div>); })()}
                             </td>
-                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handleTargetEdit(v); }}>
-                              {(() => { const p = getPriceDisplay(v, 'target'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
+                            <td className="px-3 py-4 min-w-[130px] cursor-pointer hover:bg-gray-100 rounded text-right" onClick={(e) => { e.stopPropagation(); handleTargetEdit(v); }}>
+                              {(() => { const p = getPriceDisplay(v, 'target'); return (<div className="flex flex-col"><div className="font-semibold text-[13px] md:text-[11px]">{p.ars}</div>{p.usd && <div className="text-[12px] md:text-[10px] font-semibold text-cyan-600">{p.usd}</div>}</div>); })()}
                             </td>
-                            <td className="px-2 py-3 w-28 cursor-pointer hover:bg-gray-100 rounded" onClick={(e) => { e.stopPropagation(); handlePublicEdit(v); }}>
-                              {(() => { const p = getPriceDisplay(v, 'public'); return (<div className="flex flex-col"><div className="font-semibold text-[11px] text-right">{p.ars}</div>{p.usd && <div className="text-[10px] font-semibold text-cyan-600 text-right">{p.usd}</div>}</div>); })()}
+                            <td className="px-3 py-4 min-w-[130px] cursor-pointer hover:bg-gray-100 rounded text-right" onClick={(e) => { e.stopPropagation(); handlePublicEdit(v); }}>
+                              {(() => { const p = getPriceDisplay(v, 'public'); return (<div className="flex flex-col"><div className="font-semibold text-[13px] md:text-[11px]">{p.ars}</div>{p.usd && <div className="text-[12px] md:text-[10px] font-semibold text-cyan-600">{p.usd}</div>}</div>); })()}
                             </td>
-                            <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
-                                {['RESERVADO', 'VENDIDO', 'ENTREGADO'].includes(v.status) ? (
-                                  <Badge className={`${STATUS_CONFIG[v.status]?.bg} text-[10px] h-6 w-32 justify-center flex items-center gap-1`}>
-                                    <StatusIcon className="w-3 h-3 flex-shrink-0" />
-                                    <span className="truncate">{v.status}</span>
-                                  </Badge>
-                                ) : (
-                                  <Select value={v.status} onValueChange={(s) => handleStatusChange(v.id, s, v)}>
-                                    <SelectTrigger className="h-6 text-[10px] w-32 border-0 bg-transparent p-0 [&>svg]:hidden">
-                                      <Badge className={`${STATUS_CONFIG[v.status]?.bg} text-[10px] h-6 w-full justify-center flex items-center gap-1`}>
-                                        <StatusIcon className="w-3 h-3 flex-shrink-0" />
-                                        <span className="truncate">{v.status}</span>
-                                      </Badge>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {['A PERITAR', 'A INGRESAR', 'EN REPARACION', 'DISPONIBLE', 'PAUSADO', 'RESERVADO', 'VENDIDO'].map(s => {
-                                        const Icon = STATUS_CONFIG[s]?.icon || CheckCircle;
-                                        return <SelectItem key={s} value={s} className="text-[10px]"><div className="flex items-center gap-1"><Icon className="w-3 h-3" />{s}</div></SelectItem>;
-                                      })}
-                                    </SelectContent>
-                                  </Select>
-                                )}
-                                </td>
-                            <td className="px-1 py-2" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex gap-0.5">
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditingVehicle(v)}><Edit className="w-3 h-3" /></Button>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleDelete(v.id, e)}><Trash2 className="w-3 h-3 text-red-500" /></Button>
+                            <td className="px-3 py-3 min-w-[140px]" onClick={(e) => e.stopPropagation()}>
+                              {['RESERVADO', 'VENDIDO', 'ENTREGADO'].includes(v.status) ? (
+                                <Badge className={`${STATUS_CONFIG[v.status]?.bg} text-[12px] md:text-[10px] h-7 md:h-6 w-36 md:w-32 justify-center flex items-center gap-1`}>
+                                  <StatusIcon className="w-4 h-4 md:w-3 md:h-3 flex-shrink-0" />
+                                  <span className="truncate">{v.status}</span>
+                                </Badge>
+                              ) : (
+                                <Select value={v.status} onValueChange={(s) => handleStatusChange(v.id, s, v)}>
+                                  <SelectTrigger className="h-7 md:h-6 text-[12px] md:text-[10px] w-36 md:w-32 border-0 bg-transparent p-0 [&>svg]:hidden">
+                                    <Badge className={`${STATUS_CONFIG[v.status]?.bg} text-[12px] md:text-[10px] h-7 md:h-6 w-full justify-center flex items-center gap-1`}>
+                                      <StatusIcon className="w-4 h-4 md:w-3 md:h-3 flex-shrink-0" />
+                                      <span className="truncate">{v.status}</span>
+                                    </Badge>
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {['A PERITAR', 'A INGRESAR', 'EN REPARACION', 'DISPONIBLE', 'PAUSADO', 'RESERVADO', 'VENDIDO'].map(s => {
+                                      const Icon = STATUS_CONFIG[s]?.icon || CheckCircle;
+                                      return <SelectItem key={s} value={s} className="text-[12px] md:text-[10px]"><div className="flex items-center gap-1"><Icon className="w-4 h-4 md:w-3 md:h-3" />{s}</div></SelectItem>;
+                                    })}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                              </td>
+                            <td className="px-3 py-3 w-20" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-6 md:w-6" onClick={() => setEditingVehicle(v)}><Edit className="w-4 h-4 md:w-3 md:h-3" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 md:h-6 md:w-6" onClick={(e) => handleDelete(v.id, e)}><Trash2 className="w-4 h-4 md:w-3 md:h-3 text-red-500" /></Button>
                               </div>
                             </td>
                           </tr>

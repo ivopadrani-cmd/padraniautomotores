@@ -176,13 +176,8 @@ export default function Dashboard() {
     }
   });
 
-  // Si está en móvil, mostrar dashboard móvil
-  if (isMobile) {
-    return <MobileDashboard />;
-  }
-
   return (
-    <div className="p-3 md:p-4 bg-gray-100 min-h-screen">
+    <div className="p-4 md:p-4 bg-gray-100 min-h-screen">
       <TaskDetailDialog 
         open={!!selectedTask} 
         onOpenChange={(o) => { if (!o) setSelectedTask(null); }} 
