@@ -50,10 +50,15 @@ const STATUS_CONFIG = {
 };
 
 const convertValue = (value, currency, exchangeRate, targetCurrency) => {
-  if (!value || !exchangeRate) return 0;
+  if (!value) return 0;
+  // Si no hay exchangeRate, asumir que ya está en la moneda correcta
   if (currency === targetCurrency) return value;
-  if (currency === 'ARS' && targetCurrency === 'USD') return value / exchangeRate;
-  if (currency === 'USD' && targetCurrency === 'ARS') return value * exchangeRate;
+  if (currency === 'ARS' && targetCurrency === 'USD') {
+    return exchangeRate ? value / exchangeRate : value / 1200; // Usar tasa por defecto si no hay exchangeRate
+  }
+  if (currency === 'USD' && targetCurrency === 'ARS') {
+    return exchangeRate ? value * exchangeRate : value * 1200; // Usar tasa por defecto si no hay exchangeRate
+  }
   return value;
 };
 
@@ -180,20 +185,12 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
 
   const createQuoteMutation = useMutation({
     mutationFn: async (data) => {
-      console.log('📋 Guardando presupuesto:', data);
       // Mapear 'date' a 'quote_date' y remover 'date'
       const { date, ...restData } = data;
       const quoteData = { ...restData, quote_date: date };
-      console.log('📋 Datos procesados para guardar:', quoteData);
 
-      try {
-        const result = data.id ? await base44.entities.Quote.update(data.id, quoteData) : await base44.entities.Quote.create(quoteData);
-        console.log('✅ Resultado de guardar:', result);
-        return result;
-      } catch (apiError) {
-        console.error('❌ Error en API call:', apiError);
-        throw apiError;
-      }
+      const result = data.id ? await base44.entities.Quote.update(data.id, quoteData) : await base44.entities.Quote.create(quoteData);
+      return result;
     },
     onSuccess: (result, variables) => {
       console.log('✅ Presupuesto guardado:', result);
@@ -1039,28 +1036,9 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
                 };
               };
 
-              console.log('🔍 VehicleView - Datos del vehículo:', {
-                id: updatedVehicle.id,
-                target_price_value: updatedVehicle.target_price_value,
-                target_price_currency: updatedVehicle.target_price_currency,
-                target_price_exchange_rate: updatedVehicle.target_price_exchange_rate,
-                public_price_value: updatedVehicle.public_price_value,
-                public_price_currency: updatedVehicle.public_price_currency,
-                public_price_exchange_rate: updatedVehicle.public_price_exchange_rate,
-                infoauto_value: updatedVehicle.infoauto_value,
-                infoauto_currency: updatedVehicle.infoauto_currency,
-                infoauto_exchange_rate: updatedVehicle.infoauto_exchange_rate
-              });
-
               const targetArs = convertValue(updatedVehicle.target_price_value, updatedVehicle.target_price_currency, updatedVehicle.target_price_exchange_rate, 'ARS');
               const publicArs = convertValue(updatedVehicle.public_price_value, updatedVehicle.public_price_currency, updatedVehicle.public_price_exchange_rate, 'ARS');
               const infoautoArs = convertValue(updatedVehicle.infoauto_value, updatedVehicle.infoauto_currency, updatedVehicle.infoauto_exchange_rate, 'ARS');
-
-              console.log('🔍 VehicleView - Valores convertidos:', {
-                targetArs,
-                publicArs,
-                infoautoArs
-              });
 
               return (
                 <>
