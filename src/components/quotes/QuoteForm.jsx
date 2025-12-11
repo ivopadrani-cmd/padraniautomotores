@@ -262,8 +262,11 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
           financing_installment_value: parseFloat(item.financing_installment_value) || 0
         } : {})
       };
+      console.log('📋 Datos finales del presupuesto:', quoteData);
       return quoteData;
     });
+
+    console.log('📦 Todos los presupuestos preparados:', quotes);
 
     try {
       // For multiple quotes, submit them one by one and return the results
