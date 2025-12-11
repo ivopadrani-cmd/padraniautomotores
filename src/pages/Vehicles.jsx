@@ -11,6 +11,7 @@ import { Plus, Search, Car, Grid3x3, List, Trash2, Eye, Edit, Clock, Wrench, Che
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import VehicleView from "../components/vehicles/VehicleView";
 import VehicleFormDialog from "../components/vehicles/VehicleFormDialog";
 import CostPriceDialog from "../components/vehicles/CostPriceDialog";
@@ -21,6 +22,7 @@ import ClientDetail from "../components/clients/ClientDetail";
 import SaleFormDialog from "../components/sales/SaleFormDialog";
 import ReservationForm from "../components/reservations/ReservationForm";
 import RequestInspectionDialog from "../components/vehicles/RequestInspectionDialog";
+import MobileVehicles from "../components/ui/MobileVehicles";
 
 const STATUS_CONFIG = {
   'A PERITAR': { bg: 'bg-amber-100 text-amber-700', icon: Wrench },
@@ -50,6 +52,7 @@ const formatPrice = (value, currency) => {
 export default function Vehicles() {
   const navigate = useNavigate();
   const { vehicleId } = useParams();
+  const isMobile = useIsMobile();
   
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [editingVehicle, setEditingVehicle] = useState(null);
@@ -505,6 +508,11 @@ export default function Vehicles() {
       />
     </>
   );
+
+  // Si está en móvil, mostrar versión móvil
+  if (isMobile) {
+    return <MobileVehicles />;
+  }
 
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">

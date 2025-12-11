@@ -9,9 +9,11 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addDays, isBefore, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
+import { useIsMobile } from "@/hooks/use-mobile";
 import TaskDetailDialog from "../components/tasks/TaskDetailDialog";
 import TaskFormDialog from "../components/tasks/TaskFormDialog";
 import InspectionApprovalDialog from "../components/vehicles/InspectionApprovalDialog";
+import MobileDashboard from "../components/ui/MobileDashboard";
 
 const TASK_TYPE_CONFIG = {
   'Tarea': { bg: 'bg-gray-200 text-gray-700', dot: 'bg-gray-400', icon: '○' },
@@ -23,6 +25,7 @@ const TASK_TYPE_CONFIG = {
 };
 
 export default function Dashboard() {
+  const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTask, setSelectedTask] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
@@ -172,6 +175,11 @@ export default function Dashboard() {
       setEditingTask(null);
     }
   });
+
+  // Si está en móvil, mostrar dashboard móvil
+  if (isMobile) {
+    return <MobileDashboard />;
+  }
 
   return (
     <div className="p-3 md:p-4 bg-gray-100 min-h-screen">
