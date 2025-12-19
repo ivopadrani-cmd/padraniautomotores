@@ -266,13 +266,17 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
     });
 
     try {
+      console.log('📝 QuoteForm - Enviando datos:', quotes);
+
       // If editing existing quote, update it directly
       if (editingQuote) {
         const updatedQuote = {
           ...quotes[0],
           id: editingQuote.id
         };
-        return await onSubmit(updatedQuote);
+        const result = await onSubmit(updatedQuote);
+        console.log('✅ QuoteForm - Presupuesto actualizado:', result);
+        return result;
       }
 
       // For new quotes
@@ -286,9 +290,12 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
           results.push(result);
         }
 
+        console.log('✅ QuoteForm - Múltiples presupuestos creados:', results);
         return results;
       } else {
-        return await onSubmit(quotes[0]);
+        const result = await onSubmit(quotes[0]);
+        console.log('✅ QuoteForm - Presupuesto creado:', result);
+        return result;
       }
     } catch (error) {
       console.error('❌ Error en handleSubmit:', error);

@@ -303,6 +303,12 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       setShowNewClientForm(false);
       setNewClientData({ full_name: '', phone: '', dni: '', cuit_cuil: '', email: '', birth_date: '', address: '', city: '', province: '', postal_code: '', marital_status: '', observations: '' });
     },
+    onError: (error, variables) => {
+      console.error('❌ Error creando venta:', error);
+      // Cerrar modal incluso si hay error
+      onOpenChange(false);
+      toast.error("Error al crear la venta: " + error.message);
+    }
   });
 
   const handleClientSelect = (client) => {
@@ -312,40 +318,40 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
   };
 
   const handleChange = (field, value) => {
-    // Si el campo es sale_date, actualizar también el sale_price_exchange_rate
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+
+    // Para campos de fecha que requieren cotización histórica, hacerlo en background sin bloquear el input
     if (field === 'sale_date' && value) {
       getHistoricalRate(value).then(historicalRate => {
         if (historicalRate) {
           console.log(`💱 Cotización histórica para precio de venta: ${historicalRate}`);
-          setFormData(prev => ({ ...prev, sale_date: value, sale_price_exchange_rate: historicalRate.toString() }));
+          setFormData(prev => ({ ...prev, sale_price_exchange_rate: historicalRate.toString() }));
         }
       }).catch(error => {
         console.error(`❌ Error obteniendo cotización histórica para venta:`, error);
       });
     }
-
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setHasChanges(true);
   };
 
   const handleNestedChange = (parent, field, value) => {
-    // Si el campo es una fecha, actualizar también el exchange_rate
+    setFormData(prev => ({ ...prev, [parent]: { ...prev[parent], [field]: value } }));
+    setHasChanges(true);
+
+    // Si el campo es una fecha, actualizar también el exchange_rate en background sin bloquear el input
     if (field === 'date' && value) {
       getHistoricalRate(value).then(historicalRate => {
         if (historicalRate) {
           console.log(`💱 Cotización histórica obtenida: ${historicalRate}`);
           setFormData(prev => ({
             ...prev,
-            [parent]: { ...prev[parent], [field]: value, exchange_rate: historicalRate.toString() }
+            [parent]: { ...prev[parent], exchange_rate: historicalRate.toString() }
           }));
         }
       }).catch(error => {
         console.error(`❌ Error obteniendo cotización histórica:`, error);
       });
     }
-
-    setFormData(prev => ({ ...prev, [parent]: { ...prev[parent], [field]: value } }));
-    setHasChanges(true);
   };
 
   // La actualización de cotizaciones históricas ahora se maneja directamente en handleChange y handleNestedChange

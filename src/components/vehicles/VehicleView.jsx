@@ -222,8 +222,10 @@ export default function VehicleView({ vehicle, onClose, onEdit, onDelete }) {
       setShowReservationForm(false);
       toast.success("Reserva creada");
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       console.error('❌ Error creando reserva:', error);
+      // Cerrar modal incluso si hay error
+      setShowReservationForm(false);
       toast.error("Error al crear la reserva: " + error.message);
     }
   });

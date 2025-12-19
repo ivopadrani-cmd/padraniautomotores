@@ -141,6 +141,14 @@ export default function ConsignmentContractView({ open, onOpenChange, vehicle, c
       setEditingClientData({});
       setEditingVehicleData({});
       setEditingAgencyData({});
+      // Cerrar modal después de guardar exitosamente
+      onOpenChange(false);
+    },
+    onError: (error, variables) => {
+      console.error('❌ Error guardando contrato:', error);
+      // Cerrar modal incluso si hay error
+      onOpenChange(false);
+      toast.error("Error al guardar contrato: " + error.message);
     }
   });
 

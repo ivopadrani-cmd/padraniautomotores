@@ -203,32 +203,60 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
       if (vehicle?.id && Object.keys(editingVehicleData).length > 0) {
         await base44.entities.Vehicle.update(vehicle.id, editingVehicleData);
       }
-      await onSubmit({
-        ...formData,
+      // Solo enviar campos que existen en la tabla de reservations
+      const reservationData = {
+        reservation_date: formData.reservation_date,
+        client_id: selectedClientId || null,
         vehicle_id: vehicle?.id,
         vehicle_description: `${vehicle?.brand} ${vehicle?.model} ${vehicle?.year}`,
-        client_id: selectedClientId || null,
         deposit_amount: includeDeposit ? (parseFloat(formData.deposit_amount) || 0) : 0,
+        deposit_currency: formData.deposit_currency,
         deposit_exchange_rate: parseFloat(formData.deposit_exchange_rate) || null,
         deposit_date: formData.deposit_date,
+        deposit_description: formData.deposit_description,
         agreed_price: parseFloat(formData.agreed_price) || 0,
+        agreed_price_currency: formData.agreed_price_currency,
         agreed_price_exchange_rate: parseFloat(formData.agreed_price_exchange_rate) || null,
-        agreed_price_date: formData.agreed_price_date,
-        trade_in: includeTradeIn ? {
-          ...formData.trade_in,
+        seller_id: formData.seller_id,
+        seller_name: formData.seller_name,
+        status: 'VIGENTE'
+      };
+
+      // Agregar trade_in solo si está incluido
+      if (includeTradeIn && formData.trade_in?.brand) {
+        reservationData.trade_in = {
+          brand: formData.trade_in.brand,
+          model: formData.trade_in.model,
+          year: parseInt(formData.trade_in.year) || null,
+          plate: formData.trade_in.plate || '',
+          kilometers: parseFloat(formData.trade_in.kilometers) || 0,
+          color: formData.trade_in.color || '',
+          engine_brand: formData.trade_in.engine_brand || '',
+          engine_number: formData.trade_in.engine_number || '',
+          chassis_brand: formData.trade_in.chassis_brand || '',
+          chassis_number: formData.trade_in.chassis_number || '',
+          registration_city: formData.trade_in.registration_city || '',
+          registration_province: formData.trade_in.registration_province || '',
+          value: parseFloat(formData.trade_in.value) || 0,
+          value_currency: formData.trade_in.value_currency,
           value_exchange_rate: parseFloat(formData.trade_in.value_exchange_rate) || null,
           value_date: formData.trade_in.value_date,
           is_peritado: formData.trade_in.is_peritado || false
-        } : null,
-        financing_amount: includeFinancing ? (parseFloat(formData.financing_amount) || 0) : 0,
-        financing_currency: formData.financing_currency,
-        financing_exchange_rate: parseFloat(formData.financing_exchange_rate) || null,
-        financing_date: formData.financing_date,
-        financing_bank: includeFinancing ? formData.financing_bank : '',
-        financing_installments: includeFinancing ? formData.financing_installments : '',
-        financing_installment_value: includeFinancing ? formData.financing_installment_value : '',
-        status: 'VIGENTE'
-      });
+        };
+      }
+
+      // Agregar financing solo si está incluido
+      if (includeFinancing) {
+        reservationData.financing_amount = parseFloat(formData.financing_amount) || 0;
+        reservationData.financing_currency = formData.financing_currency;
+        reservationData.financing_exchange_rate = parseFloat(formData.financing_exchange_rate) || null;
+        reservationData.financing_bank = formData.financing_bank || '';
+        reservationData.financing_installments = formData.financing_installments || '';
+        reservationData.financing_installment_value = parseFloat(formData.financing_installment_value) || 0;
+      }
+
+      console.log('📝 ReservationForm - Enviando datos:', reservationData);
+      await onSubmit(reservationData);
     } finally {
       setIsSubmitting(false);
     }

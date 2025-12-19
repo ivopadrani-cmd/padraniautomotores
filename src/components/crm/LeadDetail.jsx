@@ -190,15 +190,24 @@ export default function LeadDetail({ lead, onClose, onEdit, showEditModal = fals
 
   const createQuoteMutation = useMutation({
     mutationFn: (data) => {
+      console.log('🔄 Creando/actualizando presupuesto:', data);
       return data.id ? base44.entities.Quote.update(data.id, data) : base44.entities.Quote.create(data);
     },
     onSuccess: (result, variables) => {
+      console.log('✅ Presupuesto creado/actualizado:', result);
       queryClient.invalidateQueries({ queryKey: ['quotes'] });
       queryClient.invalidateQueries({ queryKey: ['lead-quotes'] });
       setShowQuotePrint({ ...variables, id: result?.id || variables.id });
       setShowQuoteForm(false);
       setEditingQuote(null);
       toast.success(variables.id ? "Presupuesto actualizado" : "Presupuesto guardado");
+    },
+    onError: (error, variables) => {
+      console.error('❌ Error creando presupuesto:', error);
+      // Cerrar modal incluso si hay error
+      setShowQuoteForm(false);
+      setEditingQuote(null);
+      toast.error("Error al guardar presupuesto: " + error.message);
     },
   });
 

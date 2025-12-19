@@ -195,6 +195,12 @@ export default function ConsignmentSaleForm({ open, onOpenChange, vehicle, onSal
       setShowNewClientForm(false);
       setNewClientData({ full_name: '', phone: '', dni: '', cuit_cuil: '', email: '', birth_date: '', address: '', city: '', province: '', postal_code: '', marital_status: '', observations: '' });
     },
+    onError: (error, variables) => {
+      console.error('❌ Error creando venta de consignación:', error);
+      // Cerrar modal incluso si hay error
+      onOpenChange(false);
+      toast.error("Error al crear venta de consignación: " + error.message);
+    },
   });
 
   const handleClientSelect = (client) => {
