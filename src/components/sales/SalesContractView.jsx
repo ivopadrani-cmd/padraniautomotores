@@ -46,6 +46,15 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
   const [editedClauses, setEditedClauses] = useState('');
   const [editedObservations, setEditedObservations] = useState('');
 
+  // Fetch agency settings
+  const { data: agencySettings } = useQuery({
+    queryKey: ['agency-settings'],
+    queryFn: async () => {
+      const settings = await base44.entities.AgencySettings.list();
+      return settings[0] || null;
+    },
+  });
+
   const { data: templates = [] } = useQuery({
     queryKey: ['clause-templates'],
     queryFn: () => base44.entities.ClauseTemplate.list()
@@ -178,11 +187,13 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
             {/* Vendedor */}
             <div style={{ border: '1px solid #0891b2', padding: '10px', background: '#f8fafc' }}>
               <p style={{ fontSize: '7pt', color: '#0891b2', textTransform: 'uppercase', fontWeight: 600, marginBottom: '6px', letterSpacing: '1px' }}>EL VENDEDOR</p>
-              <p style={{ fontSize: '10pt', fontWeight: 600, marginBottom: '4px' }}>PADRANI AUTOMOTORES</p>
+              <p style={{ fontSize: '10pt', fontWeight: 600, marginBottom: '4px' }}>{agencySettings?.business_name || 'PADRANI AUTOMOTORES'}</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '8pt' }}>
-                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>CUIT</p><p style={{ fontWeight: 500 }}>20-12320784-0</p></div>
-                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TELÉFONO</p><p style={{ fontWeight: 500 }}>2976258171</p></div>
-                <div style={{ gridColumn: 'span 2' }}><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMICILIO</p><p style={{ fontWeight: 500 }}>Namuncurá 283, Comodoro Rivadavia</p></div>
+                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>CUIT</p><p style={{ fontWeight: 500 }}>{agencySettings?.cuit || '20-12320784-0'}</p></div>
+                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TELÉFONO</p><p style={{ fontWeight: 500 }}>{agencySettings?.phone || '2976258171'}</p></div>
+                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>EMAIL</p><p style={{ fontWeight: 500 }}>{agencySettings?.email || '-'}</p></div>
+                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>CIUDAD</p><p style={{ fontWeight: 500 }}>{agencySettings?.city || 'Comodoro Rivadavia'}{agencySettings?.province ? `, ${agencySettings.province}` : ''}</p></div>
+                <div style={{ gridColumn: 'span 2' }}><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMICILIO</p><p style={{ fontWeight: 500 }}>{agencySettings?.address || 'Namuncurá 283'}</p></div>
               </div>
             </div>
             {/* Comprador */}
@@ -193,6 +204,7 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DNI</p><p style={{ fontWeight: 500 }}>{client?.dni || '-'}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>CUIT/CUIL</p><p style={{ fontWeight: 500 }}>{client?.cuit_cuil || '-'}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TELÉFONO</p><p style={{ fontWeight: 500 }}>{client?.phone || '-'}</p></div>
+                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>EMAIL</p><p style={{ fontWeight: 500 }}>{client?.email || '-'}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>CIUDAD</p><p style={{ fontWeight: 500 }}>{client?.city || '-'}{client?.province ? `, ${client.province}` : ''}</p></div>
                 <div style={{ gridColumn: 'span 2' }}><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMICILIO</p><p style={{ fontWeight: 500 }}>{client?.address || '-'}</p></div>
               </div>
