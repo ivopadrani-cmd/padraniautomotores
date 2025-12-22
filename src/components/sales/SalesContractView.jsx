@@ -208,7 +208,7 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
           <div style={{ marginBottom: '10px' }}>
             <p style={{ fontSize: '8pt', fontWeight: 600, marginBottom: '5px' }}>PRIMERO – OBJETO: El COMPRADOR adquiere el siguiente vehículo:</p>
             <div style={{ border: '1px solid #0891b2', padding: '10px', background: '#f8fafc' }}>
-              <p style={{ fontSize: '11pt', fontWeight: 600, marginBottom: '6px', color: '#0891b2' }}>{vehicle.brand} {vehicle.model} {vehicle.year}</p>
+              <p style={{ fontSize: '11pt', fontWeight: 600, marginBottom: '6px', color: '#0891b2' }}>Marca: {vehicle.brand} | Modelo: {vehicle.model} | Año: {vehicle.year}</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px' }}>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMINIO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.plate || '-'}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TIPO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.vehicle_type || 'AUTOMÓVIL'}</p></div>
