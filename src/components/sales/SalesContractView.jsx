@@ -118,6 +118,23 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
   const financingARS = currentSale.financing ? toARS(currentSale.financing.amount, currentSale.financing.currency, currentSale.financing.exchange_rate) : 0;
   const salePriceARS = toARS(salePrice, saleCurrency, currentSale.sale_price_exchange_rate);
   const balanceARS = salePriceARS - depositARS - cashARS - tradeInARS - financingARS;
+
+  // Funciones para mostrar pagos en su moneda original
+  const getDepositDisplay = () => currentSale.deposit ? formatCurrency(currentSale.deposit.amount, currentSale.deposit.currency) : null;
+  const getCashDisplay = () => currentSale.cash_payment ? formatCurrency(currentSale.cash_payment.amount, currentSale.cash_payment.currency) : null;
+  const getTradeInDisplay = () => {
+    if (!currentSale.trade_ins?.length) return null;
+    return currentSale.trade_ins.map(ti => formatCurrency(ti.value, ti.currency)).join(' + ');
+  };
+  const getFinancingDisplay = () => currentSale.financing ? formatCurrency(currentSale.financing.amount, currentSale.financing.currency) : null;
+
+  // Funciones para el texto en palabras en la moneda original
+  const getDepositWords = () => currentSale.deposit ? amountInWords(currentSale.deposit.amount, currentSale.deposit.currency) : null;
+  const getCashWords = () => currentSale.cash_payment ? amountInWords(currentSale.cash_payment.amount, currentSale.cash_payment.currency) : null;
+  const getTradeInWords = () => {
+    if (!currentSale.trade_ins?.length) return null;
+    return currentSale.trade_ins.map(ti => amountInWords(ti.value, ti.currency)).join(' más ');
+  };
   const saleDate = currentSale.sale_date ? new Date(currentSale.sale_date) : new Date();
   const displayObservations = isEditing ? editedObservations : (currentSale.observations || '');
   const displayClauses = isEditing ? editedClauses : (currentSale.contract_clauses || defaultClauses);
@@ -213,16 +230,16 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
             <div style={{ fontSize: '8pt', marginBottom: '6px', paddingLeft: '8px', lineHeight: 1.5 }}>
               {(depositARS > 0 || cashARS > 0 || tradeInARS > 0 || financingARS > 0) ? (
                 <>
-                  {depositARS > 0 && (
-                    <p>• En concepto de seña, la suma de {formatCurrency(depositARS)} ({amountInWords(depositARS)}) el día {currentSale.deposit?.date ? format(new Date(currentSale.deposit.date), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'de la fecha'}.</p>
+                  {currentSale.deposit?.amount > 0 && (
+                    <p>• En concepto de seña, la suma de {getDepositDisplay()} ({getDepositWords()}) el día {currentSale.deposit?.date ? format(new Date(currentSale.deposit.date), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'de la fecha'}.</p>
                   )}
-                  {cashARS > 0 && (
-                    <p>• Al contado y en este acto, la suma de {formatCurrency(cashARS)} ({amountInWords(cashARS)}).</p>
+                  {currentSale.cash_payment?.amount > 0 && (
+                    <p>• Al contado y en este acto, la suma de {getCashDisplay()} ({getCashWords()}).</p>
                   )}
-                  {tradeInARS > 0 && (
-                    <p>• Un vehículo tomado en parte de pago valuado en {formatCurrency(tradeInARS)} ({amountInWords(tradeInARS)}).</p>
+                  {currentSale.trade_ins?.length > 0 && (
+                    <p>• Un vehículo tomado en parte de pago valuado en {getTradeInDisplay()} ({getTradeInWords()}).</p>
                   )}
-                  {financingARS > 0 && (
+                  {currentSale.financing?.amount > 0 && (
                     <p>• Financiación según detalle a continuación.</p>
                   )}
                   {balanceARS > 0 && currentSale.balance_due_date && (
