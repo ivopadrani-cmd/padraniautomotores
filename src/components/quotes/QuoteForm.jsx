@@ -235,7 +235,7 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-
+    
     const tradeInData = includeTradeIn ? formData.trade_in : null;
     
     const isMultiQuote = vehicleItems.length > 1;
@@ -246,8 +246,8 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
       const quoteData = {
         quote_date: formData.date,
         client_id: selectedClientId || null,
-        vehicle_id: item.vehicle_id,
-        quoted_price_ars: parseFloat(item.quoted_price) || 0,
+      vehicle_id: item.vehicle_id,
+      quoted_price_ars: parseFloat(item.quoted_price) || 0,
         // Solo incluir campos básicos que sabemos que existen
         ...(includeTradeIn && formData.trade_in?.brand ? {
           trade_in_brand: formData.trade_in.brand,
@@ -391,9 +391,9 @@ export default function QuoteForm({ open, onOpenChange, vehicle, lead, onSubmit,
                           </SelectContent>
                         </Select>
                       </div>
-                    <div>
-                      <Label className={lbl}>Cotización</Label>
-                      <Input className={inp} value={item.quoted_price_exchange_rate || ''} onChange={(e) => handleVehicleItemChange(index, 'quoted_price_exchange_rate', e.target.value)} placeholder={currentBlueRate.toString()} />
+                      <div>
+                        <Label className={lbl}>Cotización</Label>
+                        <Input className={inp} value={item.quoted_price_exchange_rate || ''} onChange={(e) => handleVehicleItemChange(index, 'quoted_price_exchange_rate', e.target.value)} placeholder={currentBlueRate.toString()} />
                     </div>
                       <div className="flex items-end">
                         <div className="flex items-center gap-2">

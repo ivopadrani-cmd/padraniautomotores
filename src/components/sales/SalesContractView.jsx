@@ -4,8 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Printer, X, Edit2, Save, FileText } from "lucide-react";
+import { Printer, X, Edit2, Save } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -31,6 +30,18 @@ const formatCurrency = (amount, currency = 'ARS') => !amount ? '-' : currency ==
 const toARS = (amount, currency, rate) => !amount ? 0 : currency === 'USD' ? amount * (rate || 1200) : amount;
 const amountInWords = (amount, currency = 'ARS') => !amount ? '' : currency === 'USD' ? `dólares estadounidenses ${numberToWords(Math.floor(amount))}` : `pesos ${numberToWords(Math.floor(amount))}`;
 
+// Función helper para parsear fechas correctamente (evitando problemas de zona horaria)
+const parseLocalDate = (dateString) => {
+  if (!dateString) return null;
+  // Si es un objeto Date, devolverlo tal cual
+  if (dateString instanceof Date) return dateString;
+  // Si es string, parsearlo como fecha local (no UTC)
+  const date = new Date(dateString);
+  // Ajustar por zona horaria para evitar el día anterior
+  const offset = date.getTimezoneOffset();
+  return new Date(date.getTime() - (offset * 60 * 1000));
+};
+
 const defaultClauses = `TERCERO – CONDICIONES DE ENTREGA: El vehículo se entrega en el estado que se encuentra, y que el COMPRADOR declara conocer y aceptar, conforme inspección previa. La entrega del mismo se efectuará exclusivamente una vez finalizada y asentada la transferencia registral correspondiente.
 
 CUARTO – GARANTÍA Y VICIOS OCULTOS: El VENDEDOR no otorga garantía sobre el bien, salvo vicios ocultos graves no registrados ni informados al momento de la venta. No se admiten reclamos por detalles estéticos o de mantenimiento que no comprometan la seguridad o funcionamiento básico del vehículo. Para las permutas tomadas, el VENDEDOR se reserva el derecho de eventual reclamo al permutante en caso de vicios ocultos no registrados ni informados al momento de la toma.
@@ -41,7 +52,6 @@ SEXTO – JURISDICCIÓN: Para cualquier diferencia que surja del presente contra
 
 export default function SalesContractView({ open, onOpenChange, sale, vehicle, client, spouse }) {
   const printRef = useRef();
-  const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editedClauses, setEditedClauses] = useState('');
   const [editedObservations, setEditedObservations] = useState('');
@@ -55,10 +65,6 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
     },
   });
 
-  const { data: templates = [] } = useQuery({
-    queryKey: ['clause-templates'],
-    queryFn: () => base44.entities.ClauseTemplate.list()
-  });
 
   const { data: currentSale } = useQuery({
     queryKey: ['sale', sale?.id],
@@ -78,6 +84,8 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
     }
   }, [currentSale, open]);
 
+  const queryClient = useQueryClient();
+
   const updateSaleMutation = useMutation({
     mutationFn: (data) => base44.entities.Sale.update(currentSale.id, data),
     onSuccess: () => {
@@ -87,7 +95,6 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
       setIsEditing(false);
     },
     onSettled: () => {
-      // Garantizar volver a vista previa aunque la mutación termine con error
       setIsEditing(false);
     }
   });
@@ -96,12 +103,6 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
     updateSaleMutation.mutate({ contract_clauses: editedClauses, observations: editedObservations });
   };
 
-  const handleTemplateSelect = (templateId) => {
-    const template = templates.find(t => t.id === templateId);
-    if (template) {
-      setEditedClauses(template.content);
-    }
-  };
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -117,7 +118,7 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
     setTimeout(() => printWindow.print(), 300);
   };
 
-  if (!currentSale || !vehicle) return null;
+  if (!currentSale || !vehicle || !sale) return null;
 
   const salePrice = currentSale.sale_price || 0;
   const saleCurrency = currentSale.sale_price_currency || 'ARS';
@@ -144,7 +145,7 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
     if (!currentSale.trade_ins?.length) return null;
     return currentSale.trade_ins.map(ti => amountInWords(ti.value, ti.currency)).join(' más ');
   };
-  const saleDate = currentSale.sale_date ? new Date(currentSale.sale_date) : new Date();
+  const saleDate = currentSale.sale_date ? parseLocalDate(currentSale.sale_date) : new Date();
   const displayObservations = isEditing ? editedObservations : (currentSale.observations || '');
   const displayClauses = isEditing ? editedClauses : (currentSale.contract_clauses || defaultClauses);
 
@@ -154,6 +155,7 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
   if (currentSale.cash_payment?.amount > 0) paymentBoxes.push('cash');
   if (currentSale.financing?.amount > 0) paymentBoxes.push('financing');
   const paymentGridCols = paymentBoxes.length === 1 ? '1fr' : paymentBoxes.length === 2 ? '1fr 1fr' : '1fr 1fr 1fr';
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -204,9 +206,9 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DNI</p><p style={{ fontWeight: 500 }}>{client?.dni || '-'}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>CUIT/CUIL</p><p style={{ fontWeight: 500 }}>{client?.cuit_cuil || '-'}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TELÉFONO</p><p style={{ fontWeight: 500 }}>{client?.phone || '-'}</p></div>
-                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>EMAIL</p><p style={{ fontWeight: 500 }}>{client?.email || '-'}</p></div>
+                {client?.email && <div style={{ gridColumn: 'span 2' }}><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>EMAIL</p><p style={{ fontWeight: 500 }}>{client.email}</p></div>}
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>CIUDAD</p><p style={{ fontWeight: 500 }}>{client?.city || '-'}{client?.province ? `, ${client.province}` : ''}</p></div>
-                <div style={{ gridColumn: 'span 2' }}><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMICILIO</p><p style={{ fontWeight: 500 }}>{client?.address || '-'}</p></div>
+                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMICILIO</p><p style={{ fontWeight: 500 }}>{client?.address || '-'}</p></div>
               </div>
             </div>
           </div>
@@ -223,7 +225,7 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
               <p style={{ fontSize: '11pt', fontWeight: 600, marginBottom: '6px', color: '#0891b2' }}>Marca: {vehicle.brand} | Modelo: {vehicle.model} | Año: {vehicle.year}</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px' }}>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMINIO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.plate || '-'}</p></div>
-                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TIPO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.vehicle_type || 'AUTOMÓVIL'}</p></div>
+                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TIPO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{(vehicle.model?.toLowerCase().includes('up') && vehicle.year === 2015) ? 'Sedan 5 puertas' : (vehicle.vehicle_type || 'AUTOMÓVIL')}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>RADICACIÓN</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.registration_city || '-'}{vehicle.registration_province && `, ${vehicle.registration_province}`}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>COLOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.color || '-'}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>MARCA MOTOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.engine_brand || '-'}</p></div>
@@ -236,14 +238,14 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
 
           {/* Price - SEGUNDO */}
           <div style={{ marginBottom: '10px' }}>
-            <p style={{ fontSize: '8.5pt', fontWeight: 600, marginBottom: '5px' }}>SEGUNDO – PRECIO Y FORMA DE PAGO: El precio total de la operación es de <strong>{formatCurrency(salePrice, saleCurrency)}</strong> en letras (<span style={{ textTransform: 'uppercase' }}>{amountInWords(salePriceARS)}</span>) que el COMPRADOR abona de la siguiente forma:</p>
-            
-            {/* Payment description */}
+            <p style={{ fontSize: '8.5pt', fontWeight: 600, marginBottom: '5px' }}>
+              SEGUNDO – PRECIO Y FORMA DE PAGO: El precio total de la operación es de <strong>{formatCurrency(salePrice, saleCurrency)}</strong> en letras (<span style={{ textTransform: 'uppercase' }}>{amountInWords(salePriceARS)}</span>) que el COMPRADOR abona de la siguiente forma:
+            </p>
             <div style={{ fontSize: '8pt', marginBottom: '6px', paddingLeft: '8px', lineHeight: 1.5 }}>
               {(depositARS > 0 || cashARS > 0 || tradeInARS > 0 || financingARS > 0) ? (
                 <>
                   {currentSale.deposit?.amount > 0 && (
-                    <p>• En concepto de seña, la suma de {getDepositDisplay()} ({getDepositWords()}) el día {currentSale.deposit?.date ? format(new Date(currentSale.deposit.date), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'de la fecha'}.</p>
+                    <p>• En concepto de seña, la suma de {getDepositDisplay()} ({getDepositWords()}) el día {currentSale.deposit?.date ? format(parseLocalDate(currentSale.deposit.date), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'de la fecha'}.</p>
                   )}
                   {currentSale.cash_payment?.amount > 0 && (
                     <p>• Al contado y en este acto, la suma de {getCashDisplay()} ({getCashWords()}).</p>
@@ -255,86 +257,21 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                     <p>• Financiación según detalle a continuación.</p>
                   )}
                   {balanceARS > 0 && currentSale.balance_due_date && (
-                    <p>• El saldo restante de {formatCurrency(balanceARS)} ({amountInWords(balanceARS)}) deberá ser abonado en su totalidad antes del día {format(new Date(currentSale.balance_due_date), "d 'de' MMMM 'de' yyyy", { locale: es })}. En caso de incumplimiento en el pago del saldo adeudado, se aplicarán intereses moratorios equivalentes al 3% mensual sobre el capital impago, sin perjuicio de las acciones legales que correspondan.</p>
+                    <p>• El saldo restante de {formatCurrency(balanceARS)} ({amountInWords(balanceARS)}) deberá ser abonado en su totalidad antes del día {format(parseLocalDate(currentSale.balance_due_date), "d 'de' MMMM 'de' yyyy", { locale: es })}.</p>
                   )}
                 </>
               ) : (
                 <p>Al contado y en este acto.</p>
               )}
 
-              {/* Recibo suficiente */}
               <p style={{ marginTop: '8px', fontSize: '7.5pt', fontStyle: 'italic', color: '#666' }}>
                 Sirviendo el presente documento como recibo suficiente de los montos abonados hasta la fecha.
               </p>
             </div>
-
-            {/* Trade-ins detail - more compact */}
-            {currentSale.trade_ins?.length > 0 && currentSale.trade_ins.map((ti, i) => (
-              <div key={i} style={{ border: '1px solid #0891b2', padding: '8px', marginBottom: '8px', background: '#f0f9ff' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                  <p style={{ fontSize: '7pt', color: '#0e7490', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '1px' }}>VEHÍCULO EN PARTE DE PAGO VALUADO EN <span style={{ fontSize: '9pt', color: '#0891b2' }}>{formatCurrency(ti.value, ti.currency)}</span>:</p>
-                </div>
-                <p style={{ fontSize: '10pt', fontWeight: 600, color: '#0e7490', marginBottom: '4px' }}>{ti.brand} {ti.model} {ti.year}</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px', fontSize: '8pt' }}>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMINIO</p><p style={{ fontWeight: 500 }}>{ti.plate || '-'}</p></div>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>COLOR</p><p style={{ fontWeight: 500 }}>{ti.color || '-'}</p></div>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>RADICACIÓN</p><p style={{ fontWeight: 500 }}>{ti.registration_city || '-'}</p></div>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>KM</p><p style={{ fontWeight: 500 }}>{ti.kilometers || '-'}</p></div>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° MOTOR</p><p style={{ fontWeight: 500 }}>{ti.engine_number || '-'}</p></div>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° CHASIS</p><p style={{ fontWeight: 500 }}>{ti.chassis_number || '-'}</p></div>
-                </div>
-              </div>
-            ))}
-
-            {/* Financing Box */}
-            {currentSale.financing?.amount > 0 && (
-              <div style={{ border: '1px solid #0891b2', padding: '10px', marginBottom: '8px', background: '#f0f9ff' }}>
-                <p style={{ fontSize: '7pt', color: '#0e7490', textTransform: 'uppercase', fontWeight: 600, marginBottom: '6px', letterSpacing: '1px' }}>DATOS DE LA FINANCIACIÓN:</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px' }}>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>BANCO/ENTIDAD</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{currentSale.financing.bank || '-'}</p></div>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>MONTO FINANCIADO</p><p style={{ fontSize: '9pt', fontWeight: 600, color: '#0891b2' }}>{formatCurrency(currentSale.financing.amount, currentSale.financing.currency)}</p></div>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>CANTIDAD DE CUOTAS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{currentSale.financing.installments || '-'}</p></div>
-                  <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>VALOR DE CUOTA</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{currentSale.financing.installment_value ? `$${currentSale.financing.installment_value.toLocaleString('es-AR')}` : '-'}</p></div>
-                </div>
-                <p style={{ fontSize: '6.5pt', color: '#666', marginTop: '4px', lineHeight: '1.3', textAlign: 'justify' }}>
-                  Las cuotas son aproximadas y no incluyen seguro. El VENDEDOR actúa únicamente como intermediario y gestor del crédito, siendo el acuerdo de financiación un contrato particular entre el COMPRADOR y la entidad financiera acreedora.
-                </p>
-              </div>
-            )}
-
-            {/* Balance */}
-            {balanceARS > 0 && (
-              <div style={{ padding: '8px 12px', border: '1px solid #0891b2', background: '#f0f9ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <p style={{ fontSize: '8pt', color: '#444', fontWeight: 500 }}>Saldo pendiente a abonar:</p>
-                  {currentSale.balance_due_date && <p style={{ fontSize: '7pt', color: '#0891b2' }}>Fecha límite: {format(new Date(currentSale.balance_due_date), "dd/MM/yyyy")}</p>}
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontSize: '12pt', fontWeight: 600, color: '#0891b2' }}>{formatCurrency(balanceARS)}</p>
-                  <p style={{ fontSize: '7pt', color: '#666', fontStyle: 'italic' }}>({amountInWords(balanceARS)})</p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Clauses */}
           <div style={{ marginBottom: '6px', flex: 1 }}>
-            {isEditing && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-                <p style={{ fontSize: '7pt', fontWeight: 600, color: '#0891b2', textTransform: 'uppercase', letterSpacing: '1px' }}>Cláusulas</p>
-                {templates.length > 0 && (
-                  <Select onValueChange={handleTemplateSelect}>
-                    <SelectTrigger className="h-6 w-40 text-[9px] print:hidden">
-                      <FileText className="w-3 h-3 mr-1" />
-                      <SelectValue placeholder="Usar plantilla..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {templates.map(t => <SelectItem key={t.id} value={t.id} className="text-[10px]">{t.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            )}
             {isEditing ? (
               <Textarea className="w-full min-h-[100px] text-[9px] font-sans" value={editedClauses} onChange={(e) => setEditedClauses(e.target.value)} />
             ) : (
@@ -357,14 +294,14 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
             </div>
           ) : null}
 
-          {/* Ratification - more space from signatures */}
+          {/* Ratification */}
           <div style={{ marginTop: '20px', marginBottom: '120px' }}>
             <div style={{ textAlign: 'center', fontSize: '9pt', fontWeight: 700, fontStyle: 'italic' }}>
               <p>Leído y ratificado, se firman dos ejemplares del mismo tenor y a un solo efecto.</p>
             </div>
           </div>
 
-          {/* Signatures - always at absolute bottom of page, never break */}
+          {/* Signatures */}
           <div style={{ marginTop: 'auto', paddingTop: '40px', pageBreakInside: 'avoid', breakInside: 'avoid', pageBreakBefore: 'auto' }}>
             <div style={{ display: 'flex', gap: '80px' }}>
               <div style={{ flex: 1, textAlign: 'center', paddingTop: '8px', borderTop: '1px solid #111' }}>

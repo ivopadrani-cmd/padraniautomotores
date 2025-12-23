@@ -609,7 +609,7 @@ export default function Vehicles() {
                       <tr>
                         {selectionMode && (
                           <th className="px-3 py-3 w-8">
-                            <Checkbox
+                            <Checkbox 
                               checked={selectedVehicles.length === paginatedVehicles.length && paginatedVehicles.length > 0}
                               onCheckedChange={toggleSelectAll}
                               className="h-4 w-4 md:h-3.5 md:w-3.5"
@@ -640,7 +640,7 @@ export default function Vehicles() {
                           <tr key={v.id} className={`border-b hover:bg-gray-50 cursor-pointer ${rowClass} ${selectedVehicles.includes(v.id) ? 'bg-cyan-50' : v.status === 'VENDIDO' ? 'bg-yellow-50' : ''}`} onClick={() => selectionMode ? toggleSelectVehicle(v.id, { stopPropagation: () => {} }) : selectVehicle(v)}>
                             {selectionMode && (
                               <td className="px-3 py-3" onClick={(e) => toggleSelectVehicle(v.id, e)}>
-                                <Checkbox
+                                <Checkbox 
                                   checked={selectedVehicles.includes(v.id)}
                                   className="h-4 w-4 md:h-3.5 md:w-3.5"
                                 />
@@ -694,28 +694,28 @@ export default function Vehicles() {
                               {(() => { const p = getPriceDisplay(v, 'public'); return (<div className="flex flex-col"><div className="font-semibold text-[13px] md:text-[11px]">{p.ars}</div>{p.usd && <div className="text-[12px] md:text-[10px] font-semibold text-cyan-600">{p.usd}</div>}</div>); })()}
                             </td>
                             <td className="px-3 py-3 min-w-[140px]" onClick={(e) => e.stopPropagation()}>
-                              {['RESERVADO', 'VENDIDO', 'ENTREGADO'].includes(v.status) ? (
+                                {['RESERVADO', 'VENDIDO', 'ENTREGADO'].includes(v.status) ? (
                                 <Badge className={`${STATUS_CONFIG[v.status]?.bg} text-[12px] md:text-[10px] h-7 md:h-6 w-36 md:w-32 justify-center flex items-center gap-1`}>
                                   <StatusIcon className="w-4 h-4 md:w-3 md:h-3 flex-shrink-0" />
-                                  <span className="truncate">{v.status}</span>
-                                </Badge>
-                              ) : (
-                                <Select value={v.status} onValueChange={(s) => handleStatusChange(v.id, s, v)}>
+                                    <span className="truncate">{v.status}</span>
+                                  </Badge>
+                                ) : (
+                                  <Select value={v.status} onValueChange={(s) => handleStatusChange(v.id, s, v)}>
                                   <SelectTrigger className="h-7 md:h-6 text-[12px] md:text-[10px] w-36 md:w-32 border-0 bg-transparent p-0 [&>svg]:hidden">
                                     <Badge className={`${STATUS_CONFIG[v.status]?.bg} text-[12px] md:text-[10px] h-7 md:h-6 w-full justify-center flex items-center gap-1`}>
                                       <StatusIcon className="w-4 h-4 md:w-3 md:h-3 flex-shrink-0" />
-                                      <span className="truncate">{v.status}</span>
-                                    </Badge>
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {['A PERITAR', 'A INGRESAR', 'EN REPARACION', 'DISPONIBLE', 'PAUSADO', 'RESERVADO', 'VENDIDO'].map(s => {
-                                      const Icon = STATUS_CONFIG[s]?.icon || CheckCircle;
+                                        <span className="truncate">{v.status}</span>
+                                      </Badge>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {['A PERITAR', 'A INGRESAR', 'EN REPARACION', 'DISPONIBLE', 'PAUSADO', 'RESERVADO', 'VENDIDO'].map(s => {
+                                        const Icon = STATUS_CONFIG[s]?.icon || CheckCircle;
                                       return <SelectItem key={s} value={s} className="text-[12px] md:text-[10px]"><div className="flex items-center gap-1"><Icon className="w-4 h-4 md:w-3 md:h-3" />{s}</div></SelectItem>;
-                                    })}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                              </td>
+                                      })}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                                </td>
                             <td className="px-3 py-3 w-20" onClick={(e) => e.stopPropagation()}>
                               <div className="flex gap-1">
                                 <Button variant="ghost" size="icon" className="h-8 w-8 md:h-6 md:w-6" onClick={() => setEditingVehicle(v)}><Edit className="w-4 h-4 md:w-3 md:h-3" /></Button>

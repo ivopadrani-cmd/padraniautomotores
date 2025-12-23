@@ -331,9 +331,9 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       }).catch(error => {
         console.error(`❌ Error obteniendo cotización histórica para venta:`, error);
       });
-    }
+      }
   };
-
+    
   const handleNestedChange = (parent, field, value) => {
     setFormData(prev => ({ ...prev, [parent]: { ...prev[parent], [field]: value } }));
     setHasChanges(true);
@@ -351,7 +351,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
       }).catch(error => {
         console.error(`❌ Error obteniendo cotización histórica:`, error);
       });
-    }
+      }
   };
 
   // La actualización de cotizaciones históricas ahora se maneja directamente en handleChange y handleNestedChange

@@ -7,15 +7,32 @@ import { Badge } from "@/components/ui/badge";
 import { Car, User, Receipt, DollarSign, ShoppingCart, X, CreditCard, Printer } from "lucide-react";
 import { format } from "date-fns";
 import DepositReceiptView from "./DepositReceiptView";
+import CompleteReceiptDataForm from "./CompleteReceiptDataForm";
 
 export default function ReservationDetail({ open, onOpenChange, reservation, vehicle, onCancel, onConvertToSale }) {
   const [showReceipt, setShowReceipt] = useState(false);
+  const [showCompleteDataForm, setShowCompleteDataForm] = useState(false);
 
   const { data: client } = useQuery({
     queryKey: ['client', reservation?.client_id],
     queryFn: () => base44.entities.Client.list().then(cs => cs.find(c => c.id === reservation?.client_id)),
     enabled: !!reservation?.client_id && open
   });
+
+  // Check if receipt data is incomplete
+  const isReceiptDataIncomplete = () => {
+    const clientIncomplete = client && (!client.dni || !client.address || !client.city);
+    const vehicleIncomplete = vehicle && (!vehicle.kilometers || !vehicle.color || !vehicle.engine_number || !vehicle.chassis_number);
+    return clientIncomplete || vehicleIncomplete;
+  };
+
+  const handleShowReceipt = () => {
+    if (isReceiptDataIncomplete()) {
+      setShowCompleteDataForm(true);
+    } else {
+      setShowReceipt(true);
+    }
+  };
 
   if (!reservation) return null;
 
@@ -28,6 +45,14 @@ export default function ReservationDetail({ open, onOpenChange, reservation, veh
   return (
     <>
     <DepositReceiptView open={showReceipt} onOpenChange={setShowReceipt} reservation={reservation} vehicle={vehicle} client={client} />
+    <CompleteReceiptDataForm
+      open={showCompleteDataForm}
+      onOpenChange={setShowCompleteDataForm}
+      reservation={reservation}
+      vehicle={vehicle}
+      client={client}
+      onReceiptComplete={() => setShowReceipt(true)}
+    />
     <Dialog open={open && !showReceipt} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] p-0 flex flex-col">
         <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg flex flex-row items-center justify-between flex-shrink-0">
@@ -139,8 +164,8 @@ export default function ReservationDetail({ open, onOpenChange, reservation, veh
             </Button>
             <div className="flex gap-2">
               {reservation.deposit_amount > 0 && (
-                <Button onClick={() => setShowReceipt(true)} variant="outline" className="h-8 text-[11px]">
-                  <Printer className="w-3.5 h-3.5 mr-1" />Recibo de Seña
+                <Button onClick={handleShowReceipt} variant="outline" className="h-8 text-[11px]">
+                  <Printer className="w-3.5 h-3.5 mr-1" />Ver Recibo
                 </Button>
               )}
               {onConvertToSale && (

@@ -24,6 +24,7 @@ export default function VehicleForm({ vehicle, onSubmit, onCancel, isLoading }) 
     plate: vehicle?.plate || '',
     kilometers: vehicle?.kilometers || 0,
     color: vehicle?.color || '',
+    vehicle_type: vehicle?.vehicle_type || ((vehicle?.model?.toLowerCase().includes('up') && vehicle?.year === 2015) ? 'Sedan 5 puertas' : 'AUTOMÓVIL'),
     registration_city: vehicle?.registration_city || '',
     registration_province: vehicle?.registration_province || '',
     engine_brand: vehicle?.engine_brand || '',
@@ -270,6 +271,8 @@ export default function VehicleForm({ vehicle, onSubmit, onCancel, isLoading }) 
     );
   };
 
+  console.log('VehicleForm rendering, vehicle_type:', formData.vehicle_type);
+
   return (
     <div className="p-2 md:p-4 bg-gray-100 min-h-screen">
       <div className="max-w-5xl mx-auto">
@@ -290,9 +293,10 @@ export default function VehicleForm({ vehicle, onSubmit, onCancel, isLoading }) 
               <CardContent className="p-2">
                 <div className="grid grid-cols-6 gap-1.5">
                   <div><Label className={lbl}>Marca *</Label><Input className={inp} value={formData.brand} onChange={(e) => handleChange('brand', e.target.value)} required /></div>
-                  <div className="col-span-2"><Label className={lbl}>Modelo *</Label><Input className={inp} value={formData.model} onChange={(e) => handleChange('model', e.target.value)} required /></div>
+                  <div><Label className={lbl}>Modelo *</Label><Input className={inp} value={formData.model} onChange={(e) => handleChange('model', e.target.value)} required /></div>
                   <div><Label className={lbl}>Año *</Label><Input className={inp} type="number" value={formData.year} onChange={(e) => handleChange('year', parseInt(e.target.value) || 0)} required /></div>
                   <div><Label className={lbl}>Color</Label><Input className={inp} value={formData.color} onChange={(e) => handleChange('color', e.target.value)} /></div>
+                  <div><Label className={lbl}>Tipo</Label><Input className={inp} value={formData.vehicle_type} onChange={(e) => handleChange('vehicle_type', e.target.value)} placeholder={(formData.model?.toLowerCase().includes('up') && formData.year === 2015) ? 'Sedan 5 puertas' : 'AUTOMÓVIL'} /></div>
                   <div><Label className={lbl}>KM</Label><Input className={inp} type="number" value={formData.kilometers} onChange={(e) => handleChange('kilometers', parseFloat(e.target.value) || 0)} /></div>
                 </div>
                 <div className="grid grid-cols-6 gap-1.5 mt-2 pt-2 border-t">

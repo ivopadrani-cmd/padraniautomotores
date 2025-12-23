@@ -173,26 +173,23 @@ export default function ReservationForm({ open, onOpenChange, vehicle, quote, le
 
   const handleClose = () => { if (hasChanges) setShowConfirm(true); else onOpenChange(false); };
 
-  // Check if receipt data is incomplete
+  // Check if receipt data is incomplete (for showing receipt button)
   const isReceiptDataIncomplete = () => {
-    const clientIncomplete = selectedClient && (!selectedClient.dni || !selectedClient.address || !selectedClient.city) && 
-      (!editingClientData.dni && !selectedClient.dni) || (!editingClientData.address && !selectedClient.address);
-    const vehicleIncomplete = vehicle && (!vehicle.kilometers || !vehicle.color || !vehicle.engine_number || !vehicle.chassis_number) &&
-      Object.keys(editingVehicleData).length === 0;
+    const clientIncomplete = selectedClient && (!selectedClient.dni || !selectedClient.address || !selectedClient.city);
+    const vehicleIncomplete = vehicle && (!vehicle.kilometers || !vehicle.color || !vehicle.engine_number || !vehicle.chassis_number);
     return clientIncomplete || vehicleIncomplete;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
-    
-    // Warn if receipt data incomplete
-    if (isReceiptDataIncomplete()) {
-      if (!window.confirm('Faltan datos del cliente o vehículo para generar el recibo de seña. La reserva se guardará pero no se podrá generar el recibo hasta completar los datos. ¿Continuar?')) {
-        return;
-      }
+
+    // Solo validar que haya nombre de cliente
+    if (!formData.client_name?.trim()) {
+      alert('El nombre del cliente es obligatorio');
+      return;
     }
-    
+
     setIsSubmitting(true);
     try {
       // Update client with missing data

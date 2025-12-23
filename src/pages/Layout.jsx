@@ -236,9 +236,9 @@ export default function Layout({ children }) {
           <SidebarHeader className="p-4 pt-6 border-b border-gray-800">
             {/* Logo */}
             <div className="flex items-center justify-start mb-4 px-1 min-h-[60px]">
-              <img
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6907cb67c59a0c423133fafc/b58f98fe8_LogosinfondoBOLDsinrueda.png"
-                alt="Automotores"
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6907cb67c59a0c423133fafc/b58f98fe8_LogosinfondoBOLDsinrueda.png" 
+                alt="Automotores" 
                 className="w-3/4 object-contain"
                 loading="eager"
               />
@@ -272,7 +272,7 @@ export default function Layout({ children }) {
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarHeader>
-
+          
           <SidebarContent className="p-2 pt-4">
             <SidebarGroup>
               <SidebarGroupContent>
@@ -282,11 +282,11 @@ export default function Layout({ children }) {
                     const isActive = location.pathname === pageUrl;
                     return (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                          asChild
+                        <SidebarMenuButton 
+                          asChild 
                           className={`rounded transition-all duration-100 ${
-                            isActive
-                              ? 'bg-gray-700 text-white'
+                            isActive 
+                              ? 'bg-gray-700 text-white' 
                               : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                           }`}
                         >
@@ -308,8 +308,8 @@ export default function Layout({ children }) {
             <div className="rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Cotizaciones</span>
-                <button
-                  onClick={fetchRates}
+                <button 
+                  onClick={fetchRates} 
                   disabled={isUpdatingRate}
                   className="p-1 hover:bg-gray-800 rounded transition-colors"
                 >
@@ -385,16 +385,16 @@ export default function Layout({ children }) {
               // Verificar si la página actual está permitida para este rol
               const allowedPages = getAllowedPages(userRole);
               const currentPath = location.pathname.toLowerCase();
-
+              
               // Extraer el nombre de la página base (sin IDs de rutas dinámicas)
               const pathSegments = currentPath.split('/').filter(Boolean);
               const basePath = pathSegments[0] || '';
-
-              const isAllowed = allowedPages.some(page =>
-                basePath.includes(page.toLowerCase()) ||
+              
+              const isAllowed = allowedPages.some(page => 
+                basePath.includes(page.toLowerCase()) || 
                 currentPath.includes(page.toLowerCase())
               ) || currentPath === '/' || currentPath === '';
-
+              
               // Si no está permitida, redirigir a la primera página permitida
               if (!isAllowed && allowedPages.length > 0) {
                 console.warn('⚠️ Acceso denegado a:', currentPath, '- Redirigiendo a:', allowedPages[0]);
@@ -405,7 +405,7 @@ export default function Layout({ children }) {
                   </div>
                 );
               }
-
+              
               // Si es la raíz, redirigir a la primera página permitida
               if ((currentPath === '/' || currentPath === '') && allowedPages.length > 0) {
                 window.location.href = createPageUrl(allowedPages[0]);
@@ -415,7 +415,7 @@ export default function Layout({ children }) {
                   </div>
                 );
               }
-
+              
               return children;
             })()}
           </div>
