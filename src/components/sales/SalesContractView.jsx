@@ -267,15 +267,26 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                   {currentSale.deposit?.amount > 0 && (
                     <p>• En concepto de seña, la suma de {getDepositDisplay()} ({getDepositWords()}) el día {currentSale.deposit?.date ? format(parseLocalDate(currentSale.deposit.date), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'de la fecha'}.</p>
                   )}
-                  {currentSale.cash_payment?.amount > 0 && (
-                    <p>• Al contado y en este acto, la suma de {getCashDisplay()} ({getCashWords()}).</p>
-                  )}
-                  {currentSale.trade_ins?.length > 0 && (
-                    <p>• Un vehículo tomado en parte de pago valuado en {getTradeInDisplay()} ({getTradeInWords()}).</p>
-                  )}
-                  {currentSale.financing?.amount > 0 && (
-                    <p>• Financiación según detalle a continuación.</p>
-                  )}
+                  {(() => {
+                    // Construir texto para pagos al contado y otras formas de pago
+                    const paymentTexts = [];
+                    if (currentSale.cash_payment?.amount > 0) {
+                      paymentTexts.push(`la suma de ${getCashDisplay()} (${getCashWords()})`);
+                    }
+                    if (currentSale.trade_ins?.length > 0) {
+                      paymentTexts.push(`un vehículo tomado en parte de pago valuado en ${getTradeInDisplay()} (${getTradeInWords()})`);
+                    }
+                    if (currentSale.financing?.amount > 0) {
+                      paymentTexts.push('financiación según detalle a continuación');
+                    }
+
+                    if (paymentTexts.length > 0) {
+                      return (
+                        <p>• Al contado y en este acto, {paymentTexts.join(', más ')}.</p>
+                      );
+                    }
+                    return null;
+                  })()}
                   {balanceARS > 0 && currentSale.balance_due_date && (
                     <p>• El saldo restante de {formatCurrency(balanceARS)} ({amountInWords(balanceARS)}) deberá ser abonado en su totalidad antes del día {format(parseLocalDate(currentSale.balance_due_date), "d 'de' MMMM 'de' yyyy", { locale: es })}.</p>
                   )}
