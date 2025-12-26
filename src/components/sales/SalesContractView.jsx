@@ -244,11 +244,12 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px' }}>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMINIO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.plate || '-'}</p></div>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TIPO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>Sedan 5 puertas</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>RADICACIÓN</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.registration_city || '-'}{tradeIn.registration_province && `, ${tradeIn.registration_province}`}</p></div>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>COLOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.color || '-'}</p></div>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>KILOMETRAJE</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.kilometers ? tradeIn.kilometers.toLocaleString('es-AR') : '-'}</p></div>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° MOTOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.engine_number || '-'}</p></div>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° CHASIS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.chassis_number || '-'}</p></div>
-                    <div style={{ gridColumn: 'span 2' }}><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>VALOR DE TOMA</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{formatCurrency(tradeIn.value_ars || tradeIn.value, tradeIn.currency || 'ARS')}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>VALOR DE TOMA</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{formatCurrency(tradeIn.value_ars || tradeIn.value, tradeIn.currency || 'ARS')}</p></div>
                   </div>
                 </div>
               ))}
