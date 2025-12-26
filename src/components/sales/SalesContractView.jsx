@@ -224,13 +224,12 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
               <p style={{ fontSize: '11pt', fontWeight: 600, marginBottom: '6px', color: '#0891b2' }}>Marca: {vehicle.brand} | Modelo: {vehicle.model} | Año: {vehicle.year}</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px' }}>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMINIO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.plate || '-'}</p></div>
-                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TIPO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{(vehicle.model?.toLowerCase().includes('up') && vehicle.year === 2015) ? 'Sedan 5 puertas' : (vehicle.vehicle_type || 'AUTOMÓVIL')}</p></div>
+                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TIPO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>Sedan 5 puertas</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>RADICACIÓN</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.registration_city || '-'}{vehicle.registration_province && `, ${vehicle.registration_province}`}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>COLOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.color || '-'}</p></div>
-                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>MARCA MOTOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.engine_brand || '-'}</p></div>
+                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>KILOMETRAJE</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.kilometers ? vehicle.kilometers.toLocaleString('es-AR') : '-'}</p></div>
                 <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° MOTOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.engine_number || '-'}</p></div>
-                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>MARCA CHASIS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.chassis_brand || '-'}</p></div>
-                <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° CHASIS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.chassis_number || '-'}</p></div>
+                <div style={{ gridColumn: 'span 2' }}><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° CHASIS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{vehicle.chassis_number || '-'}</p></div>
               </div>
             </div>
           </div>
@@ -244,13 +243,12 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                   <p style={{ fontSize: '11pt', fontWeight: 600, marginBottom: '6px', color: '#0891b2' }}>Marca: {tradeIn.brand} | Modelo: {tradeIn.model} | Año: {tradeIn.year}</p>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px' }}>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMINIO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.plate || '-'}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>TIPO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>Sedan 5 puertas</p></div>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>COLOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.color || '-'}</p></div>
-                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>KM</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.kilometers ? tradeIn.kilometers.toLocaleString('es-AR') : '-'}</p></div>
-                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>VALOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{formatCurrency(tradeIn.value_ars || tradeIn.value, tradeIn.currency || 'ARS')}</p></div>
-                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>MARCA MOTOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.engine_brand || '-'}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>KILOMETRAJE</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.kilometers ? tradeIn.kilometers.toLocaleString('es-AR') : '-'}</p></div>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° MOTOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.engine_number || '-'}</p></div>
-                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>MARCA CHASIS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.chassis_brand || '-'}</p></div>
                     <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° CHASIS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.chassis_number || '-'}</p></div>
+                    <div style={{ gridColumn: 'span 2' }}><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>VALOR DE TOMA</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{formatCurrency(tradeIn.value_ars || tradeIn.value, tradeIn.currency || 'ARS')}</p></div>
                   </div>
                 </div>
               ))}
