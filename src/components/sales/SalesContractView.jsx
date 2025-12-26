@@ -274,7 +274,7 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                       paymentTexts.push(`la suma de ${getCashDisplay()} (${getCashWords()})`);
                     }
                     if (currentSale.trade_ins?.length > 0) {
-                      paymentTexts.push(`un vehículo tomado en parte de pago valuado en ${getTradeInDisplay()} (${getTradeInWords()})`);
+                      paymentTexts.push(`un vehículo tomado en parte de pago valuado en ${getTradeInDisplay()}`);
                     }
                     if (currentSale.financing?.amount > 0) {
                       paymentTexts.push('financiación según detalle a continuación');
