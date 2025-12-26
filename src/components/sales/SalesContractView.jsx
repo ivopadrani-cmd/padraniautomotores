@@ -35,11 +35,10 @@ const parseLocalDate = (dateString) => {
   if (!dateString) return null;
   // Si es un objeto Date, devolverlo tal cual
   if (dateString instanceof Date) return dateString;
-  // Si es string, parsearlo como fecha local (no UTC)
-  const date = new Date(dateString);
-  // Ajustar por zona horaria para evitar el día anterior
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - (offset * 60 * 1000));
+  // Si es string, parsearlo como fecha local para evitar el día anterior
+  // Crear fecha local sin problemas de zona horaria
+  const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+  return new Date(year, month - 1, day); // month - 1 porque Date usa 0-based
 };
 
 const defaultClauses = `TERCERO – CONDICIONES DE ENTREGA: El vehículo se entrega en el estado que se encuentra, y que el COMPRADOR declara conocer y aceptar, conforme inspección previa. La entrega del mismo se efectuará exclusivamente una vez finalizada y asentada la transferencia registral correspondiente.
@@ -235,6 +234,28 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
               </div>
             </div>
           </div>
+
+          {/* Trade-in Vehicles - if any */}
+          {currentSale.trade_ins && currentSale.trade_ins.length > 0 && (
+            <div style={{ marginBottom: '10px' }}>
+              <p style={{ fontSize: '8pt', fontWeight: 600, marginBottom: '5px' }}>VEHÍCULO EN PARTE DE PAGO:</p>
+              {currentSale.trade_ins.map((tradeIn, index) => (
+                <div key={index} style={{ border: '1px solid #0891b2', padding: '10px', background: '#f0f9ff', marginBottom: '6px' }}>
+                  <p style={{ fontSize: '11pt', fontWeight: 600, marginBottom: '6px', color: '#0891b2' }}>Marca: {tradeIn.brand} | Modelo: {tradeIn.model} | Año: {tradeIn.year}</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '5px' }}>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>DOMINIO</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.plate || '-'}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>COLOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.color || '-'}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>KM</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.kilometers ? tradeIn.kilometers.toLocaleString('es-AR') : '-'}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>VALOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{formatCurrency(tradeIn.value_ars || tradeIn.value, tradeIn.currency || 'ARS')}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>MARCA MOTOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.engine_brand || '-'}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° MOTOR</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.engine_number || '-'}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>MARCA CHASIS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.chassis_brand || '-'}</p></div>
+                    <div><p style={{ fontSize: '6pt', color: '#666', textTransform: 'uppercase' }}>N° CHASIS</p><p style={{ fontSize: '9pt', fontWeight: 500 }}>{tradeIn.chassis_number || '-'}</p></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Price - SEGUNDO */}
           <div style={{ marginBottom: '10px' }}>
