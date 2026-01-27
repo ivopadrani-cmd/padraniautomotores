@@ -48,11 +48,14 @@ export default function LoginScreen({ onLogin }) {
       try {
         if (base44.entities?.User) {
           console.log('Intentando guardar en base de datos...');
-          const savedUser = await base44.entities.User.create(user);
+          const savedUser = await base44.entities.User.create({
+            ...user,
+            full_name: user.name // Map name to full_name for DB
+          });
           if (savedUser) {
             console.log('Usuario guardado en DB:', savedUser);
             localStorage.setItem('current_user', JSON.stringify(savedUser));
-            toast.success(`Bienvenido ${savedUser.name || savedUser.email}`);
+            toast.success(`Bienvenido ${savedUser.full_name || savedUser.name || savedUser.email}`);
             onLogin(savedUser);
             return;
           }

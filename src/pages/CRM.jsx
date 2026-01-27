@@ -7,12 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Users, User, Eye, Edit, Trash2, Phone, Mail, MapPin, X, ChevronDown, Calendar, Car } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import ClientDetail from "../components/clients/ClientDetail";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -43,18 +41,13 @@ export default function CRM() {
   
   const [activeTab, setActiveTab] = useState('leads');
   const [showLeadForm, setShowLeadForm] = useState(false);
-  const [showClientForm, setShowClientForm] = useState(false);
   const [editingLead, setEditingLead] = useState(null);
-  const [editingClient, setEditingClient] = useState(null);
   const [selectedLead, setSelectedLead] = useState(null);
-  const [selectedClient, setSelectedClient] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [showConfirmLead, setShowConfirmLead] = useState(false);
-  const [showConfirmClient, setShowConfirmClient] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedLeads, setSelectedLeads] = useState([]);
-  const [selectedClients, setSelectedClients] = useState([]);
 
   const [leadFormData, setLeadFormData] = useState({
     consultation_date: new Date().toISOString().split('T')[0],
@@ -76,16 +69,11 @@ export default function CRM() {
 
   // Removed time options - now using input type="time" for exact time entry
 
-  const [clientFormData, setClientFormData] = useState({
-    full_name: '', phone: '', email: '', dni: '', cuit_cuil: '',
-    city: '', province: '', address: '', postal_code: '',
-    marital_status: '', observations: ''
-  });
 
   const queryClient = useQueryClient();
 
   const { data: leads = [], isLoading: loadingLeads } = useQuery({ queryKey: ['leads'], queryFn: () => base44.entities.Lead.list('-consultation_date') });
-  const { data: clients = [], isLoading: loadingClients } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list('-created_at') });
+  const { data: clients = [] } = useQuery({ queryKey: ['clients'], queryFn: () => base44.entities.Client.list('-created_at') });
   const { data: vehicles = [] } = useQuery({ queryKey: ['vehicles'], queryFn: () => base44.entities.Vehicle.list() });
 
   // Query para lead específico
@@ -182,21 +170,6 @@ export default function CRM() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['leads'] }); toast.success("Consulta eliminada"); },
   });
 
-  const createClientMutation = useMutation({
-    mutationFn: (data) => base44.entities.Client.create({ ...data, client_status: 'Cliente' }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clients'] }); resetClientForm(); toast.success("Cliente creado"); },
-  });
-
-  const updateClientMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Client.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clients'] }); resetClientForm(); toast.success("Cliente actualizado"); },
-  });
-
-  const deleteClientMutation = useMutation({
-    mutationFn: (id) => base44.entities.Client.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['clients'] }); toast.success("Cliente eliminado"); },
-  });
-
   const handleBulkDeleteLeads = async () => {
     if (selectedLeads.length === 0) return;
     if (!window.confirm(`¿Eliminar ${selectedLeads.length} consulta(s)?`)) return;
@@ -204,15 +177,6 @@ export default function CRM() {
     setSelectedLeads([]);
     queryClient.invalidateQueries({ queryKey: ['leads'] });
     toast.success(`${selectedLeads.length} consulta(s) eliminada(s)`);
-  };
-
-  const handleBulkDeleteClients = async () => {
-    if (selectedClients.length === 0) return;
-    if (!window.confirm(`¿Eliminar ${selectedClients.length} cliente(s)?`)) return;
-    for (const id of selectedClients) await base44.entities.Client.delete(id);
-    setSelectedClients([]);
-    queryClient.invalidateQueries({ queryKey: ['clients'] });
-    toast.success(`${selectedClients.length} cliente(s) eliminado(s)`);
   };
 
   const resetLeadForm = () => {
@@ -226,18 +190,6 @@ export default function CRM() {
     setIsNewProspect(true); // Volver a modo nuevo prospecto por defecto
   };
 
-  const filteredClientsForLead = clients.filter(c =>
-    !clientSearch ||
-    c.full_name?.toLowerCase().includes(clientSearch.toLowerCase()) ||
-    c.dni?.includes(clientSearch) ||
-    c.phone?.includes(clientSearch)
-  );
-
-  const resetClientForm = () => {
-    setShowClientForm(false);
-    setEditingClient(null);
-    setClientFormData({ full_name: '', phone: '', email: '', dni: '', cuit_cuil: '', city: '', province: '', address: '', postal_code: '', marital_status: '', observations: '' });
-  };
 
   const handleSelectLead = (lead) => {
     navigate(`/crm/${lead.id}`);
@@ -263,17 +215,6 @@ export default function CRM() {
       observations: lead.observations || '', follow_up_date: lead.follow_up_date || '', follow_up_time: lead.follow_up_time || ''
     });
     setShowLeadForm(true);
-  };
-
-  const handleEditClient = (client) => {
-    setEditingClient(client);
-    setClientFormData({
-      full_name: client.full_name, phone: client.phone || '', email: client.email || '',
-      dni: client.dni || '', cuit_cuil: client.cuit_cuil || '', city: client.city || '',
-      province: client.province || '', address: client.address || '', postal_code: client.postal_code || '',
-      marital_status: client.marital_status || '', observations: client.observations || ''
-    });
-    setShowClientForm(true);
   };
 
   const handleSubmitLead = (e) => {
@@ -305,10 +246,6 @@ export default function CRM() {
     }));
   };
 
-  const handleSubmitClient = (e) => {
-    e.preventDefault();
-    editingClient ? updateClientMutation.mutate({ id: editingClient.id, data: clientFormData }) : createClientMutation.mutate(clientFormData);
-  };
 
   const filteredLeads = leads.filter(l => {
     const search = searchTerm.toLowerCase();
@@ -322,10 +259,6 @@ export default function CRM() {
 
 
 
-  const filteredClients = clients.filter(c => {
-    const search = searchTerm.toLowerCase();
-    return c.full_name?.toLowerCase().includes(search) || c.phone?.includes(search) || c.dni?.includes(search);
-  });
 
   const inp = "h-8 text-[11px] bg-white";
   const lbl = "text-[10px] font-medium text-gray-500 mb-0.5";
@@ -361,13 +294,11 @@ export default function CRM() {
           <h1 className="text-lg font-bold text-gray-900">CRM</h1>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchTerm(''); setFilterStatus('ALL'); }}>
-          <TabsList className="h-9">
-            <TabsTrigger value="leads" className="text-[11px]">Consultas ({leads.length})</TabsTrigger>
-            <TabsTrigger value="clients" className="text-[11px]">Clientes ({clients.length})</TabsTrigger>
-          </TabsList>
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-sm font-semibold text-gray-900">Consultas ({leads.length})</h2>
+        </div>
 
-          <TabsContent value="leads" className="mt-3 space-y-3">
+          <div className="space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative flex-1">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
@@ -691,116 +622,7 @@ export default function CRM() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="clients" className="mt-3 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
-                <Input placeholder="Buscar cliente..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-7 h-8 text-[11px] bg-white" />
-              </div>
-              {selectedClients.length > 0 && (
-                <Button variant="outline" onClick={handleBulkDeleteClients} className="h-8 text-[11px] border-red-300 text-red-600 hover:bg-red-50">
-                  <Trash2 className="w-3.5 h-3.5 mr-1" /> Eliminar ({selectedClients.length})
-                </Button>
-              )}
-              {selectionMode ? (
-                <Button variant="outline" onClick={() => { setSelectionMode(false); setSelectedClients([]); }} className="h-8 text-[11px] border-red-300 text-red-600 hover:bg-red-50">Cancelar selección</Button>
-              ) : (
-                <Button variant="outline" onClick={() => setSelectionMode(true)} className="h-8 text-[11px]">Selección múltiple</Button>
-              )}
-              <Button onClick={() => setShowClientForm(true)} className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">
-                <Plus className="w-3.5 h-3.5 mr-1.5" /> Nuevo Cliente
-              </Button>
-            </div>
-
-            <ConfirmDialog open={showConfirmClient} onOpenChange={setShowConfirmClient} onConfirm={resetClientForm} />
-            <Dialog open={showClientForm} onOpenChange={(open) => { if (!open) setShowConfirmClient(true); else setShowClientForm(true); }}>
-              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0">
-                <DialogHeader className="p-4 border-b bg-gray-900 text-white rounded-t-lg"><DialogTitle className="text-sm font-semibold">{editingClient ? 'Editar' : 'Nuevo'} Cliente</DialogTitle></DialogHeader>
-                <form onSubmit={handleSubmitClient} className="p-4 space-y-3">
-                  <div><Label className={lbl}>Nombre completo *</Label><Input className={inp} value={clientFormData.full_name} onChange={(e) => setClientFormData({ ...clientFormData, full_name: e.target.value })} required /></div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div><Label className={lbl}>Teléfono *</Label><Input className={inp} value={clientFormData.phone} onChange={(e) => setClientFormData({ ...clientFormData, phone: e.target.value })} required /></div>
-                    <div><Label className={lbl}>Email</Label><Input className={inp} type="email" value={clientFormData.email} onChange={(e) => setClientFormData({ ...clientFormData, email: e.target.value })} /></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div><Label className={lbl}>DNI</Label><Input className={inp} value={clientFormData.dni} onChange={(e) => setClientFormData({ ...clientFormData, dni: e.target.value })} /></div>
-                    <div><Label className={lbl}>CUIT/CUIL</Label><Input className={inp} value={clientFormData.cuit_cuil} onChange={(e) => setClientFormData({ ...clientFormData, cuit_cuil: e.target.value })} /></div>
-                  </div>
-                  <div><Label className={lbl}>Dirección</Label><Input className={inp} value={clientFormData.address} onChange={(e) => setClientFormData({ ...clientFormData, address: e.target.value })} /></div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div><Label className={lbl}>Ciudad</Label><Input className={inp} value={clientFormData.city} onChange={(e) => setClientFormData({ ...clientFormData, city: e.target.value })} /></div>
-                    <div><Label className={lbl}>Provincia</Label><Input className={inp} value={clientFormData.province} onChange={(e) => setClientFormData({ ...clientFormData, province: e.target.value })} /></div>
-                    <div><Label className={lbl}>CP</Label><Input className={inp} value={clientFormData.postal_code} onChange={(e) => setClientFormData({ ...clientFormData, postal_code: e.target.value })} /></div>
-                  </div>
-                  <div>
-                    <Label className={lbl}>Estado civil</Label>
-                    <Select value={clientFormData.marital_status} onValueChange={(v) => setClientFormData({ ...clientFormData, marital_status: v })}>
-                      <SelectTrigger className={inp}><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                      <SelectContent>{['Soltero/a', 'Casado/a', 'Divorciado/a', 'Viudo/a', 'Otro'].map(s => <SelectItem key={s} value={s} className="text-[11px]">{s}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label className={lbl}>Observaciones</Label><Textarea className="text-[11px] min-h-[60px] bg-white" value={clientFormData.observations} onChange={(e) => setClientFormData({ ...clientFormData, observations: e.target.value })} /></div>
-                  <div className="flex justify-end gap-2 pt-2 border-t">
-                    <Button type="button" variant="outline" onClick={() => setShowConfirmClient(true)} className="h-8 text-[11px]">Cancelar</Button>
-                    <Button type="submit" className="h-8 text-[11px] bg-gray-900 hover:bg-gray-800">{editingClient ? 'Guardar' : 'Crear'}</Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-
-            <Card className="shadow-sm">
-              <CardContent className="p-0">
-                {loadingClients ? (
-                  <div className="text-center py-6"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600 mx-auto" /></div>
-                ) : filteredClients.length > 0 ? (
-                  <div className="divide-y">
-                    {selectionMode && (
-                      <div className="px-4 py-2 bg-gray-50 border-b">
-                        <Checkbox checked={selectedClients.length === filteredClients.length && filteredClients.length > 0} onCheckedChange={() => setSelectedClients(selectedClients.length === filteredClients.length ? [] : filteredClients.map(c => c.id))} className="h-3.5 w-3.5" />
-                        <span className="ml-2 text-[10px] text-gray-500">Seleccionar todos</span>
-                      </div>
-                    )}
-                    {filteredClients.map(client => (
-                        <div key={client.id} className={`p-4 flex items-center justify-between hover:bg-gray-50 cursor-pointer ${selectedClients.includes(client.id) ? 'bg-cyan-50' : ''}`} onClick={(e) => {
-                          if (selectionMode) {
-                            setSelectedClients(prev => prev.includes(client.id) ? prev.filter(x => x !== client.id) : [...prev, client.id]);
-                          } else {
-                            // Navegar a la URL del cliente
-                            navigate(`/clients/${client.id}`);
-                          }
-                        }}>
-                          <div className="flex items-center gap-3">
-                            {selectionMode && (
-                              <Checkbox checked={selectedClients.includes(client.id)} className="h-3.5 w-3.5" onClick={(e) => e.stopPropagation()} />
-                            )}
-                            <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center"><User className="w-4 h-4 text-gray-500" /></div>
-                            <div>
-                              <p className="font-medium text-[12px]">{client.full_name}</p>
-                              <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                                {client.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{client.phone}</span>}
-                                {client.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{client.email}</span>}
-                                {client.city && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{client.city}</span>}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                            {client.dni && <Badge variant="outline" className="text-[9px]">{client.dni}</Badge>}
-                            <Badge className={`text-[9px] ${client.client_status === 'Cliente' ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-700'}`}>{client.client_status || 'Prospecto'}</Badge>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditClient(client)}><Edit className="w-3.5 h-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { if (window.confirm('¿Eliminar?')) deleteClientMutation.mutate(client.id); }}><Trash2 className="w-3.5 h-3.5 text-red-500" /></Button>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6"><User className="w-8 h-8 text-gray-300 mx-auto mb-1" /><p className="text-[11px] text-gray-500">Sin clientes</p></div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, Car, Users, ClipboardList, Building2, RefreshCw, User, ChevronDown, Settings, LogOut, HelpCircle, Bell, FileText, Calculator, Wrench } from "lucide-react";
+import { LayoutDashboard, Car, Users, UserCheck, ClipboardList, Building2, RefreshCw, User, ChevronDown, Settings, LogOut, HelpCircle, Bell, FileText, Calculator, Wrench } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import LoginScreen from "@/components/auth/LoginScreen";
@@ -33,19 +33,19 @@ const getNavigationItems = (userRole) => {
       { title: "Dashboard", pageName: "Dashboard", icon: LayoutDashboard },
       { title: "Vehículos", pageName: "Vehicles", icon: Car },
       { title: "CRM", pageName: "CRM", icon: Users },
-      { title: "Clientes", pageName: "Clients", icon: Users, hidden: true }, // No visible en sidebar, pero permitido
+      { title: "Clientes", pageName: "Clients", icon: UserCheck },
       { title: "Tareas", pageName: "Tasks", icon: ClipboardList },
       { title: "Agencia", pageName: "Agency", icon: Building2 }
     ];
   }
-  
+
   // Vendedor, Gestor, Comisionista - sin Agencia
   if (userRole === 'Vendedor' || userRole === 'Gestor' || userRole === 'Comisionista') {
     return [
       { title: "Dashboard", pageName: "Dashboard", icon: LayoutDashboard },
       { title: "Vehículos", pageName: "Vehicles", icon: Car },
       { title: "CRM", pageName: "CRM", icon: Users },
-      { title: "Clientes", pageName: "Clients", icon: Users, hidden: true }, // No visible en sidebar, pero permitido
+      { title: "Clientes", pageName: "Clients", icon: UserCheck },
       { title: "Tareas", pageName: "Tasks", icon: ClipboardList }
     ];
   }

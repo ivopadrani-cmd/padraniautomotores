@@ -181,17 +181,35 @@ class Entity {
 class Auth {
   async me() {
     if (!useSupabase) return localClient.auth.me();
-    
+
     const { data: { user }, error } = await supabase.auth.getUser();
-    
+
     if (error || !user) {
+      // Fallback: check localStorage first
+      const localUserStr = localStorage.getItem('current_user');
+      if (localUserStr) {
+        try {
+          const localUser = JSON.parse(localUserStr);
+          // Return local user if exists
+          return {
+            id: localUser.id,
+            email: localUser.email,
+            role: localUser.role || 'Administrador',
+            full_name: localUser.full_name || localUser.name || localUser.email,
+            ...localUser
+          };
+        } catch (e) {
+          console.warn('Error parsing local user:', e);
+        }
+      }
+
       // Fallback: check for ivopadrani@gmail.com auto-login
       const { data: users } = await supabase
         .from('users')
         .select('*')
         .eq('email', 'ivopadrani@gmail.com')
         .single();
-      
+
       if (users) {
         // Auto-login as ivopadrani@gmail.com
         await this.login('ivopadrani@gmail.com', 'gerente123');
