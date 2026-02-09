@@ -53,6 +53,7 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
   const printRef = useRef();
   const [isEditing, setIsEditing] = useState(false);
   const [editedClauses, setEditedClauses] = useState('');
+  const [editedSecondClause, setEditedSecondClause] = useState('');
   const [editedObservations, setEditedObservations] = useState('');
 
   // Fetch agency settings
@@ -78,7 +79,24 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
 
   useEffect(() => {
     if (currentSale && open) {
-      setEditedClauses(currentSale.contract_clauses || defaultClauses);
+      const clauses = currentSale.contract_clauses || defaultClauses;
+      const clausesArray = clauses.split('\n\n');
+
+      // La segunda cláusula es la que contiene "CONDICIONES DE ENTREGA"
+      const secondClauseIndex = clausesArray.findIndex(clause =>
+        clause.includes('CONDICIONES DE ENTREGA') || clause.includes('TERCERO')
+      );
+
+      if (secondClauseIndex !== -1) {
+        setEditedSecondClause(clausesArray[secondClauseIndex]);
+        // Remover la segunda cláusula de las cláusulas generales
+        clausesArray.splice(secondClauseIndex, 1);
+        setEditedClauses(clausesArray.join('\n\n'));
+      } else {
+        setEditedClauses(clauses);
+        setEditedSecondClause('');
+      }
+
       setEditedObservations(currentSale.observations || '');
     }
   }, [currentSale, open]);
@@ -99,7 +117,21 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
   });
 
   const handleSave = () => {
-    updateSaleMutation.mutate({ contract_clauses: editedClauses, observations: editedObservations });
+    // Combinar las cláusulas generales con la segunda cláusula editada
+    let finalClauses = editedClauses;
+
+    if (editedSecondClause.trim()) {
+      // Insertar la segunda cláusula en la posición correcta (después de la primera cláusula)
+      const clausesArray = finalClauses.split('\n\n');
+      if (clausesArray.length >= 2) {
+        clausesArray.splice(2, 0, editedSecondClause); // Insertar después de la segunda cláusula
+        finalClauses = clausesArray.join('\n\n');
+      } else {
+        finalClauses = finalClauses + '\n\n' + editedSecondClause;
+      }
+    }
+
+    updateSaleMutation.mutate({ contract_clauses: finalClauses, observations: editedObservations });
   };
 
 
@@ -126,7 +158,12 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
   const tradeInARS = (currentSale.trade_ins || []).reduce((sum, ti) => sum + toARS(ti.value, ti.currency, ti.exchange_rate), 0);
   const financingARS = currentSale.financing ? toARS(currentSale.financing.amount, currentSale.financing.currency, currentSale.financing.exchange_rate) : 0;
   const salePriceARS = toARS(salePrice, saleCurrency, currentSale.sale_price_exchange_rate);
-  const balanceARS = salePriceARS - depositARS - cashARS - tradeInARS - financingARS;
+
+  // Usar saldo pactado si existe, sino calcular automáticamente
+  const hasCustomBalance = currentSale.balance_amount_ars > 0 || currentSale.balance_amount_usd > 0;
+  const balanceARS = hasCustomBalance
+    ? toARS(currentSale.balance_amount_ars || currentSale.balance_amount_usd, currentSale.balance_currency || 'ARS', currentSale.balance_exchange_rate || 1)
+    : salePriceARS - depositARS - cashARS - tradeInARS - financingARS;
 
   // Funciones para mostrar pagos en su moneda original
   const getDepositDisplay = () => currentSale.deposit ? formatCurrency(currentSale.deposit.amount, currentSale.deposit.currency) : null;
@@ -147,6 +184,17 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
   const saleDate = currentSale.sale_date ? parseLocalDate(currentSale.sale_date) : new Date();
   const displayObservations = isEditing ? editedObservations : (currentSale.observations || '');
   const displayClauses = isEditing ? editedClauses : (currentSale.contract_clauses || defaultClauses);
+
+  // Separar las cláusulas para mostrar
+  const getClausesForDisplay = () => {
+    if (isEditing) {
+      return editedClauses.split('\n\n');
+    }
+    const clauses = currentSale.contract_clauses || defaultClauses;
+    return clauses.split('\n\n');
+  };
+
+  const clausesArray = getClausesForDisplay();
 
   // Payment boxes count for dynamic layout
   const paymentBoxes = [];
@@ -287,8 +335,8 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
                     }
                     return null;
                   })()}
-                  {balanceARS > 0 && currentSale.balance_due_date && (
-                    <p>• El saldo restante de {formatCurrency(balanceARS)} ({amountInWords(balanceARS)}) deberá ser abonado en su totalidad antes del día {format(parseLocalDate(currentSale.balance_due_date), "d 'de' MMMM 'de' yyyy", { locale: es })}.</p>
+                  {balanceARS > 0 && (currentSale.balance_date || currentSale.balance_due_date) && (
+                    <p>• El saldo restante de {formatCurrency(balanceARS)} ({amountInWords(balanceARS)}) deberá ser abonado en su totalidad antes del día {format(parseLocalDate(currentSale.balance_date || currentSale.balance_due_date), "d 'de' MMMM 'de' yyyy", { locale: es })}{currentSale.balance_description ? ` (${currentSale.balance_description})` : ''}.</p>
                   )}
                 </>
               ) : (
@@ -303,13 +351,34 @@ export default function SalesContractView({ open, onOpenChange, sale, vehicle, c
 
           {/* Clauses */}
           <div style={{ marginBottom: '6px', flex: 1 }}>
-            {isEditing ? (
-              <Textarea className="w-full min-h-[100px] text-[9px] font-sans" value={editedClauses} onChange={(e) => setEditedClauses(e.target.value)} />
-            ) : (
-              <div style={{ fontSize: '8.5pt', textAlign: 'justify', lineHeight: 1.45 }}>
-                {displayClauses.split('\n\n').map((clause, i) => <p key={i} style={{ marginBottom: '8px' }}>{clause}</p>)}
-              </div>
-            )}
+            <div style={{ fontSize: '8.5pt', textAlign: 'justify', lineHeight: 1.45 }}>
+              {/* Mostrar cláusulas antes de la segunda */}
+              {clausesArray.slice(0, 2).map((clause, i) => (
+                <p key={i} style={{ marginBottom: '8px' }}>{clause}</p>
+              ))}
+
+              {/* Segunda cláusula - editable por separado */}
+              {isEditing ? (
+                <div style={{ marginBottom: '8px', padding: '8px', background: '#f8fafc', border: '1px solid #0891b2', borderRadius: '4px' }}>
+                  <div style={{ fontSize: '7pt', color: '#0891b2', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    Cláusula editable (Tercero - Condiciones de entrega):
+                  </div>
+                  <Textarea
+                    className="w-full min-h-[80px] text-[9px] font-sans border border-gray-300"
+                    value={editedSecondClause}
+                    onChange={(e) => setEditedSecondClause(e.target.value)}
+                    placeholder="Editar la cláusula de condiciones de entrega..."
+                  />
+                </div>
+              ) : editedSecondClause ? (
+                <p style={{ marginBottom: '8px' }}>{editedSecondClause}</p>
+              ) : null}
+
+              {/* Mostrar cláusulas restantes */}
+              {clausesArray.slice(2).map((clause, i) => (
+                <p key={i + 2} style={{ marginBottom: '8px' }}>{clause}</p>
+              ))}
+            </div>
           </div>
 
           {/* Observations - only if present */}

@@ -39,6 +39,12 @@ export default function SaleForm({ sale, clients, vehicles, onSubmit, onCancel, 
     financing_bank: '',
     financing_installments: 0,
     financing_installment_value: 0,
+    balance_amount_ars: 0,
+    balance_amount_usd: 0,
+    balance_currency: 'ARS',
+    balance_exchange_rate: 0,
+    balance_date: new Date().toISOString().split('T')[0],
+    balance_description: '',
     sale_status: 'PENDIENTE',
     observations: '',
     documents: []
@@ -284,7 +290,7 @@ export default function SaleForm({ sale, clients, vehicles, onSubmit, onCancel, 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const saleData = { ...formData };
     if (!paymentMethods.useDeposit) {
       saleData.deposit_amount_ars = 0;
@@ -302,6 +308,16 @@ export default function SaleForm({ sale, clients, vehicles, onSubmit, onCancel, 
         saleData.financing_bank = '';
         saleData.financing_installments = 0;
         saleData.financing_installment_value = 0;
+    }
+
+    // Si no hay saldo especificado, limpiar los campos
+    if (!saleData.balance_amount_ars && !saleData.balance_amount_usd) {
+      saleData.balance_amount_ars = 0;
+      saleData.balance_amount_usd = 0;
+      saleData.balance_currency = 'ARS';
+      saleData.balance_exchange_rate = 0;
+      saleData.balance_date = new Date().toISOString().split('T')[0];
+      saleData.balance_description = '';
     }
 
     onSubmit(saleData);
@@ -570,6 +586,95 @@ export default function SaleForm({ sale, clients, vehicles, onSubmit, onCancel, 
                       </div>
                     </CardContent>
                   </Card>
+                )}
+              </div>
+
+              {/* Saldo a Abonar */}
+              <div className="p-4 bg-amber-50 rounded-lg border-2 border-amber-200">
+                <h3 className="font-semibold mb-4">Saldo a Abonar</h3>
+                <div className="grid md:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>Moneda</Label>
+                    <Select value={formData.balance_currency} onValueChange={(value) => handleChange('balance_currency', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ARS">ARS</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Monto</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.balance_currency === 'ARS' ? formData.balance_amount_ars : formData.balance_amount_usd}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        if (formData.balance_currency === 'ARS') {
+                          handleChange('balance_amount_ars', value);
+                          // Auto-calculate USD if we have exchange rate
+                          if (formData.balance_exchange_rate > 0) {
+                            handleChange('balance_amount_usd', value / formData.balance_exchange_rate);
+                          }
+                        } else {
+                          handleChange('balance_amount_usd', value);
+                          // Auto-calculate ARS if we have exchange rate
+                          if (formData.balance_exchange_rate > 0) {
+                            handleChange('balance_amount_ars', value * formData.balance_exchange_rate);
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Cotización USD</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0"
+                      value={formData.balance_exchange_rate}
+                      onChange={(e) => {
+                        const rate = parseFloat(e.target.value) || 0;
+                        handleChange('balance_exchange_rate', rate);
+                        // Auto-update the other currency value
+                        if (formData.balance_currency === 'ARS' && formData.balance_amount_ars > 0) {
+                          handleChange('balance_amount_usd', formData.balance_amount_ars / rate);
+                        } else if (formData.balance_currency === 'USD' && formData.balance_amount_usd > 0) {
+                          handleChange('balance_amount_ars', formData.balance_amount_usd * rate);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Fecha Vencimiento</Label>
+                    <Input
+                      type="date"
+                      value={formData.balance_date}
+                      onChange={(e) => handleChange('balance_date', e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 space-y-2">
+                  <Label>Descripción del Saldo</Label>
+                  <Input
+                    placeholder="Ej: Saldo a abonar en 30 días"
+                    value={formData.balance_description}
+                    onChange={(e) => handleChange('balance_description', e.target.value)}
+                  />
+                </div>
+                {/* Mostrar equivalencia */}
+                {formData.balance_currency === 'ARS' && formData.balance_exchange_rate > 0 && formData.balance_amount_ars > 0 && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    Equivalente: U$D {Math.round(formData.balance_amount_ars / formData.balance_exchange_rate)}
+                  </div>
+                )}
+                {formData.balance_currency === 'USD' && formData.balance_exchange_rate > 0 && formData.balance_amount_usd > 0 && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    Equivalente: $ {Math.round(formData.balance_amount_usd * formData.balance_exchange_rate).toLocaleString('es-AR')}
+                  </div>
                 )}
               </div>
 
