@@ -322,10 +322,8 @@ export default function Vehicles() {
       const costoUsd = valorTomaUsd + expensesUsd;
       const infoautoArs = convertValue(v.infoauto_value, v.infoauto_currency, infoautoRate, 'ARS');
 
-      // PRECIO OBJETIVO: Fijo en USD, convertido al dólar ACTUAL para ARS
-      const targetArs = v.target_price_currency === 'USD'
-        ? v.target_price_value * currentBlueRate
-        : v.target_price_value;
+      // PRECIO OBJETIVO: SIEMPRE tratado como fijo en USD, convertido al dólar ACTUAL para ARS
+      const targetArs = v.target_price_value * currentBlueRate;
 
       const publicArs = convertValue(v.public_price_value, v.public_price_currency, publicRate, 'ARS');
 
@@ -333,10 +331,8 @@ export default function Vehicles() {
       // Costo USD ya calculado arriba
       const infoautoUsd = infoautoArs ? infoautoArs / currentBlueRate : null;
 
-      // PRECIO OBJETIVO: Si está en USD, mostrar el valor fijo; si no, convertir
-      const targetUsd = v.target_price_currency === 'USD'
-        ? v.target_price_value
-        : (targetArs ? targetArs / currentBlueRate : null);
+      // PRECIO OBJETIVO: Siempre mostrar el valor fijo en USD
+      const targetUsd = v.target_price_value;
 
       const publicUsd = publicArs ? publicArs / currentBlueRate : null;
 
@@ -480,16 +476,10 @@ export default function Vehicles() {
       const storedRate = v[keys.rate];
 
       if (type === 'target') {
-        // PRECIO OBJETIVO: Fijo en USD, convertido al dólar ACTUAL para ARS
-        if (currency === 'USD') {
-          // Si está en USD, mantener fijo y convertir con cotización actual
-          valueArs = value * currentBlueRate;
-          rateForUsd = currentBlueRate;
-        } else {
-          // Si está en ARS, convertir a USD con cotización actual
-          valueArs = value;
-          rateForUsd = currentBlueRate;
-        }
+        // PRECIO OBJETIVO: SIEMPRE tratado como fijo en USD, convertido al dólar ACTUAL para ARS
+        // Independientemente de cómo esté guardado en la BD, lo tratamos como USD
+        valueArs = value * currentBlueRate;
+        rateForUsd = currentBlueRate;
       } else {
         // Para otros precios, usar lógica normal
         const rate = storedRate || currentBlueRate;

@@ -111,8 +111,8 @@ class Entity {
     const cleanData = {};
     Object.keys(data).forEach(key => {
       const value = data[key];
-      // Skip only empty strings, but keep null/undefined for optional fields
-      if (value !== '') {
+      // Skip only empty strings, but keep null/undefined for optional fields, and keep 0 and false
+      if (value !== '' || value === 0 || value === false) {
         cleanData[key] = value;
       }
     });
@@ -133,12 +133,12 @@ class Entity {
   async update(id, data) {
     if (!useSupabase) return this.localEntity.update(id, data);
 
-    // Clean data: remove empty strings, but keep null/undefined for optional fields
+    // Clean data: remove empty strings, but keep null/undefined for optional fields, and keep false and 0
     const cleanData = {};
     Object.keys(data).forEach(key => {
       const value = data[key];
-      // Skip only empty strings, but keep null/undefined for optional fields
-      if (value !== '') {
+      // Skip only empty strings, but keep null/undefined for optional fields, and keep 0 and false
+      if (value !== '' || value === 0 || value === false) {
         cleanData[key] = value;
       }
     });

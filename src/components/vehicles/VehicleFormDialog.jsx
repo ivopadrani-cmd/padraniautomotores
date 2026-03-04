@@ -219,6 +219,10 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
     e.preventDefault();
     if (isSubmitting) return;
     setIsSubmitting(true);
+
+    console.log('🔍 Iniciando guardado de vehículo...');
+    console.log('📋 FormData antes de procesar:', formData);
+
     // Convert numeric string fields to numbers before submit
     const numericFields = ['year', 'kilometers', 'cost_value', 'cost_exchange_rate', 'target_price_value', 'target_price_exchange_rate', 'public_price_value', 'public_price_exchange_rate', 'infoauto_value', 'infoauto_exchange_rate'];
     const processedData = { ...formData };
@@ -227,15 +231,22 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
         processedData[field] = parseFloat(processedData[field]) || 0;
       }
     });
-    
+
     const finalData = { ...processedData, expenses };
     console.log('📤 Enviando datos del vehículo:', finalData);
-    
+    console.log('🎯 Llamando a onSubmit con:', finalData);
+
     try {
-      await onSubmit(finalData);
+      const result = await onSubmit(finalData);
+      console.log('✅ onSubmit completado, resultado:', result);
       console.log('✅ Vehículo guardado correctamente');
+      onOpenChange(false); // Cerrar el diálogo manualmente
     } catch (error) {
       console.error('❌ Error al guardar vehículo:', error);
+      console.error('❌ Detalles del error:', error.message);
+      console.error('❌ Stack trace:', error.stack);
+      // Mostrar error al usuario
+      alert('Error al guardar el vehículo: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }
