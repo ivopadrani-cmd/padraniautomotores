@@ -18,28 +18,49 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
   });
   const [hasChanges, setHasChanges] = useState(false);
   const [currentBlueRate, setCurrentBlueRate] = useState(1200);
+  const [isLoadingRate, setIsLoadingRate] = useState(false);
   const [showManual, setShowManual] = useState(false);
 
+  // Función para obtener cotización BLUE actual
+  const fetchCurrentBlueRate = async () => {
+    setIsLoadingRate(true);
+    try {
+      const response = await fetch('https://dolarapi.com/v1/dolares/blue');
+      const data = await response.json();
+      const rate = data.venta;
+      setCurrentBlueRate(rate);
+      return rate;
+    } catch (error) {
+      console.error('Error fetching blue rate:', error);
+      return currentBlueRate;
+    } finally {
+      setIsLoadingRate(false);
+    }
+  };
 
-  // Calcular conversión automática
-  const calculateConversion = (value, currency, exchangeRate) => {
-    if (!value || !exchangeRate) return null;
+
+  // Calcular conversión automática usando dólar ACTUAL para vista previa
+  const calculateConversion = (value, currency) => {
+    if (!value || !currentBlueRate) return null;
     if (currency === 'ARS') {
-      return value / exchangeRate;
+      return value / currentBlueRate; // Convertir ARS a USD usando cotización actual
     } else {
-      return value * exchangeRate;
+      return value * currentBlueRate; // Convertir USD a ARS usando cotización actual
     }
   };
 
   useEffect(() => {
     if (open && vehicle) {
-      setFormData({
-        public_price_value: vehicle.public_price_value || '',
-        public_price_currency: vehicle.public_price_currency || 'ARS',
-        public_price_exchange_rate: vehicle.public_price_exchange_rate || '',
-        public_price_date: vehicle.public_price_date || ''
+      // Obtener cotización actual al abrir el diálogo
+      fetchCurrentBlueRate().then(() => {
+        setFormData({
+          public_price_value: vehicle.public_price_value || '',
+          public_price_currency: vehicle.public_price_currency || 'ARS',
+          public_price_exchange_rate: vehicle.public_price_exchange_rate || '',
+          public_price_date: vehicle.public_price_date || ''
+        });
+        setHasChanges(false);
       });
-      setHasChanges(false);
     }
   }, [open, vehicle]);
 
@@ -193,8 +214,8 @@ export default function PublicPriceDialog({ open, onOpenChange, vehicle, onSubmi
                   </Label>
                   <div className="h-9 bg-green-100 rounded px-3 flex items-center justify-between">
                     <span className="text-[11px] font-medium text-green-700">
-                      {formData.public_price_value && formData.public_price_exchange_rate ?
-                        `${formData.public_price_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.public_price_value), formData.public_price_currency, parseFloat(formData.public_price_exchange_rate))?.toLocaleString(formData.public_price_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
+                      {formData.public_price_value ?
+                        `${formData.public_price_currency === 'ARS' ? 'U$D' : '$'} ${calculateConversion(parseFloat(formData.public_price_value), formData.public_price_currency)?.toLocaleString(formData.public_price_currency === 'ARS' ? 'en-US' : 'es-AR', { maximumFractionDigits: 0 })}`
                         : '-'
                       }
                     </span>

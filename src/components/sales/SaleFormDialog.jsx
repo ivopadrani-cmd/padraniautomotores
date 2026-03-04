@@ -513,7 +513,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
             <div className="flex gap-2 items-end">
               <div className="flex-1">
                 <Label className="text-[9px] text-gray-400 uppercase">Precio de venta</Label>
-                <Input className="h-9 text-[15px] font-bold" inputMode="decimal" value={formData.sale_price} onChange={(e) => handleChange('sale_price', e.target.value)} placeholder="0" />
+                <Input className="h-9 text-[15px] font-bold" type="number" step="0.01" value={formData.sale_price} onChange={(e) => handleChange('sale_price', e.target.value)} placeholder="0" />
               </div>
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -524,7 +524,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               </div>
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                <Input className="h-9 w-20 text-[11px]" inputMode="decimal" value={formData.sale_price_exchange_rate} onChange={(e) => handleChange('sale_price_exchange_rate', e.target.value)} />
+                <Input className="h-9 w-20 text-[11px]" type="number" step="0.01" value={formData.sale_price_exchange_rate} onChange={(e) => handleChange('sale_price_exchange_rate', e.target.value)} />
               </div>
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Fecha</Label>
@@ -697,7 +697,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 <div className="flex gap-1.5 items-end">
                   <div className="flex-1">
                     <Label className="text-[9px] text-gray-400 uppercase">Monto</Label>
-                    <Input className="h-7 text-[11px]" inputMode="decimal" value={formData.deposit.amount} onChange={(e) => handleNestedChange('deposit', 'amount', e.target.value)} />
+                    <Input className="h-7 text-[11px]" type="number" step="0.01" value={formData.deposit.amount} onChange={(e) => handleNestedChange('deposit', 'amount', e.target.value)} />
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -708,7 +708,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                  <Input className="h-7 w-16 text-[10px]" inputMode="decimal" value={formData.deposit.exchange_rate} onChange={(e) => handleNestedChange('deposit', 'exchange_rate', e.target.value)} />
+                  <Input className="h-7 w-16 text-[10px]" type="number" step="0.01" value={formData.deposit.exchange_rate} onChange={(e) => handleNestedChange('deposit', 'exchange_rate', e.target.value)} />
                   </div>
                 </div>
                 <div className="flex gap-1.5 items-end">
@@ -727,7 +727,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               <div className="flex gap-1.5 items-end">
                 <div className="flex-1">
                   <Label className="text-[9px] text-gray-400 uppercase">Monto</Label>
-                    <Input className="h-7 text-[11px]" inputMode="decimal" value={formData.cash_payment.amount} onChange={(e) => handleNestedChange('cash_payment', 'amount', e.target.value)} />
+                    <Input className="h-7 text-[11px]" type="number" step="0.01" value={formData.cash_payment.amount} onChange={(e) => handleNestedChange('cash_payment', 'amount', e.target.value)} />
                 </div>
                 <div>
                   <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -738,7 +738,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 </div>
                 <div>
                   <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                  <Input className="h-7 w-16 text-[10px]" inputMode="decimal" value={formData.cash_payment.exchange_rate} onChange={(e) => handleNestedChange('cash_payment', 'exchange_rate', e.target.value)} />
+                  <Input className="h-7 w-16 text-[10px]" type="number" step="0.01" value={formData.cash_payment.exchange_rate} onChange={(e) => handleNestedChange('cash_payment', 'exchange_rate', e.target.value)} />
                 </div>
                 <div className="w-28"><Label className="text-[9px] text-gray-400 uppercase">Método</Label>
                   <Select value={formData.cash_payment.payment_method} onValueChange={(v) => handleNestedChange('cash_payment', 'payment_method', v)}>
@@ -785,7 +785,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   <div className="flex gap-1.5 items-end pt-1 border-t border-cyan-200">
                     <div className="flex-1">
                       <Label className="text-[9px] text-gray-400 uppercase">Valor de toma *</Label>
-                      <Input className="h-7 text-[11px]" inputMode="decimal" value={ti.value} onChange={(e) => handleTradeInChange(i, 'value', e.target.value)} required />
+                      <Input className="h-7 text-[11px]" type="number" step="0.01" value={ti.value} onChange={(e) => handleTradeInChange(i, 'value', e.target.value)} required />
                     </div>
                     <div>
                       <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -805,7 +805,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                     </div>
                     <div>
                       <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                      <Input className="h-7 w-16 text-[10px]" inputMode="decimal" value={ti.exchange_rate} onChange={(e) => handleTradeInChange(i, 'exchange_rate', e.target.value)} />
+                      <Input className="h-7 w-16 text-[10px]" type="number" step="0.01" value={ti.exchange_rate} onChange={(e) => handleTradeInChange(i, 'exchange_rate', e.target.value)} />
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pt-2 mt-2 border-t border-cyan-200 border-dashed">
@@ -828,7 +828,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 <div className="flex gap-1.5 items-end">
                   <div className="flex-1">
                     <Label className="text-[9px] text-gray-400 uppercase">Monto</Label>
-                    <Input className="h-7 text-[11px]" inputMode="decimal" value={formData.financing.amount} onChange={(e) => handleNestedChange('financing', 'amount', e.target.value)} />
+                    <Input className="h-7 text-[11px]" type="number" step="0.01" value={formData.financing.amount} onChange={(e) => handleNestedChange('financing', 'amount', e.target.value)} />
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -839,7 +839,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                    <Input className="h-7 w-16 text-[10px]" inputMode="decimal" value={formData.financing.exchange_rate} onChange={(e) => handleNestedChange('financing', 'exchange_rate', e.target.value)} />
+                    <Input className="h-7 w-16 text-[10px]" type="number" step="0.01" value={formData.financing.exchange_rate} onChange={(e) => handleNestedChange('financing', 'exchange_rate', e.target.value)} />
                   </div>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -852,8 +852,8 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                       onChange={(e) => handleNestedChange('financing', 'date', e.target.value)}
                     />
                   </div>
-                  <div><Label className="text-[9px] text-gray-400 uppercase">Cuotas</Label><Input className="h-7 text-[10px]" inputMode="decimal" value={formData.financing.installments} onChange={(e) => handleNestedChange('financing', 'installments', e.target.value)} /></div>
-                  <div><Label className="text-[9px] text-gray-400 uppercase">Valor cuota</Label><Input className="h-7 text-[10px]" inputMode="decimal" value={formData.financing.installment_value} onChange={(e) => handleNestedChange('financing', 'installment_value', e.target.value)} /></div>
+                  <div><Label className="text-[9px] text-gray-400 uppercase">Cuotas</Label><Input className="h-7 text-[10px]" type="number" step="0.01" value={formData.financing.installments} onChange={(e) => handleNestedChange('financing', 'installments', e.target.value)} /></div>
+                  <div><Label className="text-[9px] text-gray-400 uppercase">Valor cuota</Label><Input className="h-7 text-[10px]" type="number" step="0.01" value={formData.financing.installment_value} onChange={(e) => handleNestedChange('financing', 'installment_value', e.target.value)} /></div>
                 </div>
               </div>
             </PaymentSection>

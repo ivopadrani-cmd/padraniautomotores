@@ -75,6 +75,7 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
         brand: vehicle?.brand || '',
         model: vehicle?.model || '',
         year: vehicle?.year || '',
+        vehicle_type: vehicle?.vehicle_type || '',
         plate: vehicle?.plate || '',
         kilometers: vehicle?.kilometers || '',
         color: vehicle?.color || '',
@@ -298,11 +299,13 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
                 <div className="col-span-1"><Label className={lbl}>Marca *</Label><Input className={inp} value={formData.brand} onChange={(e) => handleChange('brand', e.target.value)} required /></div>
                 <div className="col-span-2"><Label className={lbl}>Modelo *</Label><Input className={inp} value={formData.model} onChange={(e) => handleChange('model', e.target.value)} required /></div>
                 <div className="col-span-1"><Label className={lbl}>Año</Label><Input className={inp} type="number" value={formData.year ?? ''} onChange={(e) => handleChange('year', e.target.value)} /></div>
+                <div className="col-span-1"><Label className={lbl}>Tipo</Label><Input className={inp} value={formData.vehicle_type || ''} onChange={(e) => handleChange('vehicle_type', e.target.value)} placeholder="Sedan 5 puertas" /></div>
                 <div className="col-span-1"><Label className={lbl}>Dominio</Label><Input className={inp} value={formData.plate} onChange={(e) => handleChange('plate', e.target.value.toUpperCase())} /></div>
-                <div className="col-span-1"><Label className={lbl}>KM</Label><Input className={inp} type="number" value={formData.kilometers ?? ''} onChange={(e) => handleChange('kilometers', e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-6 gap-3 mt-2">
-                <div className="col-span-2"><Label className={lbl}>Color</Label><Input className={inp} value={formData.color} onChange={(e) => handleChange('color', e.target.value)} /></div>
+                <div className="col-span-1"><Label className={lbl}>KM</Label><Input className={inp} type="number" value={formData.kilometers ?? ''} onChange={(e) => handleChange('kilometers', e.target.value)} /></div>
+              <div className="grid grid-cols-6 gap-3 mt-2">
+                <div className="col-span-1"><Label className={lbl}>Color</Label><Input className={inp} value={formData.color} onChange={(e) => handleChange('color', e.target.value)} /></div>
                 <div className="col-span-1"><Label className={lbl}>Estado</Label>
                   <Select value={formData.status} onValueChange={(v) => handleChange('status', v)}>
                     <SelectTrigger className={inp}><SelectValue /></SelectTrigger>

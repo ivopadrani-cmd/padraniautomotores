@@ -321,13 +321,23 @@ export default function Vehicles() {
       const expensesUsd = (v.expenses || []).reduce((sum, e) => sum + convertValue(e.value, e.currency, e.exchange_rate || v.cost_exchange_rate, 'USD'), 0);
       const costoUsd = valorTomaUsd + expensesUsd;
       const infoautoArs = convertValue(v.infoauto_value, v.infoauto_currency, infoautoRate, 'ARS');
-      const targetArs = convertValue(v.target_price_value, v.target_price_currency, targetRate, 'ARS');
+
+      // PRECIO OBJETIVO: Fijo en USD, convertido al dólar ACTUAL para ARS
+      const targetArs = v.target_price_currency === 'USD'
+        ? v.target_price_value * currentBlueRate
+        : v.target_price_value;
+
       const publicArs = convertValue(v.public_price_value, v.public_price_currency, publicRate, 'ARS');
 
 
       // Costo USD ya calculado arriba
       const infoautoUsd = infoautoArs ? infoautoArs / currentBlueRate : null;
-      const targetUsd = targetArs ? targetArs / currentBlueRate : null;
+
+      // PRECIO OBJETIVO: Si está en USD, mostrar el valor fijo; si no, convertir
+      const targetUsd = v.target_price_currency === 'USD'
+        ? v.target_price_value
+        : (targetArs ? targetArs / currentBlueRate : null);
+
       const publicUsd = publicArs ? publicArs / currentBlueRate : null;
 
       const isCons = v.ownership === 'CONSIGNACIÓN' || v.is_consignment;
@@ -467,9 +477,25 @@ export default function Vehicles() {
       const keys = keyMap[type];
       const value = v[keys.value];
       const currency = v[keys.currency] || 'ARS';
-      const rate = v[keys.rate] || currentBlueRate;
-      valueArs = convertValue(value, currency, rate, 'ARS');
-      rateForUsd = currentBlueRate;
+      const storedRate = v[keys.rate];
+
+      if (type === 'target') {
+        // PRECIO OBJETIVO: Fijo en USD, convertido al dólar ACTUAL para ARS
+        if (currency === 'USD') {
+          // Si está en USD, mantener fijo y convertir con cotización actual
+          valueArs = value * currentBlueRate;
+          rateForUsd = currentBlueRate;
+        } else {
+          // Si está en ARS, convertir a USD con cotización actual
+          valueArs = value;
+          rateForUsd = currentBlueRate;
+        }
+      } else {
+        // Para otros precios, usar lógica normal
+        const rate = storedRate || currentBlueRate;
+        valueArs = convertValue(value, currency, rate, 'ARS');
+        rateForUsd = currentBlueRate;
+      }
     }
 
     if (!valueArs) return { ars: '-', usd: '', historical: null };
