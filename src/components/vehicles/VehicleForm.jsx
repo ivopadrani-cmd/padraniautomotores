@@ -296,7 +296,7 @@ export default function VehicleForm({ vehicle, onSubmit, onCancel, isLoading }) 
                   <div><Label className={lbl}>Modelo *</Label><Input className={inp} value={formData.model} onChange={(e) => handleChange('model', e.target.value)} required /></div>
                   <div><Label className={lbl}>Año *</Label><Input className={inp} type="number" value={formData.year} onChange={(e) => handleChange('year', parseInt(e.target.value) || 0)} required /></div>
                   <div><Label className={lbl}>Color</Label><Input className={inp} value={formData.color} onChange={(e) => handleChange('color', e.target.value)} /></div>
-                  <div><Label className={lbl}>Tipo</Label><Input className={inp} value={formData.vehicle_type} onChange={(e) => handleChange('vehicle_type', e.target.value)} placeholder={(formData.model?.toLowerCase().includes('up') && formData.year === 2015) ? 'Sedan 5 puertas' : 'AUTOMÓVIL'} /></div>
+                  <div><Label className={lbl}>Tipo</Label><Input className={inp} value={formData.vehicle_type} onChange={(e) => handleChange('vehicle_type', e.target.value)} placeholder="AUTOMÓVIL" /></div>
                   <div><Label className={lbl}>KM</Label><Input className={inp} type="number" value={formData.kilometers} onChange={(e) => handleChange('kilometers', parseFloat(e.target.value) || 0)} /></div>
                 </div>
                 <div className="grid grid-cols-6 gap-1.5 mt-2 pt-2 border-t">
@@ -306,7 +306,7 @@ export default function VehicleForm({ vehicle, onSubmit, onCancel, isLoading }) 
                     <Select value={formData.status} onValueChange={(v) => handleChange('status', v)}>
                       <SelectTrigger className={inp}><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {['A INGRESAR', 'EN REPARACION', 'DISPONIBLE', 'PAUSADO', 'RESERVADO', 'VENDIDO'].map(s => <SelectItem key={s} value={s} className="text-[11px]">{s}</SelectItem>)}
+                        {['A PERITAR', 'A INGRESAR', 'EN REPARACION', 'DISPONIBLE', 'PAUSADO', 'RESERVADO', 'VENDIDO', 'ENTREGADO'].map(s => <SelectItem key={s} value={s} className="text-[11px]">{s}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>

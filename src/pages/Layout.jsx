@@ -38,7 +38,7 @@ const getNavigationItems = (userRole) => {
       { title: "Agencia", pageName: "Agency", icon: Building2 }
     ];
   }
-
+  
   // Vendedor, Gestor, Comisionista - sin Agencia
   if (userRole === 'Vendedor' || userRole === 'Gestor' || userRole === 'Comisionista') {
     return [

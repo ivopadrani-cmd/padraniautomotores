@@ -1,0 +1,110 @@
+# EJEMPLO DE DATOS PARA GOOGLE SHEETS - PADRANI AUTOMOTORES
+
+## INSTRUCCIONES:
+1. Crea un nuevo Google Sheet
+2. Crea las siguientes pestañas con estos nombres exactos
+3. Copia las columnas y datos de ejemplo
+
+---
+
+## PESTAÑA: VEHICULOS
+
+| ID | Nombre | Marca | Modelo | Año | Patente | Kilómetros | Color | Tipo | Estado | Fecha Ingreso | Propietario | Dueño | Costo Valor | Costo Moneda | Costo Cotización | Precio Objetivo Valor | Precio Objetivo Moneda | Precio Objetivo Cotización | Precio Público Valor | Precio Público Moneda | Precio Público Cotización | Precio InfoAuto Valor | Precio InfoAuto Moneda | Precio InfoAuto Cotización | Fotos | Documentos | Gastos | Observaciones |
+|----|--------|-------|--------|-----|---------|------------|-------|------|--------|---------------|-------------|-------|-------------|--------------|------------------|-----------------------|-------------------------|---------------------------|-----------------------|-------------------------|---------------------------|-------------------------|-------------------------|---------------------------|-------|------------|--------|--------------|
+| V001 | TOYOTA COROLLA 2020 - ABC123 | TOYOTA | COROLLA | 2020 | ABC123 | 45000 | BLANCO | SEDAN | DISPONIBLE | 2024-01-15 | Juan Pérez | Dueño Original | 15000000 | ARS | 800 | 18000000 | ARS | 850 | 19500000 | ARS | 900 | 18500000 | ARS | 880 | https://ejemplo.com/foto1.jpg | https://ejemplo.com/doc1.pdf | [{"tipo":"GESTORIA","valor":150000,"moneda":"ARS","cotizacion":900,"fecha":"2024-01-15","descripcion":"Gestoría vehículo"}] | Vehículo en excelente estado |
+| V002 | FORD FIESTA 2019 - DEF456 | FORD | FIESTA | 2019 | DEF456 | 32000 | ROJO | HATCHBACK | RESERVADO | 2024-02-01 | María García | Dueño Original | 9500000 | ARS | 750 | 12000000 | ARS | 800 | 13500000 | ARS | 850 | 12800000 | ARS | 820 | https://ejemplo.com/foto2.jpg,https://ejemplo.com/foto2b.jpg |  | [] | Vehículo reservado con seña |
+
+---
+
+## PESTAÑA: CLIENTES
+
+| ID | Nombre Completo | Fecha Nacimiento | Teléfono | Email | DNI | CUIT/CUIL | Ciudad | Provincia | Dirección | Código Postal | Estado Civil | Estado Cliente | Observaciones | Cónyuge Nombre | Cónyuge DNI | Cónyuge CUIT/CUIL | Cónyuge Teléfono | Cónyuge Email | Cónyuge Fecha Nacimiento | Cónyuge Ocupación |
+|----|-----------------|------------------|----------|-------|-----|-----------|--------|-----------|-----------|---------------|--------------|----------------|--------------|----------------|-------------|------------------|------------------|--------------|-------------------------|-------------------|
+| C001 | Juan Pérez | 1985-03-15 | +54911234567 | juan@email.com | 12345678 | 20123456789 | Buenos Aires | Buenos Aires | Calle 123 456 | 1000 | Casado | Cliente | Cliente regular | Ana López | 87654321 | 20876543210 | +54911876543 | ana@email.com | 1987-07-20 | Docente |
+| C002 | María García | 1990-11-22 | +54911987654 | maria@email.com | 87654321 | 20876543210 | Córdoba | Córdoba | Av. Siempre Viva 742 | 5000 | Soltero | Interesado | Primera consulta |  |  |  |  |  |  |  |
+
+---
+
+## PESTAÑA: CONSULTAS
+
+| ID | Fecha Consulta | Cliente ID | Cliente Nombre | Cliente Teléfono | Cliente Email | Vehículos Interesados | Otros Intereses | Presupuesto | Preferencia Contacto | Estado | Nivel Interés | Observaciones | Fecha Seguimiento |
+|----|----------------|------------|----------------|------------------|----------------|----------------------|-----------------|------------|---------------------|--------|---------------|--------------|-------------------|
+| Q001 | 2024-03-01 | C002 | María García | +54911987654 | maria@email.com | V001,V002 | SUV familiar | 15000000-20000000 | WhatsApp | En Negociación | Alta | Interesada en vehículo familiar | 2024-03-05 |
+| Q002 | 2024-03-03 | C001 | Juan Pérez | +54911234567 | juan@email.com | V001 | Auto económico | 18000000 | Llamada | Nuevo | Media | Busca segundo auto | 2024-03-07 |
+
+---
+
+## PESTAÑA: RESERVAS
+
+| ID | Vehículo ID | Fecha Reserva | Cliente ID | Cliente Nombre | Cliente Teléfono | Vendedor ID | Vendedor Nombre | Monto Seña | Moneda Seña | Cotización Seña | Fecha Seña | Descripción Seña | Precio Acordado | Moneda Precio Acordado | Cotización Precio Acordado | Fecha Precio Acordado | Permuta Marca | Permuta Modelo | Permuta Año | Permuta Patente | Permuta Kilómetros | Permuta Valor | Permuta Moneda | Permuta Cotización | Permuta Fecha | Financiación Monto | Financiación Moneda | Financiación Cotización | Financiación Fecha | Banco Financiación | Cuotas Financiación | Valor Cuota Financiación | Observaciones |
+|----|-------------|---------------|------------|----------------|------------------|------------|------------------|------------|-------------|-----------------|------------|------------------|----------------|---------------------------|-----------------------------|----------------------|--------------|----------------|-------------|-----------------|---------------------|--------------|---------------|---------------------|---------------|-------------------|----------------------|-------------------------|-------------------|-------------------|---------------------|-----------------------|----------------|
+| R001 | V002 | 2024-03-05 | C002 | María García | +54911987654 | S001 | Carlos López | 1000000 | ARS | 900 | 2024-03-05 | Seña reserva Ford Fiesta | 13500000 | ARS | 900 | 2024-03-05 | CHEVROLET | CLASSIC | 2015 | GHI789 | 120000 | 3000000 | ARS | 900 | 2024-03-05 | 8500000 | ARS | 900 | 2024-03-05 | Santander | 36 | 236111 | Cliente solicita entrega en 15 días |
+
+---
+
+## PESTAÑA: VENTAS
+
+| ID | Vehículo ID | Fecha Venta | Cliente ID | Cliente Nombre | Vendedor | Precio Venta | Moneda Venta | Cotización Venta | Monto Seña | Moneda Seña | Cotización Seña | Fecha Seña | Método Pago Seña | Descripción Seña | Monto Pago Contado | Moneda Pago Contado | Cotización Pago Contado | Fecha Pago Contado | Método Pago Contado | Permutas | Monto Financiación | Moneda Financiación | Cotización Financiación | Fecha Financiación | Banco Financiación | Cuotas Financiación | Valor Cuota Financiación | Fecha Saldo | Estado Venta | Observaciones |
+|----|-------------|-------------|------------|----------------|----------|--------------|--------------|------------------|------------|-------------|-----------------|------------|------------------|------------------|-------------------|---------------------|-----------------------|-------------------|---------------------|----------|---------------------|----------------------|-------------------------|-------------------|-------------------|---------------------|-----------------------|-------------|-------------|--------------|
+| S001 | V001 | 2024-02-20 | C001 | Juan Pérez | Carlos López | 19500000 | ARS | 900 | 2000000 | ARS | 900 | 2024-02-15 | Transferencia | Seña Toyota Corolla | 5000000 | ARS | 900 | 2024-02-20 | Efectivo | [{"marca":"FORD","modelo":"FOCUS","año":2018,"patente":"JKL012","kilometros":95000,"valor":7000000,"moneda":"ARS","cotizacion":900}] | 8500000 | ARS | 900 | 2024-02-20 | BBVA | 48 | 177083 | 2024-03-15 | Completada | Venta exitosa con permuta |
+
+---
+
+## PESTAÑA: PERITAJES
+
+| ID | Vehículo ID | Fecha Peritaje | Inspector Nombre | Kilómetros al Peritaje | Estado Motor | Pérdida Fluidos | Estado Caja | Estado 4x4 | Suspensión | Sistema Frenos | Desgaste Frenos | Fallas Eléctricas | Faros y Ópticas | Estado Batería | Aire Acondicionado | Calefacción | Estado Tapizados | Desgaste Volante | Estado Vidrios | Bollos Granizo | Cubierta DD | Cubierta DI | Cubierta TD | Cubierta TI | Pintura Frente | Pintura Guardabarro Del Derecho | Pintura Guardabarro Del Izquierdo | Pintura Puerta Del Derecha | Pintura Puerta Del Izquierda | Pintura Puerta Tras Derecha | Pintura Puerta Tras Izquierda | Pintura Guardabarro Tras Derecho | Pintura Guardabarro Tras Izquierdo | Pintura Parte Trasera | Pintura Techo | Tiene Accesorios | Detalle Accesorios | Cambio Correa Distribución | Tipo Correa | Fecha Cambio Correa | Kilómetros Cambio Correa | Estado Correa | Estado Tensores | Estado Bomba Agua | Costo | Cambio Aceite | Fecha Cambio Aceite | Kilómetros Cambio Aceite | Tipo Aceite | Cambio Filtro Aire | Fecha Cambio Filtro Aire | Cambio Filtro Combustible | Fecha Cambio Filtro Combustible | Cambio Filtro Aceite | Fecha Cambio Filtro Aceite | Cambio Bujías | Fecha Cambio Bujías | Kilómetros Cambio Bujías | Tipo Bujías | Observaciones Peritaje |
+|----|-------------|----------------|------------------|-------------------------|-------------|-----------------|-------------|------------|------------|----------------|-----------------|------------------|----------------|-----------------|--------------------|-------------|------------------|------------------|---------------|----------------|-------------|-------------|-------------|-------------|---------------|-----------------------------|-------------------------------|-----------------------------|-------------------------------|-----------------------------|-------------------------------|-----------------------------|-------------------------------|---------------------|-------------|------------------|--------------------|------------------|---------------------|---------------------|----------------|-------------------|--------------|--------------------|-------------------------|---------------------|------------------|------------------|----------------|-------------|-------------------|---------------------|---------------------|---------------------------|-----------------------------|---------------------|---------------------|----------------|------------------|---------------------|----------------|-----------------|
+| P001 | V001 | 2024-01-16 | Roberto Díaz | 45000 | Bueno | No | Bueno | Bueno | Bueno | Bueno | No | No | Bueno | Bueno | Sí | Sí | Bueno | No | Bueno | No | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Bueno | Sí | Alarma, levantavidrios eléctricos | Sí | correa | 2023-08-15 | 38000 | Bueno | Bueno | Bueno | 0 | Sí | 2024-01-16 | 45000 | 10W40 | Sí | 2024-01-16 | Sí | 2024-01-16 | Sí | 2024-01-16 | Sí | 2023-08-15 | 38000 | NGK | Vehículo en excelente estado mecánico |
+
+---
+
+## PESTAÑA: COTIZACIONES
+
+| ID | Fecha Cotización | Cliente ID | Cliente Nombre | Cliente Teléfono | Cliente Email | Vendedor ID | Vendedor Nombre | Vehículos Cotizados | Monto Cotización | Moneda Cotización | Cotización USD | Fecha Cotización | Permuta Incluida | Permuta Marca | Permuta Modelo | Permuta Año | Permuta Valor Estimado | Financiación Incluida | Monto Financiación | Banco Financiación | Cuotas Financiación | Valor Cuota Financiación | Estado Cotización | Observaciones |
+|----|------------------|------------|----------------|------------------|----------------|------------|------------------|---------------------|-------------------|-------------------|----------------|------------------|------------------|--------------|----------------|-------------|-------------|-----------------------|----------------------|-------------------|-------------------|---------------------|-----------------------|------------------|--------------|
+| Q001 | 2024-03-01 | C002 | María García | +54911987654 | maria@email.com | S001 | Carlos López | V002 | 13500000 | ARS | 900 | 2024-03-01 | Sí | CHEVROLET | CLASSIC | 2015 | 3500000 | Sí | 8000000 | Santander | 36 | 222222 | Aprobada | Cotización convertida en reserva |
+
+---
+
+## PESTAÑA: VENDEDORES
+
+| ID | Nombre Completo | Teléfono | Email | Activo | Fecha Ingreso | Observaciones |
+|----|-----------------|----------|-------|--------|---------------|--------------|
+| S001 | Carlos López | +54911111111 | carlos@padrani.com | Sí | 2023-01-01 | Vendedor principal |
+| S002 | Ana Rodríguez | +54911222222 | ana@padrani.com | Sí | 2023-06-01 | Vendedora |
+
+---
+
+## PESTAÑA: TASAS_CAMBIO
+
+| ID | Fecha Tasa | Tipo Tasa | Valor USD | Fuente | Fecha Actualización |
+|----|------------|-----------|-----------|--------|---------------------|
+| TC001 | 2024-03-04 | Blue | 950 | DolarAPI | 2024-03-04 12:00:00 |
+| TC002 | 2024-03-04 | Oficial | 890 | ArgentinaDatos | 2024-03-04 12:00:00 |
+
+---
+
+## FÓRMULAS IMPORTANTES PARA AGREGAR EN GOOGLE SHEETS:
+
+### En VEHICULOS:
+- Nombre =B2&" "&C2&" "&D2&" - "&F2
+- Costo Total ARS =SI(L2="USD",K2*M2,K2)
+- Precio Objetivo Total ARS =SI(O2="USD",N2*P2,N2)
+- Precio Público Total ARS =SI(S2="USD",R2*T2,R2)
+- Precio InfoAuto Total ARS =SI(W2="USD",V2*X2,V2)
+
+### En CONSULTAS:
+- Estado con colores condicionales
+
+### En RESERVAS:
+- Precio Acordado Total ARS =SI(P2="USD",O2*Q2,O2)
+
+### En VENTAS:
+- Precio Venta Total ARS =SI(H2="USD",G2*I2,G2)
+
+## COLORES PARA ESTADOS (Formato condicional):
+- DISPONIBLE: Azul (#3B82F6)
+- RESERVADO: Negro (#1F2937)
+- VENDIDO: Rojo (#EF4444)
+- A PERITAR: Amarillo (#FCD34D)
+- EN REPARACION: Gris (#9CA3AF)

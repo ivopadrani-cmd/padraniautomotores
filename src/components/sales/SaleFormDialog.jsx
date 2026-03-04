@@ -239,6 +239,13 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               plate: ti.plate || '',
               kilometers: parseFloat(ti.kilometers) || 0,
               color: ti.color || '',
+              vehicle_type: ti.vehicle_type || 'AUTOMÓVIL',
+              engine_number: ti.engine_number || '',
+              chassis_number: ti.chassis_number || '',
+              chassis_brand: ti.chassis_brand || '',
+              engine_brand: ti.engine_brand || '',
+              registration_city: ti.registration_city || '',
+              registration_province: ti.registration_province || '',
               status: ti.is_peritado ? 'A INGRESAR' : 'A PERITAR',
               supplier_client_id: selectedClientId || clientId,
               supplier_client_name: formData.client_name,
@@ -506,7 +513,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
             <div className="flex gap-2 items-end">
               <div className="flex-1">
                 <Label className="text-[9px] text-gray-400 uppercase">Precio de venta</Label>
-                <Input className="h-9 text-[15px] font-bold" value={formData.sale_price} onChange={(e) => handleChange('sale_price', e.target.value)} placeholder="0" />
+                <Input className="h-9 text-[15px] font-bold" inputMode="decimal" value={formData.sale_price} onChange={(e) => handleChange('sale_price', e.target.value)} placeholder="0" />
               </div>
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -517,7 +524,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               </div>
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                <Input className="h-9 w-20 text-[11px]" value={formData.sale_price_exchange_rate} onChange={(e) => handleChange('sale_price_exchange_rate', e.target.value)} />
+                <Input className="h-9 w-20 text-[11px]" inputMode="decimal" value={formData.sale_price_exchange_rate} onChange={(e) => handleChange('sale_price_exchange_rate', e.target.value)} />
               </div>
               <div>
                 <Label className="text-[9px] text-gray-400 uppercase">Fecha</Label>
@@ -690,7 +697,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 <div className="flex gap-1.5 items-end">
                   <div className="flex-1">
                     <Label className="text-[9px] text-gray-400 uppercase">Monto</Label>
-                    <Input className="h-7 text-[11px]" value={formData.deposit.amount} onChange={(e) => handleNestedChange('deposit', 'amount', e.target.value)} />
+                    <Input className="h-7 text-[11px]" inputMode="decimal" value={formData.deposit.amount} onChange={(e) => handleNestedChange('deposit', 'amount', e.target.value)} />
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -701,7 +708,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                  <Input className="h-7 w-16 text-[10px]" value={formData.deposit.exchange_rate} onChange={(e) => handleNestedChange('deposit', 'exchange_rate', e.target.value)} />
+                  <Input className="h-7 w-16 text-[10px]" inputMode="decimal" value={formData.deposit.exchange_rate} onChange={(e) => handleNestedChange('deposit', 'exchange_rate', e.target.value)} />
                   </div>
                 </div>
                 <div className="flex gap-1.5 items-end">
@@ -720,7 +727,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               <div className="flex gap-1.5 items-end">
                 <div className="flex-1">
                   <Label className="text-[9px] text-gray-400 uppercase">Monto</Label>
-                  <Input className="h-7 text-[11px]" value={formData.cash_payment.amount} onChange={(e) => handleNestedChange('cash_payment', 'amount', e.target.value)} />
+                    <Input className="h-7 text-[11px]" inputMode="decimal" value={formData.cash_payment.amount} onChange={(e) => handleNestedChange('cash_payment', 'amount', e.target.value)} />
                 </div>
                 <div>
                   <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -731,7 +738,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 </div>
                 <div>
                   <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                  <Input className="h-7 w-16 text-[10px]" value={formData.cash_payment.exchange_rate} onChange={(e) => handleNestedChange('cash_payment', 'exchange_rate', e.target.value)} />
+                  <Input className="h-7 w-16 text-[10px]" inputMode="decimal" value={formData.cash_payment.exchange_rate} onChange={(e) => handleNestedChange('cash_payment', 'exchange_rate', e.target.value)} />
                 </div>
                 <div className="w-28"><Label className="text-[9px] text-gray-400 uppercase">Método</Label>
                   <Select value={formData.cash_payment.payment_method} onValueChange={(v) => handleNestedChange('cash_payment', 'payment_method', v)}>
@@ -750,7 +757,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
               </div>
             </PaymentSection>
 
-            <PaymentSection id="tradein" label="Permuta" checked={includeTradeIn} onCheckedChange={(c) => { setIncludeTradeIn(c); if (c && formData.trade_ins.length === 0) setFormData(prev => ({ ...prev, trade_ins: [{ brand: '', model: '', year: '', plate: '', kilometers: '', color: '', engine_brand: '', engine_number: '', chassis_brand: '', chassis_number: '', registration_city: '', value: '', currency: 'ARS', exchange_rate: currentBlueRate, date: new Date().toISOString().split('T')[0] }] })); }}>
+            <PaymentSection id="tradein" label="Permuta" checked={includeTradeIn} onCheckedChange={(c) => { setIncludeTradeIn(c); if (c && formData.trade_ins.length === 0) setFormData(prev => ({ ...prev, trade_ins: [{ brand: '', model: '', year: '', vehicle_type: 'AUTOMÓVIL', plate: '', kilometers: '', color: '', engine_brand: '', engine_number: '', chassis_brand: '', chassis_number: '', registration_city: '', registration_province: '', value: '', currency: 'ARS', exchange_rate: currentBlueRate, date: new Date().toISOString().split('T')[0] }] })); }}>
               {formData.trade_ins.map((ti, i) => (
                 <div key={i} className="space-y-2 p-2 bg-cyan-50 rounded border border-cyan-200">
                   <p className="text-[9px] font-medium text-cyan-700 uppercase">Datos del vehículo en permuta (obligatorios para el boleto)</p>
@@ -758,12 +765,15 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                     <div><Label className="text-[9px] text-gray-400">Marca *</Label><Input className="h-7 text-[10px]" defaultValue={ti.brand} onBlur={(e) => handleTradeInChange(i, 'brand', e.target.value)} key={`ti-brand-${i}-${open}`} required /></div>
                     <div><Label className="text-[9px] text-gray-400">Modelo *</Label><Input className="h-7 text-[10px]" defaultValue={ti.model} onBlur={(e) => handleTradeInChange(i, 'model', e.target.value)} key={`ti-model-${i}-${open}`} required /></div>
                     <div><Label className="text-[9px] text-gray-400">Año *</Label><Input className="h-7 text-[10px]" defaultValue={ti.year} onBlur={(e) => handleTradeInChange(i, 'year', e.target.value)} key={`ti-year-${i}-${open}`} required /></div>
-                    <div><Label className="text-[9px] text-gray-400">Dominio *</Label><Input className="h-7 text-[10px]" defaultValue={ti.plate} onBlur={(e) => handleTradeInChange(i, 'plate', e.target.value.toUpperCase())} key={`ti-plate-${i}-${open}`} required /></div>
+                    <div><Label className="text-[9px] text-gray-400">Tipo</Label><Input className="h-7 text-[10px]" defaultValue={ti.vehicle_type || 'AUTOMÓVIL'} onBlur={(e) => handleTradeInChange(i, 'vehicle_type', e.target.value)} key={`ti-type-${i}-${open}`} /></div>
                   </div>
                   <div className="grid grid-cols-4 gap-1.5">
+                    <div><Label className="text-[9px] text-gray-400">Dominio *</Label><Input className="h-7 text-[10px]" defaultValue={ti.plate} onBlur={(e) => handleTradeInChange(i, 'plate', e.target.value.toUpperCase())} key={`ti-plate-${i}-${open}`} required /></div>
                     <div><Label className="text-[9px] text-gray-400">KM *</Label><Input className="h-7 text-[10px]" defaultValue={ti.kilometers} onBlur={(e) => handleTradeInChange(i, 'kilometers', e.target.value)} key={`ti-km-${i}-${open}`} required /></div>
                     <div><Label className="text-[9px] text-gray-400">Color *</Label><Input className="h-7 text-[10px]" defaultValue={ti.color} onBlur={(e) => handleTradeInChange(i, 'color', e.target.value)} key={`ti-color-${i}-${open}`} required /></div>
                     <div><Label className="text-[9px] text-gray-400">Ciudad Rad.</Label><Input className="h-7 text-[10px]" defaultValue={ti.registration_city} onBlur={(e) => handleTradeInChange(i, 'registration_city', e.target.value)} key={`ti-reg-city-${i}-${open}`} /></div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
                     <div><Label className="text-[9px] text-gray-400">Provincia Rad.</Label><Input className="h-7 text-[10px]" defaultValue={ti.registration_province} onBlur={(e) => handleTradeInChange(i, 'registration_province', e.target.value)} key={`ti-reg-prov-${i}-${open}`} /></div>
                   </div>
                   <div className="grid grid-cols-4 gap-1.5">
@@ -775,7 +785,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   <div className="flex gap-1.5 items-end pt-1 border-t border-cyan-200">
                     <div className="flex-1">
                       <Label className="text-[9px] text-gray-400 uppercase">Valor de toma *</Label>
-                      <Input className="h-7 text-[11px]" value={ti.value} onChange={(e) => handleTradeInChange(i, 'value', e.target.value)} required />
+                      <Input className="h-7 text-[11px]" inputMode="decimal" value={ti.value} onChange={(e) => handleTradeInChange(i, 'value', e.target.value)} required />
                     </div>
                     <div>
                       <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -795,7 +805,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                     </div>
                     <div>
                       <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                      <Input className="h-7 w-16 text-[10px]" value={ti.exchange_rate} onChange={(e) => handleTradeInChange(i, 'exchange_rate', e.target.value)} />
+                      <Input className="h-7 w-16 text-[10px]" inputMode="decimal" value={ti.exchange_rate} onChange={(e) => handleTradeInChange(i, 'exchange_rate', e.target.value)} />
                     </div>
                   </div>
                   <div className="flex items-center gap-2 pt-2 mt-2 border-t border-cyan-200 border-dashed">
@@ -818,7 +828,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                 <div className="flex gap-1.5 items-end">
                   <div className="flex-1">
                     <Label className="text-[9px] text-gray-400 uppercase">Monto</Label>
-                    <Input className="h-7 text-[11px]" value={formData.financing.amount} onChange={(e) => handleNestedChange('financing', 'amount', e.target.value)} />
+                    <Input className="h-7 text-[11px]" inputMode="decimal" value={formData.financing.amount} onChange={(e) => handleNestedChange('financing', 'amount', e.target.value)} />
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Moneda</Label>
@@ -829,7 +839,7 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                   </div>
                   <div>
                     <Label className="text-[9px] text-gray-400 uppercase">Cotiz. USD</Label>
-                    <Input className="h-7 w-16 text-[10px]" value={formData.financing.exchange_rate} onChange={(e) => handleNestedChange('financing', 'exchange_rate', e.target.value)} />
+                    <Input className="h-7 w-16 text-[10px]" inputMode="decimal" value={formData.financing.exchange_rate} onChange={(e) => handleNestedChange('financing', 'exchange_rate', e.target.value)} />
                   </div>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
@@ -842,8 +852,8 @@ export default function SaleFormDialog({ open, onOpenChange, vehicle, reservatio
                       onChange={(e) => handleNestedChange('financing', 'date', e.target.value)}
                     />
                   </div>
-                  <div><Label className="text-[9px] text-gray-400 uppercase">Cuotas</Label><Input className="h-7 text-[10px]" value={formData.financing.installments} onChange={(e) => handleNestedChange('financing', 'installments', e.target.value)} /></div>
-                  <div><Label className="text-[9px] text-gray-400 uppercase">Valor cuota</Label><Input className="h-7 text-[10px]" value={formData.financing.installment_value} onChange={(e) => handleNestedChange('financing', 'installment_value', e.target.value)} /></div>
+                  <div><Label className="text-[9px] text-gray-400 uppercase">Cuotas</Label><Input className="h-7 text-[10px]" inputMode="decimal" value={formData.financing.installments} onChange={(e) => handleNestedChange('financing', 'installments', e.target.value)} /></div>
+                  <div><Label className="text-[9px] text-gray-400 uppercase">Valor cuota</Label><Input className="h-7 text-[10px]" inputMode="decimal" value={formData.financing.installment_value} onChange={(e) => handleNestedChange('financing', 'installment_value', e.target.value)} /></div>
                 </div>
               </div>
             </PaymentSection>

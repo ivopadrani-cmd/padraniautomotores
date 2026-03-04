@@ -1,0 +1,229 @@
+# PROMPT COMPLETO PARA CREAR APLICACIÓN EN GLIDE - PADRANI AUTOMOTORES
+
+## CONTEXTO DEL SISTEMA
+Soy un concesionario de autos usado en Argentina (Padrani Automotores). Necesito una aplicación móvil nativa que replique exactamente mi sistema actual de gestión, pero más intuitiva y sin los errores técnicos que tiene mi app actual.
+
+## OBJETIVO PRINCIPAL
+Crear una aplicación móvil que permita gestionar el inventario de vehículos, clientes, consultas, reservas, ventas y peritajes de manera unificada y centrada en el vehículo. Todo debe verse desde la perspectiva del auto individual.
+
+## ESTRUCTURA DE DATOS (Google Sheets)
+
+### 1. VEHICULOS (Tabla principal - Centro del sistema)
+Columnas principales:
+- ID (único)
+- Nombre (fórmula: Marca & " " & Modelo & " " & Año & " - " & Patente)
+- Marca (dropdown: TOYOTA, FORD, VOLKSWAGEN, CHEVROLET, RENAULT, PEUGEOT, CITROEN, FIAT, etc.)
+- Modelo
+- Año
+- Patente
+- Kilómetros
+- Color
+- Tipo (dropdown: SEDAN, SUV, HATCHBACK, PICKUP, etc.)
+- Estado (dropdown: A PERITAR, A INGRESAR, EN REPARACION, DISPONIBLE, PAUSADO, RESERVADO, VENDIDO, ENTREGADO)
+- Fecha Ingreso
+- Propietario (relación con CLIENTES)
+- Dueño (texto libre)
+- Costo Valor (número)
+- Costo Moneda (ARS/USD)
+- Costo Cotización (cotización histórica USD)
+- Precio Objetivo Valor (número)
+- Precio Objetivo Moneda (ARS/USD)
+- Precio Objetivo Cotización
+- Precio Público Valor (número)
+- Precio Público Moneda (ARS/USD)
+- Precio Público Cotización
+- Precio InfoAuto Valor (número)
+- Precio InfoAuto Moneda (ARS/USD)
+- Precio InfoAuto Cotización
+- Fotos (múltiples imágenes)
+- Documentos (múltiples archivos)
+- Gastos (JSON con array de gastos)
+- Observaciones
+
+### 2. CLIENTES
+- ID, Nombre Completo, Fecha Nacimiento, Teléfono, Email, DNI, CUIT/CUIL
+- Ciudad, Provincia, Dirección, Código Postal, Estado Civil
+- Estado Cliente (Cliente, Proveedor, Interesado)
+- Observaciones
+- Datos del cónyuge (si corresponde)
+
+### 3. CONSULTAS
+- ID, Fecha Consulta, Cliente (relación), Vehículos Interesados (relación múltiple)
+- Presupuesto, Preferencia Contacto, Estado, Nivel Interés, Observaciones, Fecha Seguimiento
+
+### 4. RESERVAS
+- ID, Vehículo (relación), Fecha Reserva, Cliente (relación), Vendedor (relación)
+- Monto Seña, Moneda Seña, Cotización Seña, Fecha Seña, Descripción Seña
+- Precio Acordado, Moneda, Cotización, Fecha
+- Datos de permuta (marca, modelo, año, patente, km, valor)
+- Datos de financiación (monto, banco, cuotas, valor cuota)
+- Observaciones
+
+### 5. VENTAS
+- ID, Vehículo (relación), Fecha Venta, Cliente (relación), Vendedor
+- Precio Venta, Moneda, Cotización
+- Datos de pagos (seña, contado, financiación)
+- Permutas (array de vehículos)
+- Estado Venta, Observaciones
+
+### 6. PERITAJES
+- ID, Vehículo (relación), Fecha Peritaje, Inspector, Kilómetros
+- Estados de componentes (motor, caja, frenos, suspensión, etc.)
+- Estados de neumáticos, pintura, accesorios
+- Servicios realizados, observaciones
+
+### 7. COTIZACIONES
+- ID, Fecha, Cliente, Vendedor, Vehículos (múltiple), Monto, Estado, Observaciones
+
+### 8. VENDEDORES
+- ID, Nombre, Teléfono, Email, Activo, Fecha Ingreso
+
+### 9. TASAS_CAMBIO
+- ID, Fecha, Tipo Tasa, Valor USD, Fuente
+
+## FUNCIONALIDADES OBLIGATORIAS
+
+### SISTEMA MONETARIO ARGENTINO (CRÍTICO)
+- Manejo de precios en ARS y USD con cotizaciones históricas
+- Cálculos automáticos: Costo Total ARS = SI(Costo Moneda='USD', Costo Valor * Costo Cotización, Costo Valor)
+- Precios convertidos automáticamente a ARS para mostrar
+- API de dólar actual integrada (mostrar cotización actual visible)
+
+### VISTAS PRINCIPALES
+
+#### 1. DASHBOARD PRINCIPAL
+- Métricas principales: Total vehículos disponibles, consultas activas, reservas pendientes
+- Lista de vehículos por estado con colores distintivos
+- Cotización del dólar actual (Blue y Oficial)
+- Notificaciones de seguimientos pendientes
+
+#### 2. STOCK (Vista principal de vehículos)
+- Lista de vehículos con foto, nombre, precio público, estado con colores
+- Filtros por: Estado, Marca, Precio, Kilómetros
+- Búsqueda por marca, modelo, patente
+- Vista de galería y lista
+- Acciones rápidas: Ver detalle, Reservar, Vender, Editar
+
+#### 3. DETALLE DE VEHÍCULO (Vista más importante)
+**Esta vista debe contener TODO relacionado con el vehículo:**
+- **Información básica**: Foto principal, marca, modelo, año, patente, km, color, tipo
+- **Precios**: Costo, Objetivo, Público, InfoAuto (con conversiones automáticas)
+- **Propiedad**: Propietario (cliente), Dueño
+- **Estado y fechas**: Estado actual, fecha ingreso
+- **Documentación**: Checklist de documentos requeridos
+- **Accesorios**: Lista de accesorios incluidos
+- **Gastos**: Historial de gastos con totales
+- **Fotos**: Galería completa
+- **Documentos**: Archivos adjuntos
+
+**Secciones relacionadas (accesibles desde el detalle):**
+- **Consultas**: Lista de consultas relacionadas con este vehículo
+- **Reservas**: Historial de reservas del vehículo
+- **Ventas**: Información de venta si está vendido
+- **Peritajes**: Historial de inspecciones técnicas
+- **Cotizaciones**: Cotizaciones realizadas para este vehículo
+
+**Acciones disponibles desde el detalle:**
+- Editar información básica
+- Modificar precios
+- Agregar gasto
+- Subir fotos/documentos
+- Crear consulta
+- Crear reserva
+- Registrar venta
+- Solicitar peritaje
+
+#### 4. CLIENTES
+- Lista de clientes con nombre, teléfono, estado
+- Detalle de cliente con todos los datos
+- Historial: vehículos comprados, vendidos, consultados, reservados
+
+#### 5. CONSULTAS (CRM)
+- Lista de consultas por estado con colores
+- Crear nueva consulta asociada a vehículo(s)
+- Seguimiento con fechas y observaciones
+- Conversión a reserva/venta
+
+### FLUJOS DE TRABAJO
+
+#### FLUJO DE COMPRA DE VEHÍCULO
+1. **Registro inicial**: Crear vehículo con datos básicos, propietario, costo
+2. **Peritaje**: Crear inspección técnica completa
+3. **Precios**: Establecer precios objetivo, público, infoauto
+4. **Documentación**: Subir fotos, documentos, checklist
+5. **Disponible**: Cambiar estado a DISPONIBLE
+
+#### FLUJO DE VENTA
+1. **Consulta**: Cliente muestra interés
+2. **Cotización**: Crear presupuesto con precios y condiciones
+3. **Reserva**: Con seña y condiciones acordadas
+4. **Venta**: Registro completo con pagos, permutas, financiación
+5. **Entrega**: Cambio de estado y documentación final
+
+#### FLUJO DE PERITAJE
+- Formulario completo con todas las secciones técnicas
+- Estados de componentes con colores (Bueno=verde, Regular=amarillo, Malo=rojo)
+- Costos estimados de reparaciones
+- Observaciones detalladas
+
+### FUNCIONALIDADES AVANZADAS
+
+#### CÁLCULOS AUTOMÁTICOS
+- Conversiones de moneda con cotización histórica
+- Totales de gastos por vehículo
+- Márgenes de ganancia
+- Valores convertidos a dólar actual
+
+#### NOTIFICACIONES
+- Seguimientos de consultas pendientes
+- Reservas próximas a vencer
+- Vehículos sin actividad reciente
+
+#### FILTROS Y BÚSQUEDAS
+- Búsqueda global por patente, marca, modelo, nombre cliente
+- Filtros avanzados por precio, km, estado, fecha
+
+### DISEÑO Y UX
+
+#### COLORES POR ESTADO
+- **A PERITAR**: Amarillo (#FCD34D)
+- **A INGRESAR**: Azul claro (#93C5FD)
+- **EN REPARACION**: Gris (#9CA3AF)
+- **DISPONIBLE**: Azul (#3B82F6)
+- **PAUSADO**: Gris claro (#D1D5DB)
+- **RESERVADO**: Negro (#1F2937)
+- **VENDIDO**: Rojo claro (#F87171)
+- **ENTREGADO**: Rojo oscuro (#DC2626)
+
+#### ICONOS Y NAVEGACIÓN
+- Navegación por tabs: Dashboard, Stock, Clientes, Consultas
+- Iconos consistentes: Carro para vehículos, Usuario para clientes, etc.
+- Diseño limpio y profesional, similar a app actual pero más intuitivo
+
+### INTEGRACIONES
+
+#### API DE DOLAR
+- Mostrar cotización actual del dólar blue
+- Histórico para cálculos de precios
+- Actualización automática
+
+#### WHATSAPP INTEGRATION
+- Enlaces directos para contactar clientes
+- Mensajes predefinidos para seguimientos
+
+### SEGURIDAD Y PERMISOS
+- Acceso basado en roles (Admin, Vendedor, Mecánico)
+- Control de quién puede modificar precios, estados, etc.
+
+## INSTRUCCIONES ESPECÍFICAS PARA GLIDE
+
+1. **IMPORTANTE**: Conectar primero el Google Sheet con todas las pestañas
+2. **TABLA PRINCIPAL**: VEHICULOS debe ser el centro de todo
+3. **RELACIONES**: Configurar correctamente todas las relaciones entre tablas
+4. **CÁLCULOS**: Implementar todas las fórmulas de conversión monetaria
+5. **VISTAS**: Crear las vistas detalladas como se describe
+6. **FORMULARIOS**: Formularios intuitivos para crear/editar cada tipo de registro
+7. **ACCIONES**: Configurar acciones rápidas y flujos de trabajo
+
+## RESULTADO ESPERADO
+Una aplicación móvil nativa que se sienta como una extensión natural del negocio, donde todo esté conectado al vehículo y sea fácil de usar tanto para vendedores como para mecánicos. Debe eliminar la fricción de la app actual y hacer que el flujo de trabajo sea fluido y eficiente.

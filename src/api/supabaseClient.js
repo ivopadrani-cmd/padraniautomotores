@@ -106,17 +106,13 @@ class Entity {
 
   async create(data) {
     if (!useSupabase) return this.localEntity.create(data);
-    
-    // Clean data: remove empty strings, undefined, and fields that don't exist in Supabase
+
+    // Clean data: remove empty strings, but keep undefined/null for optional fields, and keep false and 0
     const cleanData = {};
     Object.keys(data).forEach(key => {
       const value = data[key];
-      // Skip empty strings, undefined, null (but keep false and 0)
-      if (value !== '' && value !== undefined && value !== null) {
-        cleanData[key] = value;
-      }
-      // Keep false and 0 explicitly
-      if (value === false || value === 0) {
+      // Skip only empty strings, but keep null/undefined for optional fields
+      if (value !== '') {
         cleanData[key] = value;
       }
     });
@@ -136,15 +132,13 @@ class Entity {
 
   async update(id, data) {
     if (!useSupabase) return this.localEntity.update(id, data);
-    
-    // Clean data: remove empty strings, undefined
+
+    // Clean data: remove empty strings, but keep null/undefined for optional fields
     const cleanData = {};
     Object.keys(data).forEach(key => {
       const value = data[key];
-      if (value !== '' && value !== undefined && value !== null) {
-        cleanData[key] = value;
-      }
-      if (value === false || value === 0) {
+      // Skip only empty strings, but keep null/undefined for optional fields
+      if (value !== '') {
         cleanData[key] = value;
       }
     });
@@ -181,9 +175,9 @@ class Entity {
 class Auth {
   async me() {
     if (!useSupabase) return localClient.auth.me();
-
+    
     const { data: { user }, error } = await supabase.auth.getUser();
-
+    
     if (error || !user) {
       // Fallback: check localStorage first
       const localUserStr = localStorage.getItem('current_user');
@@ -209,7 +203,7 @@ class Auth {
         .select('*')
         .eq('email', 'ivopadrani@gmail.com')
         .single();
-
+      
       if (users) {
         // Auto-login as ivopadrani@gmail.com
         await this.login('ivopadrani@gmail.com', 'gerente123');

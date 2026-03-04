@@ -622,7 +622,7 @@ export default function CRM() {
                 )}
               </CardContent>
             </Card>
-        </div>
+                  </div>
       </div>
     </div>
   );

@@ -1,0 +1,338 @@
+{
+  "tables": [
+    {
+      "name": "Cotizaciones_Dolar",
+      "description": "Cotizaciones históricas y actuales del dólar blue",
+      "fields": [
+        { "name": "Nombre", "type": "formula", "formula": "DATETIME_FORMAT({Fecha}, 'DD/MM/YYYY') & ' - ' & {Tipo} & ' $' & {Valor_ARS}" },
+        { "name": "ID", "type": "formula", "formula": "'DOL-' & RECORD_ID()" },
+        { "name": "Fecha", "type": "date", "description": "Fecha de la cotización" },
+        { "name": "Tipo", "type": "singleSelect", "options": ["Diaria", "Oficial", "Histórica"], "default": "Diaria" },
+        { "name": "Valor_ARS", "type": "number", "description": "Cotización en pesos" },
+        { "name": "Fuente", "type": "singleSelect", "options": ["DolarAPI", "ArgentinaDatos", "Manual"], "default": "DolarAPI" },
+        { "name": "Activa", "type": "checkbox", "default": true }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "description": "Base completa de clientes - proveedores, compradores, interesados",
+      "fields": [
+        { "name": "Nombre_Completo", "type": "singleLineText" },
+        { "name": "ID", "type": "formula", "formula": "'CLI-' & RECORD_ID()" },
+        { "name": "Tipo_Cliente", "type": "multipleSelect", "options": ["Proveedor", "Comprador", "Interesado", "Consignatario"], "default": "Comprador" },
+        { "name": "DNI", "type": "singleLineText" },
+        { "name": "CUIT_CUIL", "type": "singleLineText" },
+        { "name": "Telefono", "type": "phoneNumber" },
+        { "name": "Email", "type": "email" },
+        { "name": "Domicilio", "type": "singleLineText" },
+        { "name": "Localidad", "type": "singleLineText" },
+        { "name": "Provincia", "type": "singleSelect", "options": ["Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", "Tucumán", "Entre Ríos", "Salta", "Chaco", "Corrientes", "Misiones", "San Juan", "Jujuy", "Río Negro", "Formosa", "Neuquén", "Chubut", "San Luis", "Catamarca", "La Rioja", "La Pampa", "Santa Cruz", "Santiago del Estero", "Tierra del Fuego"] },
+        { "name": "Estado_Civil", "type": "singleSelect", "options": ["Soltero/a", "Casado/a", "Divorciado/a", "Viudo/a"] },
+        { "name": "Nombre_Conyuge", "type": "singleLineText", "description": "Solo si está casado/a" },
+        { "name": "Observaciones", "type": "singleLineText" },
+        { "name": "Fecha_Registro", "type": "date", "default": "now" },
+        { "name": "Ultimo_Contacto", "type": "date" }
+      ]
+    },
+    {
+      "name": "Vehiculos",
+      "description": "Centro del sistema - inventario completo con todas las relaciones",
+      "fields": [
+        { "name": "Nombre", "type": "formula", "formula": "{Marca} & ' ' & {Modelo} & ' ' & {Anio} & ' - ' & {Patente}" },
+        { "name": "ID", "type": "formula", "formula": "'V-' & RECORD_ID()" },
+        { "name": "Marca", "type": "singleSelect", "options": ["FORD", "TOYOTA", "VOLKSWAGEN", "RENAULT", "PEUGEOT", "CHEVROLET", "HONDA", "NISSAN", "FIAT", "CITROEN", "BMW", "MERCEDES", "AUDI", "JEEP", "MITSUBISHI", "KIA", "HYUNDAI", "SUZUKI", "CHERY", "CHANGAN"] },
+        { "name": "Modelo", "type": "singleLineText" },
+        { "name": "Anio", "type": "number" },
+        { "name": "Tipo_Vehiculo", "type": "singleSelect", "options": ["SEDÁN", "HATCHBACK", "SUV", "PICKUP", "FURGÓN", "COUPE", "CONVERTIBLE", "UTILITARIO"] },
+        { "name": "Patente", "type": "singleLineText", "description": "Dominio/Patente" },
+        { "name": "Color", "type": "singleSelect", "options": ["BLANCO", "NEGRO", "GRIS", "AZUL", "ROJO", "VERDE", "BEIGE", "BORDEAUX", "MARRÓN", "NARANJA", "AMARILLO", "VIOLETA", "PLATA", "DORADO"] },
+        { "name": "Kilometraje", "type": "number" },
+        { "name": "Motor", "type": "singleLineText", "description": "Marca del motor" },
+        { "name": "Numero_Motor", "type": "singleLineText" },
+        { "name": "Chasis", "type": "singleLineText", "description": "Marca del chasis" },
+        { "name": "Numero_Chasis", "type": "singleLineText" },
+        { "name": "Ciudad_Radicacion", "type": "singleLineText" },
+        { "name": "Provincia_Radicacion", "type": "singleSelect", "options": ["Buenos Aires", "Córdoba", "Santa Fe", "Mendoza", "Tucumán", "Entre Ríos", "Salta", "Chaco", "Corrientes", "Misiones", "San Juan", "Jujuy", "Río Negro", "Formosa", "Neuquén", "Chubut", "San Luis", "Catamarca", "La Rioja", "La Pampa", "Santa Cruz", "Santiago del Estero", "Tierra del Fuego"] },
+        { "name": "Propiedad", "type": "singleSelect", "options": ["CONSIGNACIÓN", "100% PROPIO", "50% PROPIO", "COMPRA DIRECTA"], "default": "CONSIGNACIÓN" },
+        { "name": "Proveedor", "type": "link", "link": "Clientes" },
+        { "name": "Estado", "type": "singleSelect", "options": ["A PERITAR", "A INGRESAR", "EN REPARACIÓN", "DISPONIBLE", "PAUSADO", "RESERVADO", "VENDIDO", "ENTREGADO"], "default": "DISPONIBLE" },
+        { "name": "Fecha_Ingreso", "type": "date" },
+        { "name": "Ubicacion", "type": "singleSelect", "options": ["PLAYA", "SALÓN", "TALLER", "EXTERIOR"], "default": "PLAYA" },
+        { "name": "Costo_Valor", "type": "currency", "currency": "ARS" },
+        { "name": "Costo_Moneda", "type": "singleSelect", "options": ["ARS", "USD"], "default": "USD" },
+        { "name": "Costo_Cotizacion", "type": "number", "description": "Cotización histórica del dólar al momento de compra" },
+        { "name": "InfoAuto_Precio", "type": "currency", "currency": "ARS" },
+        { "name": "InfoAuto_Cotizacion", "type": "number", "description": "Cotización del dólar al actualizar InfoAuto" },
+        { "name": "InfoAuto_Fecha", "type": "date" },
+        { "name": "Objetivo_Valor", "type": "currency", "currency": "ARS" },
+        { "name": "Objetivo_Moneda", "type": "singleSelect", "options": ["ARS", "USD"], "default": "USD" },
+        { "name": "Publico_Valor", "type": "currency", "currency": "ARS" },
+        { "name": "Publico_Moneda", "type": "singleSelect", "options": ["ARS", "USD"], "default": "ARS" },
+        { "name": "Gastos", "type": "multipleSelect", "options": ["GESTORÍA", "FLETE", "REPARACIÓN", "SEGURO", "OTROS", "TRANSFERENCIA", "PINTURA", "MECÁNICA"] },
+        { "name": "Documentacion_Completa", "type": "checkbox", "default": false },
+        { "name": "Cedula_Verde", "type": "checkbox", "default": false },
+        { "name": "Titulo_Propiedad", "type": "checkbox", "default": false },
+        { "name": "Cedula_Azul", "type": "checkbox", "default": false },
+        { "name": "Factura_Compra", "type": "checkbox", "default": false },
+        { "name": "Formulario_08", "type": "checkbox", "default": false },
+        { "name": "Formulario_12", "type": "checkbox", "default": false },
+        { "name": "Accesorios_Completo", "type": "checkbox", "default": false },
+        { "name": "Manuales", "type": "checkbox", "default": true },
+        { "name": "Llave_Repuesto", "type": "checkbox", "default": true },
+        { "name": "Rueda_Repuesto", "type": "checkbox", "default": true },
+        { "name": "Gato", "type": "checkbox", "default": true },
+        { "name": "Tuerca_Seguridad", "type": "checkbox", "default": true },
+        { "name": "Extintor", "type": "checkbox", "default": true },
+        { "name": "Triangulo_Seguridad", "type": "checkbox", "default": true },
+        { "name": "Caballete", "type": "checkbox", "default": true },
+        { "name": "Fotos", "type": "attachment", "description": "Fotos del vehículo" },
+        { "name": "Documentos_Adjuntos", "type": "attachment", "description": "Documentos adicionales" },
+        { "name": "Venta_Realizada", "type": "checkbox", "default": false },
+        { "name": "Comprador", "type": "link", "link": "Clientes" },
+        { "name": "Precio_Venta_ARS", "type": "currency", "currency": "ARS" },
+        { "name": "Precio_Venta_Moneda", "type": "singleSelect", "options": ["ARS", "USD"], "default": "ARS" },
+        { "name": "Fecha_Venta", "type": "date" },
+        { "name": "Vendedor", "type": "link", "link": "Clientes", "description": "Cliente que actúa como vendedor" },
+        { "name": "Reservado", "type": "checkbox", "default": false },
+        { "name": "Cliente_Reserva", "type": "link", "link": "Clientes" },
+        { "name": "Fecha_Reserva", "type": "date" },
+        { "name": "Precio_Reservado", "type": "currency", "currency": "ARS" },
+        { "name": "Seña_Reserva", "type": "currency", "currency": "ARS" },
+        { "name": "Consultas_Activas", "type": "number", "default": 0 },
+        { "name": "Clientes_Interesados", "type": "link", "link": "Clientes" },
+        { "name": "Presupuestos_Enviados", "type": "number", "default": 0 },
+        { "name": "Costo_Total_ARS", "type": "formula", "formula": "IF({Costo_Moneda}='USD', {Costo_Valor}*{Costo_Cotizacion}, {Costo_Valor})" },
+        { "name": "InfoAuto_USD", "type": "formula", "formula": "IF({InfoAuto_Cotizacion}>0, {InfoAuto_Precio}/{InfoAuto_Cotizacion}, 0)" },
+        { "name": "Objetivo_ARS", "type": "formula", "formula": "IF({Objetivo_Moneda}='USD', {Objetivo_Valor}*1200, {Objetivo_Valor})" },
+        { "name": "Publico_ARS", "type": "formula", "formula": "IF({Publico_Moneda}='USD', {Publico_Valor}*1200, {Publico_Valor})" },
+        { "name": "Margen_Bruto", "type": "formula", "formula": "IF({Venta_Realizada}, {Precio_Venta_ARS} - {Costo_Total_ARS}, {Publico_ARS} - {Costo_Total_ARS})" },
+        { "name": "Margen_Porcentaje", "type": "formula", "formula": "IF({Costo_Total_ARS}>0, ROUND(({Margen_Bruto}/{Costo_Total_ARS})*100, 1) & '%', 'N/A')" },
+        { "name": "Valor_Actual_USD", "type": "formula", "formula": "{Publico_ARS}/1200" },
+        { "name": "Estado_Color", "type": "formula", "formula": "SWITCH({Estado}, 'DISPONIBLE', '🟢 DISPONIBLE', 'RESERVADO', '🟡 RESERVADO', 'VENDIDO', '🔴 VENDIDO', 'A PERITAR', '🟠 A PERITAR', 'EN REPARACIÓN', '🔵 EN REPARACIÓN', 'ENTREGADO', '⚫ ENTREGADO', 'PAUSADO', '⚪ PAUSADO')" },
+        { "name": "Documentacion_Checklist", "type": "formula", "formula": "({Cedula_Verde} + {Titulo_Propiedad} + {Cedula_Azul} + {Factura_Compra} + {Formulario_08} + {Formulario_12}) & '/7 completados'" },
+        { "name": "Accesorios_Checklist", "type": "formula", "formula": "({Manuales} + {Llave_Repuesto} + {Rueda_Repuesto} + {Gato} + {Tuerca_Seguridad} + {Extintor} + {Triangulo_Seguridad} + {Caballete}) & '/9 completados'" }
+      ]
+    },
+    {
+      "name": "Consultas",
+      "description": "Consultas físicas con interesados en vehículos",
+      "fields": [
+        { "name": "Nombre", "type": "formula", "formula": "{Cliente} & ' - ' & {Vehiculo} & ' - ' & DATETIME_FORMAT({Fecha_Consulta}, 'DD/MM/YYYY')" },
+        { "name": "ID", "type": "formula", "formula": "'CONS-' & RECORD_ID()" },
+        { "name": "Fecha_Consulta", "type": "date" },
+        { "name": "Cliente", "type": "link", "link": "Clientes" },
+        { "name": "Vehiculo", "type": "link", "link": "Vehiculos" },
+        { "name": "Tipo_Consulta", "type": "singleSelect", "options": ["Presencial", "Llamada", "WhatsApp", "Email"], "default": "Presencial" },
+        { "name": "Fuente", "type": "singleSelect", "options": ["Salón", "Redes sociales", "Recomendado", "Paseante"], "default": "Salón" },
+        { "name": "Interes_Nivel", "type": "singleSelect", "options": ["Bajo", "Medio", "Alto", "Muy Alto"], "default": "Medio" },
+        { "name": "Presupuesto_Maximo", "type": "currency", "currency": "ARS" },
+        { "name": "Necesita_Financiacion", "type": "checkbox", "default": false },
+        { "name": "Vehiculo_Usado", "type": "singleLineText", "description": "Vehículo que trae como parte de pago" },
+        { "name": "Valor_Aproximado_Usado", "type": "currency", "currency": "ARS" },
+        { "name": "Estado", "type": "singleSelect", "options": ["Nueva", "En Seguimiento", "Presupuesto Enviado", "Negociación", "Concretada", "Perdida"], "default": "Nueva" },
+        { "name": "Proximo_Contacto", "type": "date" },
+        { "name": "Observaciones", "type": "singleLineText" },
+        { "name": "Dias_Sin_Contacto", "type": "formula", "formula": "DATETIME_DIFF(TODAY(), {Fecha_Consulta}, 'days')" },
+        { "name": "Vencida", "type": "formula", "formula": "IF(AND({Proximo_Contacto} < TODAY(), {Estado} != 'Concretada', {Estado} != 'Perdida'), '⚠️ VENCIDA', '✅ OK')" }
+      ]
+    },
+    {
+      "name": "Presupuestos",
+      "description": "Presupuestos enviados a clientes",
+      "fields": [
+        { "name": "Nombre", "type": "formula", "formula": "{Cliente} & ' - ' & {Vehiculo} & ' $' & {Precio_Final}" },
+        { "name": "ID", "type": "formula", "formula": "'PRES-' & RECORD_ID()" },
+        { "name": "Cliente", "type": "link", "link": "Clientes" },
+        { "name": "Vehiculo", "type": "link", "link": "Vehiculos" },
+        { "name": "Fecha_Presupuesto", "type": "date" },
+        { "name": "Precio_Base", "type": "currency", "currency": "ARS" },
+        { "name": "Descuento", "type": "currency", "currency": "ARS" },
+        { "name": "Precio_Final", "type": "currency", "currency": "ARS" },
+        { "name": "Incluye_Usado", "type": "checkbox", "default": false },
+        { "name": "Valor_Usado", "type": "currency", "currency": "ARS" },
+        { "name": "Neto_Con_Usado", "type": "formula", "formula": "{Precio_Final} - {Valor_Usado}" },
+        { "name": "Estado", "type": "singleSelect", "options": ["Enviado", "Aceptado", "Rechazado", "Modificado", "Expirado"], "default": "Enviado" },
+        { "name": "Fecha_Expiracion", "type": "date" },
+        { "name": "Observaciones", "type": "singleLineText" },
+        { "name": "Dias_Para_Vencer", "type": "formula", "formula": "DATETIME_DIFF({Fecha_Expiracion}, TODAY(), 'days')" },
+        { "name": "Estado_Color", "type": "formula", "formula": "SWITCH({Estado}, 'Enviado', '📤 Enviado', 'Aceptado', '✅ Aceptado', 'Rechazado', '❌ Rechazado', 'Modificado', '🔄 Modificado', 'Expirado', '⏰ Expirado')" }
+      ]
+    },
+    {
+      "name": "Ventas_Detalladas",
+      "description": "Información completa de ventas (complemento a la vista desde vehículo)",
+      "fields": [
+        { "name": "Nombre", "type": "formula", "formula": "{Vehiculo} & ' - ' & {Comprador} & ' - ' & DATETIME_FORMAT({Fecha_Venta}, 'DD/MM/YYYY')" },
+        { "name": "ID", "type": "formula", "formula": "'VENTA-' & RECORD_ID()" },
+        { "name": "Vehiculo", "type": "link", "link": "Vehiculos" },
+        { "name": "Comprador", "type": "link", "link": "Clientes" },
+        { "name": "Vendedor", "type": "link", "link": "Clientes" },
+        { "name": "Fecha_Venta", "type": "date" },
+        { "name": "Precio_Venta_ARS", "type": "currency", "currency": "ARS" },
+        { "name": "Precio_Venta_USD", "type": "formula", "formula": "{Precio_Venta_ARS}/1200" },
+        { "name": "Seña_Monto", "type": "currency", "currency": "ARS" },
+        { "name": "Seña_Forma_Pago", "type": "singleSelect", "options": ["Efectivo", "Transferencia", "Cheque", "Tarjeta"] },
+        { "name": "Seña_Fecha", "type": "date" },
+        { "name": "Efectivo_Monto", "type": "currency", "currency": "ARS" },
+        { "name": "Efectivo_Forma_Pago", "type": "singleSelect", "options": ["Efectivo", "Transferencia", "Cheque", "Tarjeta"] },
+        { "name": "Efectivo_Fecha", "type": "date" },
+        { "name": "Financiacion_Monto", "type": "currency", "currency": "ARS" },
+        { "name": "Financiacion_Banco", "type": "singleLineText" },
+        { "name": "Financiacion_Cuotas", "type": "number" },
+        { "name": "Financiacion_Valor_Cuota", "type": "currency", "currency": "ARS" },
+        { "name": "Financiacion_Fecha", "type": "date" },
+        { "name": "Usado_Incluido", "type": "checkbox", "default": false },
+        { "name": "Usado_Descripcion", "type": "singleLineText" },
+        { "name": "Usado_Valor", "type": "currency", "currency": "ARS" },
+        { "name": "Total_Pagado", "type": "formula", "formula": "{Seña_Monto} + {Efectivo_Monto} + {Usado_Valor}" },
+        { "name": "Saldo_Pendiente", "type": "formula", "formula": "{Precio_Venta_ARS} - {Total_Pagado}" },
+        { "name": "Cuota_Mensual", "type": "formula", "formula": "IF({Financiacion_Cuotas}>0, {Financiacion_Monto}/{Financiacion_Cuotas}, 0)" },
+        { "name": "Fecha_Entrega", "type": "date" },
+        { "name": "Entregado", "type": "checkbox", "default": false },
+        { "name": "Observaciones", "type": "singleLineText" }
+      ]
+    }
+  ],
+
+  "views": [
+    {
+      "name": "Stock Principal",
+      "type": "gallery",
+      "table": "Vehiculos",
+      "description": "Vista principal del stock - igual que la app",
+      "filters": [{ "field": "Estado", "operator": "is not", "value": "VENDIDO" }],
+      "sorts": [{ "field": "Fecha_Ingreso", "direction": "desc" }],
+      "fields": [
+        "Nombre", "Estado_Color", "Publico_ARS", "Margen_Porcentaje",
+        "Kilometraje", "Fotos", "Estado"
+      ],
+      "gallery": {
+        "coverField": "Fotos",
+        "fields": ["Nombre", "Estado_Color", "Publico_ARS", "Valor_Actual_USD", "Margen_Porcentaje", "Kilometraje"]
+      }
+    },
+    {
+      "name": "Vehículos Disponibles",
+      "type": "grid",
+      "table": "Vehiculos",
+      "filters": [{ "field": "Estado", "operator": "is", "value": "DISPONIBLE" }],
+      "sorts": [{ "field": "Fecha_Ingreso", "direction": "desc" }],
+      "fields": [
+        "Nombre", "Marca", "Modelo", "Anio", "Patente", "Estado",
+        "Publico_ARS", "Valor_Actual_USD", "Margen_Bruto", "Margen_Porcentaje",
+        "Kilometraje", "Fecha_Ingreso"
+      ]
+    },
+    {
+      "name": "Vehículos Reservados",
+      "type": "grid",
+      "table": "Vehiculos",
+      "filters": [{ "field": "Estado", "operator": "is", "value": "RESERVADO" }],
+      "sorts": [{ "field": "Fecha_Reserva", "direction": "desc" }],
+      "fields": [
+        "Nombre", "Cliente_Reserva", "Fecha_Reserva", "Precio_Reservado",
+        "Seña_Reserva", "Publico_ARS", "Estado"
+      ]
+    },
+    {
+      "name": "Vehículos Vendidos",
+      "type": "grid",
+      "table": "Vehiculos",
+      "filters": [{ "field": "Estado", "operator": "is", "value": "VENDIDO" }],
+      "sorts": [{ "field": "Fecha_Venta", "direction": "desc" }],
+      "fields": [
+        "Nombre", "Comprador", "Fecha_Venta", "Precio_Venta_ARS",
+        "Margen_Bruto", "Margen_Porcentaje", "Estado"
+      ]
+    },
+    {
+      "name": "Vista Detallada del Vehículo",
+      "type": "form",
+      "table": "Vehiculos",
+      "description": "Vista completa unificada del vehículo",
+      "sections": [
+        {
+          "name": "Identificación",
+          "fields": ["Nombre", "Marca", "Modelo", "Anio", "Tipo_Vehiculo", "Patente", "Color", "Kilometraje"]
+        },
+        {
+          "name": "Datos Técnicos",
+          "fields": ["Motor", "Numero_Motor", "Chasis", "Numero_Chasis", "Ciudad_Radicacion", "Provincia_Radicacion"]
+        },
+        {
+          "name": "Propiedad y Estado",
+          "fields": ["Propiedad", "Proveedor", "Estado", "Fecha_Ingreso", "Ubicacion"]
+        },
+        {
+          "name": "Sistema Monetario",
+          "fields": [
+            "Costo_Valor", "Costo_Moneda", "Costo_Cotizacion", "Costo_Total_ARS",
+            "InfoAuto_Precio", "InfoAuto_Cotizacion", "InfoAuto_USD",
+            "Objetivo_Valor", "Objetivo_Moneda", "Objetivo_ARS",
+            "Publico_Valor", "Publico_Moneda", "Publico_ARS", "Valor_Actual_USD",
+            "Margen_Bruto", "Margen_Porcentaje"
+          ]
+        },
+        {
+          "name": "Gastos y Checklist",
+          "fields": ["Gastos", "Documentacion_Checklist", "Accesorios_Checklist"]
+        },
+        {
+          "name": "Documentación Detallada",
+          "fields": ["Cedula_Verde", "Titulo_Propiedad", "Cedula_Azul", "Factura_Compra", "Formulario_08", "Formulario_12"]
+        },
+        {
+          "name": "Accesorios Detallados",
+          "fields": ["Manuales", "Llave_Repuesto", "Rueda_Repuesto", "Gato", "Tuerca_Seguridad", "Extintor", "Triangulo_Seguridad", "Caballete"]
+        },
+        {
+          "name": "Fotos y Documentos",
+          "fields": ["Fotos", "Documentos_Adjuntos"]
+        },
+        {
+          "name": "Información de Venta",
+          "fields": ["Venta_Realizada", "Comprador", "Precio_Venta_ARS", "Precio_Venta_Moneda", "Fecha_Venta", "Vendedor"]
+        },
+        {
+          "name": "Información de Reserva",
+          "fields": ["Reservado", "Cliente_Reserva", "Fecha_Reserva", "Precio_Reservado", "Seña_Reserva"]
+        },
+        {
+          "name": "Consultas e Interesados",
+          "fields": ["Consultas_Activas", "Clientes_Interesados", "Presupuestos_Enviados"]
+        }
+      ]
+    },
+    {
+      "name": "Clientes - Todos",
+      "type": "grid",
+      "table": "Clientes",
+      "sorts": [{ "field": "Fecha_Registro", "direction": "desc" }],
+      "fields": ["Nombre_Completo", "Tipo_Cliente", "Telefono", "Email", "Ultimo_Contacto", "Fecha_Registro"]
+    },
+    {
+      "name": "Consultas Activas",
+      "type": "grid",
+      "table": "Consultas",
+      "filters": [{ "field": "Estado", "operator": "is not", "value": "Concretada" }, { "field": "Estado", "operator": "is not", "value": "Perdida" }],
+      "sorts": [{ "field": "Fecha_Consulta", "direction": "desc" }],
+      "fields": ["Nombre", "Cliente", "Vehiculo", "Tipo_Consulta", "Interes_Nivel", "Estado", "Proximo_Contacto", "Vencida"]
+    },
+    {
+      "name": "Presupuestos Activos",
+      "type": "grid",
+      "table": "Presupuestos",
+      "filters": [{ "field": "Estado", "operator": "is not", "value": "Rechazado" }, { "field": "Estado", "operator": "is not", "value": "Expirado" }],
+      "sorts": [{ "field": "Fecha_Presupuesto", "direction": "desc" }],
+      "fields": ["Nombre", "Cliente", "Vehiculo", "Precio_Final", "Estado", "Fecha_Expiracion", "Estado_Color"]
+    },
+    {
+      "name": "Dólar Actual",
+      "type": "grid",
+      "table": "Cotizaciones_Dolar",
+      "filters": [{ "field": "Activa", "operator": "is", "value": true }],
+      "sorts": [{ "field": "Fecha", "direction": "desc" }],
+      "fields": ["Nombre", "Fecha", "Tipo", "Valor_ARS", "Fuente"]
+    }
+  ]
+}

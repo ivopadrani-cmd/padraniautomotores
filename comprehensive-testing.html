@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testing Completo - Padrani Automotores</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #2563eb;
+        }
+        .section h2 {
+            color: #1e40af;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .status.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+        }
+        .status.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .status.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .status.warning {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+        .console {
+            background-color: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .data-summary {
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #2563eb;
+        }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .data-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .data-item .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .data-item .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .vehicle-list {
+            background-color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .vehicle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .vehicle-item:last-child {
+            border-bottom: none;
+        }
+        .vehicle-info {
+            flex: 1;
+        }
+        .vehicle-name {
+            font-weight: bold;
+            color: #1e40af;
+        }
+        .vehicle-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .disponible { background-color: #dbeafe; color: #1e40af; }
+        .reservado { background-color: #fef3c7; color: #92400e; }
+        .vendido { background-color: #fee2e2; color: #991b1b; }
+        .entregado { background-color: #d1fae5; color: #065f46; }
+        .peritar { background-color: #fef3c7; color: #92400e; }
+        .reparacion { background-color: #e2e8f0; color: #374151; }
+        .instructions {
+            background-color: #f0f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #0ea5e9;
+        }
+        .instructions h3 {
+            margin: 0 0 15px 0;
+            color: #0c4a6e;
+        }
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #0c4a6e;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Testing Completo del Sistema</h1>
+        <p class="subtitle">Padrani Automotores - Detección de errores y validación de funcionalidades</p>
+
+        <div class="section">
+            <h2>📥 Paso 1: Cargar Datos de Ejemplo</h2>
+            <p>Carga datos completos de ejemplo para probar todas las funcionalidades del sistema.</p>
+
+            <div class="button-group">
+                <button onclick="loadSampleData()">🔄 Cargar Datos de Ejemplo</button>
+                <button onclick="clearData()" class="secondary">🗑️ Limpiar Datos</button>
+            </div>
+
+            <div id="load-status" class="status info">
+                Haz click en "Cargar Datos de Ejemplo" para poblar la aplicación con ejemplos completos
+            </div>
+
+            <div id="data-summary" class="data-summary" style="display: none;">
+                <h3>📊 Resumen de Datos Cargados</h3>
+                <div id="data-grid" class="data-grid"></div>
+            </div>
+
+            <div id="vehicle-list" class="vehicle-list" style="display: none;">
+                <h3>🚗 Vehículos por Estado</h3>
+                <div id="vehicle-items"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🧪 Paso 2: Ejecutar Tests del Sistema</h2>
+            <p>Ejecuta pruebas exhaustivas para detectar errores actuales y verificar integridad de datos.</p>
+
+            <div class="button-group">
+                <button onclick="runSystemTests()" class="success">🚀 Ejecutar Tests Completos</button>
+                <button onclick="runIndividualTest('data')">📊 Test de Datos</button>
+                <button onclick="runIndividualTest('vehicles')">🚗 Test de Vehículos</button>
+                <button onclick="runIndividualTest('sales')">💰 Test de Ventas</button>
+                <button onclick="runIndividualTest('contracts')">📄 Test de Contratos</button>
+            </div>
+
+            <div id="test-status" class="status info">
+                Los tests verificarán integridad de datos, cálculos de precios, generación de contratos y más
+            </div>
+
+            <div id="test-results" class="console" style="display: none;"></div>
+        </div>
+
+        <div class="instructions">
+            <h3>💡 Instrucciones de Uso</h3>
+            <ul>
+                <li><strong>Paso 1:</strong> Carga los datos de ejemplo para tener información completa para probar</li>
+                <li><strong>Paso 2:</strong> Ejecuta los tests del sistema para detectar errores</li>
+                <li><strong>Verificación:</strong> Revisa la consola del navegador para ver resultados detallados</li>
+                <li><strong>Aplicación:</strong> Ve a <a href="http://localhost:5175" target="_blank">http://localhost:5175</a> para probar manualmente</li>
+                <li><strong>Próximos pasos:</strong> Corrige los errores detectados y vuelve a ejecutar los tests</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Próximos Pasos Después del Testing</h2>
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px;">
+                <h4 style="margin: 0 0 15px 0; color: #2563eb;">Después de ejecutar los tests:</h4>
+                <ol style="margin: 0; padding-left: 20px; color: #374151;">
+                    <li><strong>Revisa los resultados:</strong> Los tests mostrarán errores específicos encontrados</li>
+                    <li><strong>Corrige los bugs:</strong> Implementa las correcciones necesarias</li>
+                    <li><strong>Prueba manualmente:</strong> Ve a la aplicación y verifica las funcionalidades</li>
+                    <li><strong>Genera contratos:</strong> Verifica que los contratos se creen correctamente</li>
+                    <li><strong>Valida cálculos:</strong> Confirma que los precios se calculan correctamente</li>
+                    <li><strong>Repite el proceso:</strong> Vuelve a ejecutar los tests hasta que todos pasen</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script src="test-system-errors.js"></script>
+    <script>
+        // Cargar datos de ejemplo
+        async function loadSampleData() {
+            const statusDiv = document.getElementById('load-status');
+            statusDiv.className = 'status info pulse';
+            statusDiv.textContent = '🔄 Cargando datos de ejemplo...';
+
+            try {
+                // Datos de ejemplo (simplificados para la demo)
+                const sampleData = {
+                    clients: [
+                        { id: '1', full_name: 'Juan Carlos Pérez', phone: '+5491123456789', email: 'juan.perez@email.com', dni: '12345678', cuit_cuil: '20123456789', address: 'Av. Corrientes 1234', city: 'Buenos Aires', province: 'Buenos Aires', client_status: 'Cliente' },
+                        { id: '2', full_name: 'María González', phone: '+5491187654321', email: 'maria.gonzalez@email.com', dni: '87654321', cuit_cuil: '20876543219', address: 'Calle Florida 567', city: 'Buenos Aires', province: 'Buenos Aires', client_status: 'Cliente' },
+                        { id: '3', full_name: 'Carlos Rodríguez', phone: '+5491155566677', email: 'carlos.rodriguez@email.com', dni: '11223344', cuit_cuil: '20112233449', address: 'Av. 9 de Julio 890', city: 'Buenos Aires', province: 'Buenos Aires', client_status: 'Cliente' }
+                    ],
+                    vehicles: [
+                        { id: '1', brand: 'FORD', model: 'FIESTA', year: '2020', vehicle_type: 'SEDÁN', plate: 'ABC123', color: 'BLANCO', kilometers: 45000, registration_city: 'BUENOS AIRES', registration_province: 'BUENOS AIRES', engine_brand: 'FORD', engine_number: 'ENG123456789', chassis_brand: 'FORD', chassis_number: 'CHA987654321', ownership: 'CONSIGNACIÓN', is_consignment: true, supplier_client_id: '3', status: 'DISPONIBLE', entry_date: '2024-01-15', cost_value: 85000, cost_currency: 'USD', cost_exchange_rate: 1100, target_price_value: 140000, target_price_currency: 'ARS', public_price_value: 160000, public_price_currency: 'ARS', expenses: [{ type: 'GESTORIA', value: 5000, currency: 'ARS', exchange_rate: 1100, date: '2024-01-15', description: 'Gestoría y patentamiento' }] },
+                        { id: '2', brand: 'RENAULT', model: 'SANDERO', year: '2019', vehicle_type: 'HATCHBACK', plate: 'DEF456', color: 'GRIS', kilometers: 78000, registration_city: 'LA PLATA', registration_province: 'BUENOS AIRES', engine_brand: 'RENAULT', engine_number: 'REN456789123', chassis_brand: 'RENAULT', chassis_number: 'CHS321654987', ownership: '100L', status: 'A PERITAR', entry_date: '2024-02-01', cost_value: 65000, cost_currency: 'USD', cost_exchange_rate: 1150 },
+                        { id: '3', brand: 'TOYOTA', model: 'COROLLA', year: '2021', vehicle_type: 'SEDÁN', plate: 'JKL012', color: 'AZUL', kilometers: 25000, registration_city: 'BUENOS AIRES', registration_province: 'BUENOS AIRES', engine_brand: 'TOYOTA', engine_number: 'TOY012345678', chassis_brand: 'TOYOTA', chassis_number: 'CHS987654321', ownership: '100I', status: 'RESERVADO', entry_date: '2024-01-10', cost_value: 120000, cost_currency: 'USD', cost_exchange_rate: 1180, target_price_value: 180000, target_price_currency: 'ARS', public_price_value: 195000, public_price_currency: 'ARS' },
+                        { id: '4', brand: 'VOLKSWAGEN', model: 'GOLF', year: '2019', vehicle_type: 'HATCHBACK', plate: 'MNO345', color: 'ROJO', kilometers: 55000, registration_city: 'BUENOS AIRES', registration_province: 'BUENOS AIRES', engine_brand: 'VOLKSWAGEN', engine_number: 'VW345678901', chassis_brand: 'VOLKSWAGEN', chassis_number: 'CHS456789012', ownership: '100', status: 'VENDIDO', entry_date: '2024-01-05', cost_value: 95000, cost_currency: 'USD', cost_exchange_rate: 1120, target_price_value: 155000, target_price_currency: 'ARS', public_price_value: 170000, public_price_currency: 'ARS' },
+                        { id: '5', brand: 'PEUGEOT', model: '208', year: '2020', vehicle_type: 'HATCHBACK', plate: 'PQR678', color: 'BLANCO', kilometers: 32000, registration_city: 'BUENOS AIRES', registration_province: 'BUENOS AIRES', engine_brand: 'PEUGEOT', engine_number: 'PEU678901234', chassis_brand: 'PEUGEOT', chassis_number: 'CHS789012345', ownership: 'CONSIGNACIÓN', is_consignment: true, supplier_client_id: '2', status: 'ENTREGADO', entry_date: '2024-01-08', cost_value: 78000, cost_currency: 'USD', cost_exchange_rate: 1140, target_price_value: 130000, target_price_currency: 'ARS', public_price_value: 145000, public_price_currency: 'ARS' }
+                    ],
+                    sales: [
+                        { id: '1', vehicle_id: '4', client_id: '1', sale_date: '2024-02-15', client_name: 'Juan Carlos Pérez', sale_price: 170000, sale_price_currency: 'ARS', sale_price_exchange_rate: 1200, deposit: { amount: 34000, currency: 'ARS', exchange_rate: 1200, date: '2024-02-15', payment_method: 'Transferencia' }, financing: { amount: 136000, currency: 'ARS', exchange_rate: 1200, bank: 'Banco Nación', installments: 60, installment_value: 2833, date: '2024-02-15' } },
+                        { id: '2', vehicle_id: '5', client_id: '2', sale_date: '2024-02-20', client_name: 'María González', sale_price: 145000, sale_price_currency: 'ARS', sale_price_exchange_rate: 1200, cash_payment: { amount: 145000, currency: 'ARS', exchange_rate: 1200, date: '2024-02-20', payment_method: 'Efectivo' } }
+                    ],
+                    reservations: [
+                        { id: '1', vehicle_id: '3', client_id: '3', reservation_date: '2024-02-10', client_name: 'Carlos Rodríguez', agreed_price: 190000, deposit_amount: 38000, deposit_currency: 'ARS', deposit_exchange_rate: 1200, status: 'ACTIVA' }
+                    ],
+                    quotes: [
+                        { id: '1', vehicle_id: '1', client_id: '3', quote_date: '2024-02-18', quoted_price_ars: 160000, trade_in_brand: 'CITROEN', trade_in_model: 'C4', trade_in_year: '2017', trade_in_value_ars: 45000 }
+                    ],
+                    leads: [
+                        { id: '1', client_id: '3', client_name: 'Carlos Rodríguez', client_phone: '+5491155566677', consultation_date: '2024-02-18', source: 'Salón', interested_vehicles: [{ vehicle_id: '1', vehicle_description: 'FORD FIESTA 2020' }], status: 'En negociación', interest_level: 'Alto' }
+                    ]
+                };
+
+                // Cargar datos
+                localStorage.setItem('local_db_clients', JSON.stringify(sampleData.clients));
+                localStorage.setItem('local_db_vehicles', JSON.stringify(sampleData.vehicles));
+                localStorage.setItem('local_db_sales', JSON.stringify(sampleData.sales));
+                localStorage.setItem('local_db_reservations', JSON.stringify(sampleData.reservations));
+                localStorage.setItem('local_db_quotes', JSON.stringify(sampleData.quotes));
+                localStorage.setItem('local_db_leads', JSON.stringify(sampleData.leads));
+
+                // Mostrar resumen
+                showDataSummary(sampleData);
+                showVehicleList(sampleData.vehicles);
+
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '🎉 ¡Datos de ejemplo cargados exitosamente!';
+
+                console.log('✅ Datos de ejemplo cargados:', sampleData);
+
+            } catch (error) {
+                console.error('❌ Error cargando datos:', error);
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '❌ Error al cargar datos: ' + error.message;
+            }
+        }
+
+        function clearData() {
+            const entities = ['clients', 'vehicles', 'sales', 'reservations', 'quotes', 'leads'];
+            entities.forEach(entity => {
+                localStorage.removeItem(`local_db_${entity}`);
+            });
+
+            document.getElementById('load-status').className = 'status warning';
+            document.getElementById('load-status').textContent = '🗑️ Datos limpiados. Carga nuevos datos de ejemplo para continuar.';
+            document.getElementById('data-summary').style.display = 'none';
+            document.getElementById('vehicle-list').style.display = 'none';
+
+            console.log('🗑️ Datos limpiados');
+        }
+
+        function showDataSummary(data) {
+            const dataGrid = document.getElementById('data-grid');
+            dataGrid.innerHTML = `
+                <div class="data-item">
+                    <div class="number">${data.clients.length}</div>
+                    <div class="label">👥 Clientes</div>
+                </div>
+                <div class="data-item">
+                    <div class="number">${data.vehicles.length}</div>
+                    <div class="label">🚗 Vehículos</div>
+                </div>
+                <div class="data-item">
+                    <div class="number">${data.sales.length}</div>
+                    <div class="label">💰 Ventas</div>
+                </div>
+                <div class="data-item">
+                    <div class="number">${data.reservations.length}</div>
+                    <div class="label">📋 Reservas</div>
+                </div>
+                <div class="data-item">
+                    <div class="number">${data.quotes.length}</div>
+                    <div class="label">📄 Presupuestos</div>
+                </div>
+                <div class="data-item">
+                    <div class="number">${data.leads.length}</div>
+                    <div class="label">📞 Consultas</div>
+                </div>
+            `;
+
+            document.getElementById('data-summary').style.display = 'block';
+        }
+
+        function showVehicleList(vehicles) {
+            const vehicleItems = document.getElementById('vehicle-items');
+            const statusClasses = {
+                'DISPONIBLE': 'disponible',
+                'A PERITAR': 'peritar',
+                'EN REPARACION': 'reparacion',
+                'RESERVADO': 'reservado',
+                'VENDIDO': 'vendido',
+                'ENTREGADO': 'entregado'
+            };
+
+            vehicleItems.innerHTML = vehicles.map(vehicle => `
+                <div class="vehicle-item">
+                    <div class="vehicle-info">
+                        <div class="vehicle-name">${vehicle.brand} ${vehicle.model} ${vehicle.year}</div>
+                        <div class="vehicle-details">${vehicle.plate} • ${vehicle.kilometers?.toLocaleString('es-AR')} km • ${vehicle.ownership}</div>
+                    </div>
+                    <div>
+                        <span class="status-badge ${statusClasses[vehicle.status] || ''}">${vehicle.status}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('vehicle-list').style.display = 'block';
+        }
+
+        async function runSystemTests() {
+            const statusDiv = document.getElementById('test-status');
+            const resultsDiv = document.getElementById('test-results');
+
+            statusDiv.className = 'status info pulse';
+            statusDiv.textContent = '🚀 Ejecutando tests del sistema...';
+            resultsDiv.style.display = 'block';
+            resultsDiv.textContent = 'Iniciando tests...\n';
+
+            try {
+                // Redirigir console.log a la consola visual
+                const originalLog = console.log;
+                const originalError = console.error;
+
+                console.log = function(...args) {
+                    resultsDiv.textContent += args.join(' ') + '\n';
+                    originalLog.apply(console, args);
+                };
+
+                console.error = function(...args) {
+                    resultsDiv.textContent += '❌ ' + args.join(' ') + '\n';
+                    originalError.apply(console, args);
+                };
+
+                // Ejecutar tests
+                const result = await systemTests.runAllTests();
+
+                // Restaurar console
+                console.log = originalLog;
+                console.error = originalError;
+
+                statusDiv.className = result ? 'status success' : 'status error';
+                statusDiv.textContent = result ?
+                    '✅ ¡Todos los tests pasaron exitosamente!' :
+                    '❌ Algunos tests fallaron. Revisa los resultados.';
+
+            } catch (error) {
+                console.error('💥 Error ejecutando tests:', error);
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '❌ Error ejecutando tests: ' + error.message;
+                resultsDiv.textContent += '\n💥 ERROR: ' + error.message;
+            }
+        }
+
+        async function runIndividualTest(testType) {
+            const statusDiv = document.getElementById('test-status');
+            const resultsDiv = document.getElementById('test-results');
+
+            statusDiv.className = 'status info pulse';
+            statusDiv.textContent = `🧪 Ejecutando test: ${testType}...`;
+            resultsDiv.style.display = 'block';
+            resultsDiv.textContent = `Ejecutando test: ${testType}...\n`;
+
+            try {
+                const testMap = {
+                    'data': systemTests.testDataLoading,
+                    'vehicles': systemTests.testVehicleDataIntegrity,
+                    'sales': systemTests.testSalesIntegrity,
+                    'contracts': systemTests.testContractGeneration
+                };
+
+                const testFunction = testMap[testType];
+                if (!testFunction) {
+                    throw new Error(`Test ${testType} no encontrado`);
+                }
+
+                const result = await testFunction.call(systemTests);
+
+                statusDiv.className = result ? 'status success' : 'status error';
+                statusDiv.textContent = result ?
+                    `✅ Test ${testType} pasó exitosamente` :
+                    `❌ Test ${testType} falló`;
+
+                resultsDiv.textContent += `\n📊 Resultado: ${result ? 'PASÓ' : 'FALLÓ'}\n`;
+
+            } catch (error) {
+                console.error(`Error ejecutando test ${testType}:`, error);
+                statusDiv.className = 'status error';
+                statusDiv.textContent = `❌ Error en test ${testType}`;
+                resultsDiv.textContent += '\n💥 ERROR: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

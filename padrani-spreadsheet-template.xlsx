@@ -1,0 +1,269 @@
+Esta es una plantilla de Excel/Google Sheets para el sistema Padrani Automotores con nombres de interfaz en español.
+
+HOJAS DEL SPREADSHEET:
+
+1. VEHICULOS
+Columnas principales:
+- ID
+- Nombre (Marca Modelo Año - Patente)
+- Marca
+- Modelo
+- Año
+- Patente
+- Kilómetros
+- Color
+- Tipo
+- Estado (A PERITAR, A INGRESAR, EN REPARACION, DISPONIBLE, PAUSADO, RESERVADO, VENDIDO, ENTREGADO)
+- Fecha Ingreso
+- Propietario
+- Dueño
+- Costo Valor ($)
+- Costo Moneda (ARS/USD)
+- Costo Cotización (cotización histórica USD)
+- Precio Objetivo ($)
+- Precio Objetivo Moneda
+- Precio Objetivo Cotización
+- Precio Público ($)
+- Precio Público Moneda
+- Precio Público Cotización
+- Precio InfoAuto ($)
+- Precio InfoAuto Moneda
+- Precio InfoAuto Cotización
+- Fotos (URLs separadas por coma)
+- Documentos (URLs separadas por coma)
+- Gastos (JSON con tipo, valor, moneda, cotización, fecha, descripción)
+- Observaciones
+
+2. CLIENTES
+Columnas:
+- ID
+- Nombre Completo
+- Fecha Nacimiento
+- Teléfono
+- Email
+- DNI
+- CUIT/CUIL
+- Ciudad
+- Provincia
+- Dirección
+- Código Postal
+- Estado Civil
+- Estado Cliente (Cliente, Proveedor, Interesado)
+- Observaciones
+- Cónyuge Nombre (si corresponde)
+- Cónyuge DNI
+- Cónyuge CUIT/CUIL
+- Cónyuge Teléfono
+- Cónyuge Email
+- Cónyuge Fecha Nacimiento
+- Cónyuge Ocupación
+
+3. CONSULTAS
+Columnas:
+- ID
+- Fecha Consulta
+- Cliente ID
+- Cliente Nombre
+- Cliente Teléfono
+- Cliente Email
+- Vehículos Interesados (IDs separados por coma)
+- Otros Intereses
+- Presupuesto
+- Preferencia Contacto (WhatsApp, Llamada, Email)
+- Estado (Nuevo, Contactado, En Negociación, Cerrado, Perdido)
+- Nivel Interés (Baja, Media, Alta)
+- Observaciones
+- Fecha Seguimiento
+
+4. RESERVAS
+Columnas:
+- ID
+- Vehículo ID
+- Fecha Reserva
+- Cliente ID
+- Cliente Nombre
+- Cliente Teléfono
+- Vendedor ID
+- Vendedor Nombre
+- Monto Seña
+- Moneda Seña
+- Cotización Seña
+- Fecha Seña
+- Descripción Seña
+- Precio Acordado
+- Moneda Precio Acordado
+- Cotización Precio Acordado
+- Fecha Precio Acordado
+- Permuta Marca
+- Permuta Modelo
+- Permuta Año
+- Permuta Patente
+- Permuta Kilómetros
+- Permuta Valor
+- Permuta Moneda
+- Permuta Cotización
+- Permuta Fecha
+- Financiación Monto
+- Financiación Moneda
+- Financiación Cotización
+- Financiación Fecha
+- Banco Financiación
+- Cuotas Financiación
+- Valor Cuota Financiación
+- Observaciones
+
+5. VENTAS
+Columnas:
+- ID
+- Vehículo ID
+- Fecha Venta
+- Cliente ID
+- Cliente Nombre
+- Vendedor
+- Precio Venta
+- Moneda Venta
+- Cotización Venta
+- Monto Seña
+- Moneda Seña
+- Cotización Seña
+- Fecha Seña
+- Método Pago Seña
+- Descripción Seña
+- Monto Pago Contado
+- Moneda Pago Contado
+- Cotización Pago Contado
+- Fecha Pago Contado
+- Método Pago Contado
+- Permutas (JSON array con datos de vehículos permuta)
+- Monto Financiación
+- Moneda Financiación
+- Cotización Financiación
+- Fecha Financiación
+- Banco Financiación
+- Cuotas Financiación
+- Valor Cuota Financiación
+- Fecha Saldo
+- Estado Venta (Activa, Cancelada, Completada)
+- Observaciones
+
+6. PERITAJES
+Columnas:
+- ID
+- Vehículo ID
+- Fecha Peritaje
+- Inspector Nombre
+- Kilómetros al Peritaje
+- Estado Motor (Bueno/Regular/Malo/No aplica)
+- Pérdida Fluidos (Sí/No/No aplica)
+- Estado Caja (Bueno/Regular/Malo/No aplica)
+- Estado 4x4 (Bueno/Regular/Malo/No aplica)
+- Suspensión (Bueno/Regular/Malo/No aplica)
+- Sistema Frenos (Bueno/Regular/Malo/No aplica)
+- Desgaste Frenos (Sí/No/No aplica)
+- Fallas Eléctricas (Sí/No/No aplica)
+- Faros y Ópticas (Bueno/Regular/Malo/No aplica)
+- Estado Batería (Bueno/Regular/Malo/No aplica)
+- Aire Acondicionado (Sí/No/No aplica)
+- Calefacción (Sí/No/No aplica)
+- Estado Tapizados (Bueno/Regular/Malo/No aplica)
+- Desgaste Volante (Sí/No/No aplica)
+- Estado Vidrios (Bueno/Regular/Malo/No aplica)
+- Bollos Granizo (Sí/No/No aplica)
+- Cubierta DD (Delantera Derecha)
+- Cubierta DI (Delantera Izquierda)
+- Cubierta TD (Trasera Derecha)
+- Cubierta TI (Trasera Izquierda)
+- Pintura Frente
+- Pintura Guardabarro Del Derecho
+- Pintura Guardabarro Del Izquierdo
+- Pintura Puerta Del Derecha
+- Pintura Puerta Del Izquierda
+- Pintura Puerta Tras Derecha
+- Pintura Puerta Tras Izquierda
+- Pintura Guardabarro Tras Derecho
+- Pintura Guardabarro Tras Izquierdo
+- Pintura Parte Trasera
+- Pintura Techo
+- Tiene Accesorios (Sí/No)
+- Detalle Accesorios
+- Cambio Correa Distribución (Sí/No)
+- Tipo Correa (correa/cadena)
+- Fecha Cambio Correa
+- Kilómetros Cambio Correa
+- Estado Correa (Bueno/Regular/Malo/No aplica)
+- Estado Tensores (Bueno/Regular/Malo/No aplica)
+- Estado Bomba Agua (Bueno/Regular/Malo/No aplica)
+- Cambio Aceite (Sí/No)
+- Fecha Cambio Aceite
+- Kilómetros Cambio Aceite
+- Tipo Aceite
+- Cambio Filtro Aire (Sí/No)
+- Fecha Cambio Filtro Aire
+- Cambio Filtro Combustible (Sí/No)
+- Fecha Cambio Filtro Combustible
+- Cambio Filtro Aceite (Sí/No)
+- Fecha Cambio Filtro Aceite
+- Cambio Bujías (Sí/No)
+- Fecha Cambio Bujías
+- Kilómetros Cambio Bujías
+- Tipo Bujías
+- Observaciones Peritaje
+
+7. COTIZACIONES
+Columnas:
+- ID
+- Fecha Cotización
+- Cliente ID
+- Cliente Nombre
+- Cliente Teléfono
+- Cliente Email
+- Vendedor ID
+- Vendedor Nombre
+- Vehículos Cotizados (JSON array)
+- Monto Cotización
+- Moneda Cotización
+- Cotización USD
+- Fecha Cotización
+- Permuta Incluida (Sí/No)
+- Permuta Marca
+- Permuta Modelo
+- Permuta Año
+- Permuta Valor Estimado
+- Financiación Incluida (Sí/No)
+- Monto Financiación
+- Banco Financiación
+- Cuotas Financiación
+- Valor Cuota Financiación
+- Estado Cotización (Pendiente, Aprobada, Rechazada)
+- Observaciones
+
+8. VENDEDORES
+Columnas:
+- ID
+- Nombre Completo
+- Teléfono
+- Email
+- Activo (Sí/No)
+- Fecha Ingreso
+- Observaciones
+
+9. TASAS_CAMBIO
+Columnas:
+- ID
+- Fecha Tasa
+- Tipo Tasa (Oficial, Blue, CCL, etc.)
+- Valor USD
+- Fuente (ArgentinaDatos, DolarAPI, etc.)
+- Fecha Actualización
+
+10. GASTOS_VEHICULO
+Columnas:
+- ID
+- Vehículo ID
+- Tipo Gasto (GESTORIA, REPARACION, PATENTE, etc.)
+- Valor
+- Moneda
+- Cotización USD
+- Fecha
+- Descripción
+- Factura/Proforma
