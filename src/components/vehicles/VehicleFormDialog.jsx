@@ -304,7 +304,6 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
               </div>
               <div className="grid grid-cols-6 gap-3 mt-2">
                 <div className="col-span-1"><Label className={lbl}>KM</Label><Input className={inp} type="number" value={formData.kilometers ?? ''} onChange={(e) => handleChange('kilometers', e.target.value)} /></div>
-              <div className="grid grid-cols-6 gap-3 mt-2">
                 <div className="col-span-1"><Label className={lbl}>Color</Label><Input className={inp} value={formData.color} onChange={(e) => handleChange('color', e.target.value)} /></div>
                 <div className="col-span-1"><Label className={lbl}>Estado</Label>
                   <Select value={formData.status} onValueChange={(v) => handleChange('status', v)}>
