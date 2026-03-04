@@ -222,6 +222,7 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
 
     console.log('🔍 Iniciando guardado de vehículo...');
     console.log('📋 FormData antes de procesar:', formData);
+    console.log('🎯 Campo vehicle_type en formData:', formData.vehicle_type);
 
     // Convert numeric string fields to numbers before submit
     const numericFields = ['year', 'kilometers', 'cost_value', 'cost_exchange_rate', 'target_price_value', 'target_price_exchange_rate', 'public_price_value', 'public_price_exchange_rate', 'infoauto_value', 'infoauto_exchange_rate'];
@@ -234,11 +235,21 @@ export default function VehicleFormDialog({ open, onOpenChange, vehicle, onSubmi
 
     const finalData = { ...processedData, expenses };
     console.log('📤 Enviando datos del vehículo:', finalData);
-    console.log('🎯 Llamando a onSubmit con:', finalData);
+    console.log('🎯 Campo vehicle_type en finalData:', finalData.vehicle_type);
+    console.log('🎯 Todos los campos enviados:', Object.keys(finalData));
 
     try {
+      console.log('🚀 Llamando a onSubmit...');
       const result = await onSubmit(finalData);
       console.log('✅ onSubmit completado, resultado:', result);
+      console.log('🎯 Campo vehicle_type en resultado:', result?.vehicle_type);
+
+      // Verificar si el campo se guardó correctamente
+      if (result && result.vehicle_type !== finalData.vehicle_type) {
+        console.warn('⚠️ ADVERTENCIA: vehicle_type no se guardó correctamente!');
+        console.warn('Enviado:', finalData.vehicle_type, 'Recibido:', result.vehicle_type);
+      }
+
       console.log('✅ Vehículo guardado correctamente');
       onOpenChange(false); // Cerrar el diálogo manualmente
     } catch (error) {

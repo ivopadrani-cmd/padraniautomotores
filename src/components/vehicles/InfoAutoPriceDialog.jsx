@@ -101,15 +101,20 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
     e.preventDefault();
 
     console.log('💾 Intentando guardar InfoAuto:', formData);
+    console.log('💾 Campo infoauto_value:', formData.infoauto_value);
+    console.log('💾 Campo infoauto_currency:', formData.infoauto_currency);
+    console.log('💾 Campo infoauto_exchange_rate:', formData.infoauto_exchange_rate);
 
     const processedData = { ...formData };
 
     // Procesar campos numéricos
     if (processedData.infoauto_value !== '' && processedData.infoauto_value !== undefined) {
       processedData.infoauto_value = parseFloat(processedData.infoauto_value) || 0;
+      console.log('🔢 infoauto_value convertido a:', processedData.infoauto_value);
     }
     if (processedData.infoauto_exchange_rate !== '' && processedData.infoauto_exchange_rate !== undefined) {
       processedData.infoauto_exchange_rate = parseFloat(processedData.infoauto_exchange_rate) || 1200;
+      console.log('🔢 infoauto_exchange_rate convertido a:', processedData.infoauto_exchange_rate);
     }
     // Procesar fecha
     if (processedData.infoauto_date !== '' && processedData.infoauto_date !== undefined) {
@@ -117,11 +122,31 @@ export default function InfoAutoPriceDialog({ open, onOpenChange, vehicle, onSub
     }
 
     console.log('📤 Datos procesados para guardar:', processedData);
+    console.log('📤 Todos los campos en processedData:', Object.keys(processedData));
 
     try {
       console.log('🚀 Enviando datos a onSubmit:', processedData);
       const result = await onSubmit(processedData);
       console.log('✅ InfoAuto guardado exitosamente, resultado:', result);
+      console.log('✅ Campos en resultado:', result ? Object.keys(result) : 'null');
+
+      // Verificar si los campos se guardaron
+      if (result) {
+        console.log('✅ Resultado infoauto_value:', result.infoauto_value);
+        console.log('✅ Resultado infoauto_currency:', result.infoauto_currency);
+        console.log('✅ Resultado infoauto_exchange_rate:', result.infoauto_exchange_rate);
+
+        if (result.infoauto_value !== processedData.infoauto_value) {
+          console.warn('⚠️ WARNING: infoauto_value no se guardó correctamente!');
+        }
+        if (result.infoauto_currency !== processedData.infoauto_currency) {
+          console.warn('⚠️ WARNING: infoauto_currency no se guardó correctamente!');
+        }
+        if (result.infoauto_exchange_rate !== processedData.infoauto_exchange_rate) {
+          console.warn('⚠️ WARNING: infoauto_exchange_rate no se guardó correctamente!');
+        }
+      }
+
       onOpenChange(false);
       toast.success("Precio InfoAuto actualizado correctamente");
     } catch (error) {

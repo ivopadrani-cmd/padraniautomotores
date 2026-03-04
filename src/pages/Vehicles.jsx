@@ -131,7 +131,11 @@ export default function Vehicles() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Vehicle.update(id, data),
+    mutationFn: ({ id, data }) => {
+      console.log('🔄 updateMutation llamada con:', { id, data });
+      console.log('🔄 Campo vehicle_type en data:', data.vehicle_type);
+      return base44.entities.Vehicle.update(id, data);
+    },
     onMutate: async ({ id, data }) => {
       // Cancelar TODAS las queries relacionadas
       await queryClient.cancelQueries({ queryKey: ['vehicles'] });
@@ -190,8 +194,17 @@ export default function Vehicles() {
   });
 
   const handleSubmit = (data) => {
-    if (editingVehicle?.id) updateMutation.mutate({ id: editingVehicle.id, data });
-    else createMutation.mutate(data);
+    console.log('🏠 Vehicles.handleSubmit llamado con data:', data);
+    console.log('🏠 Campo vehicle_type en data:', data.vehicle_type);
+    console.log('🏠 editingVehicle:', editingVehicle);
+
+    if (editingVehicle?.id) {
+      console.log('🏠 Llamando updateMutation con ID:', editingVehicle.id);
+      updateMutation.mutate({ id: editingVehicle.id, data });
+    } else {
+      console.log('🏠 Llamando createMutation');
+      createMutation.mutate(data);
+    }
   };
 
   const handleStatusChange = (vehicleId, newStatus, vehicle) => {
@@ -265,10 +278,23 @@ export default function Vehicles() {
   };
 
   const handleInfoAutoSubmit = async (priceData) => {
-    if (!priceEditVehicle) return;
-    await updateMutation.mutateAsync({ id: priceEditVehicle.id, data: priceData });
-    setShowInfoAutoDialog(false);
-    setPriceEditVehicle(null);
+    console.log('🏠 handleInfoAutoSubmit llamado con:', priceData);
+    console.log('🏠 priceEditVehicle:', priceEditVehicle);
+
+    if (!priceEditVehicle) {
+      console.error('❌ No hay priceEditVehicle seleccionado');
+      return;
+    }
+
+    try {
+      console.log('🏠 Llamando updateMutation para InfoAuto...');
+      const result = await updateMutation.mutateAsync({ id: priceEditVehicle.id, data: priceData });
+      console.log('🏠 InfoAuto update completado:', result);
+      setShowInfoAutoDialog(false);
+      setPriceEditVehicle(null);
+    } catch (error) {
+      console.error('❌ Error en handleInfoAutoSubmit:', error);
+    }
   };
 
   const handleTargetSubmit = async (priceData) => {
